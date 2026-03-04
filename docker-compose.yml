@@ -1,0 +1,10 @@
+services:
+  app:
+    image: ghcr.io/world-goes-to-hell/ysk-kanban:latest
+    container_name: kanban-board
+    ports:
+      - "8080:8080"
+    volumes:
+      - /home/junu/canvanboard/data:/app/data
+      - /home/junu/canvanboard/uploads:/app/uploads
+    restart: unless-stopped
