@@ -1,0 +1,18 @@
+.git
+.gitignore
+.idea
+.vscode
+.omc
+*.md
+
+# Build outputs
+build/
+frontend/node_modules/
+frontend/dist/
+
+# Runtime data
+data/
+uploads/
+
+# Gradle cache
+.gradle/
