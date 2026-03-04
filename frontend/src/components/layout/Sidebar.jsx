@@ -2,12 +2,14 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useProjects } from '../../contexts/ProjectContext';
 import ProjectModal from '../project/ProjectModal';
+import ProjectMembersModal from '../project/ProjectMembersModal';
 import ConfirmDialog from '../common/ConfirmDialog';
 import SidebarProjectItem from './SidebarProjectItem';
 import styles from '../../styles/layout.module.css';
 
 export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
-  const { projectTree, favoriteIds, deleteProject } = useProjects();
+  const { projectTree, favoriteIds, deleteProject, loadProjects } = useProjects();
+  const [membersProject, setMembersProject] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [projectModal, setProjectModal] = useState(null);
@@ -122,6 +124,7 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
               onEditProject={handleEditProject}
               onDeleteProject={handleDeleteProject}
               onCreateChild={handleCreateChild}
+              onManageMembers={setMembersProject}
             />
           ))}
         </nav>
@@ -173,6 +176,14 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
           project={projectModal.project}
           parentId={projectModal.parentId}
           onClose={() => setProjectModal(null)}
+        />
+      )}
+
+      {membersProject && (
+        <ProjectMembersModal
+          project={membersProject}
+          onClose={() => setMembersProject(null)}
+          onUpdated={loadProjects}
         />
       )}
 

@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.todo.entity.Project;
+import com.example.todo.entity.ProjectMember;
+import com.example.todo.entity.ProjectRole;
 import com.example.todo.entity.User;
+import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +26,20 @@ import lombok.extern.slf4j.Slf4j;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository memberRepository;
 
     @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
         return projectRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Project> getProjectsByUser(Long userId) {
+        List<Long> projectIds = memberRepository.findByUserId(userId).stream()
+                .map(m -> m.getProject().getId())
+                .collect(Collectors.toList());
+        if (projectIds.isEmpty()) return new ArrayList<>();
+        return projectRepository.findAllById(projectIds);
     }
 
     @Transactional(readOnly = true)
@@ -42,6 +55,26 @@ public class ProjectService {
 
         for (Project p : allProjects) {
             Long parentId = (p.getParent() != null) ? p.getParent().getId() : null;
+            childrenMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(p);
+        }
+
+        List<Project> roots = childrenMap.getOrDefault(null, new ArrayList<>());
+        return roots.stream()
+                .map(root -> buildTreeNode(root, childrenMap))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getProjectTreeByUser(Long userId) {
+        List<Project> userProjects = getProjectsByUser(userId);
+        java.util.Set<Long> userProjectIds = userProjects.stream()
+                .map(Project::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        Map<Long, List<Project>> childrenMap = new HashMap<>();
+        for (Project p : userProjects) {
+            Long parentId = (p.getParent() != null && userProjectIds.contains(p.getParent().getId()))
+                    ? p.getParent().getId() : null;
             childrenMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(p);
         }
 
@@ -92,7 +125,24 @@ public class ProjectService {
         }
 
         log.info("Creating project: {} ({})", name, projectKey);
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+
+        ProjectMember master = ProjectMember.builder()
+                .project(saved)
+                .user(createdBy)
+                .role(ProjectRole.MASTER)
+                .build();
+        memberRepository.save(master);
+
+        return saved;
+    }
+
+    public void validateMaster(Long projectId, Long userId) {
+        ProjectMember member = memberRepository.findByProjectIdAndUserId(projectId, userId)
+                .orElseThrow(() -> new SecurityException("프로젝트 접근 권한이 없습니다."));
+        if (member.getRole() != ProjectRole.MASTER) {
+            throw new SecurityException("MASTER 권한이 필요합니다.");
+        }
     }
 
     public Project updateProject(Long id, String name, String description) {

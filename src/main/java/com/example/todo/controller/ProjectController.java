@@ -33,12 +33,14 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<List<Project>> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
+        User currentUser = getCurrentUser();
+        return ResponseEntity.ok(projectService.getProjectsByUser(currentUser.getId()));
     }
 
     @GetMapping("/tree")
     public ResponseEntity<List<Map<String, Object>>> getProjectTree() {
-        return ResponseEntity.ok(projectService.getProjectTree());
+        User currentUser = getCurrentUser();
+        return ResponseEntity.ok(projectService.getProjectTreeByUser(currentUser.getId()));
     }
 
     @PostMapping
@@ -55,9 +57,15 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Project> updateProject(
+    public ResponseEntity<?> updateProject(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
+        User currentUser = getCurrentUser();
+        try {
+            projectService.validateMaster(id, currentUser.getId());
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
         String name = body.get("name");
         String description = body.getOrDefault("description", "");
         String parentIdStr = body.get("parentId");
@@ -67,7 +75,13 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
+    public ResponseEntity<?> deleteProject(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+        try {
+            projectService.validateMaster(id, currentUser.getId());
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
     }

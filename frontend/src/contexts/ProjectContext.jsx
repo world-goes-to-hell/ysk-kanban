@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import projectAPI from '../api/projects';
+import { useAuth } from './AuthContext';
 import { useToast } from '../hooks/useToast';
 import { useLoading } from '../hooks/useLoading';
 
@@ -9,17 +10,32 @@ export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
   const [projectTree, setProjectTree] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [myRoles, setMyRoles] = useState({});
+  const { currentUser } = useAuth();
   const showToast = useToast();
   const { showLoading, hideLoading } = useLoading();
 
   const loadProjects = useCallback(async () => {
     try {
       const data = await projectAPI.list();
-      setProjects(Array.isArray(data) ? data : []);
+      const projectList = Array.isArray(data) ? data : [];
+      setProjects(projectList);
+
+      if (currentUser && projectList.length > 0) {
+        const roles = {};
+        await Promise.all(projectList.map(async (p) => {
+          try {
+            const members = await projectAPI.getMembers(p.id);
+            const me = members.find(m => m.user?.id === currentUser.id);
+            if (me) roles[p.id] = me.role;
+          } catch { /* ignore */ }
+        }));
+        setMyRoles(roles);
+      }
     } catch {
       setProjects([]);
     }
-  }, []);
+  }, [currentUser]);
 
   const loadProjectTree = useCallback(async () => {
     try {
@@ -108,7 +124,7 @@ export function ProjectProvider({ children }) {
   }, [showToast]);
 
   return (
-    <ProjectContext.Provider value={{ projects, projectTree, favoriteIds, loadProjects, loadProjectTree, loadFavorites, createProject, updateProject, deleteProject, toggleFavorite }}>
+    <ProjectContext.Provider value={{ projects, projectTree, favoriteIds, myRoles, loadProjects, loadProjectTree, loadFavorites, createProject, updateProject, deleteProject, toggleFavorite }}>
       {children}
     </ProjectContext.Provider>
   );

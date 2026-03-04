@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useProjects } from '../../contexts/ProjectContext';
 import styles from '../../styles/layout.module.css';
 
-export default function SidebarProjectItem({ project, activeProjectId, depth = 0, onProjectClick, onEditProject, onDeleteProject, onCreateChild }) {
+export default function SidebarProjectItem({ project, activeProjectId, depth = 0, onProjectClick, onEditProject, onDeleteProject, onCreateChild, onManageMembers }) {
   const [expanded, setExpanded] = useState(true);
-  const { favoriteIds, toggleFavorite } = useProjects();
+  const { favoriteIds, toggleFavorite, myRoles } = useProjects();
   const hasChildren = project.children && project.children.length > 0;
   const isActive = activeProjectId === String(project.id);
   const isFavorite = favoriteIds.has(project.id);
+  const isMaster = myRoles[project.id] === 'MASTER';
 
   const handleToggle = (e) => {
     e.stopPropagation();
@@ -46,16 +47,25 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
               {isFavorite ? '\u2605' : '\u2606'}
             </button>
           )}
-          <button
-            className={styles.sidebarItemBtn}
-            title="편집"
-            onClick={(e) => { e.stopPropagation(); onEditProject(e, project); }}
-          >&#9998;</button>
-          <button
-            className={styles.sidebarItemBtn}
-            title="삭제"
-            onClick={(e) => { e.stopPropagation(); onDeleteProject(e, project); }}
-          >&times;</button>
+          {isMaster && (
+            <>
+              <button
+                className={styles.sidebarItemBtn}
+                title="멤버 관리"
+                onClick={(e) => { e.stopPropagation(); onManageMembers?.(project); }}
+              >&#128101;</button>
+              <button
+                className={styles.sidebarItemBtn}
+                title="편집"
+                onClick={(e) => { e.stopPropagation(); onEditProject(e, project); }}
+              >&#9998;</button>
+              <button
+                className={styles.sidebarItemBtn}
+                title="삭제"
+                onClick={(e) => { e.stopPropagation(); onDeleteProject(e, project); }}
+              >&times;</button>
+            </>
+          )}
         </span>
       </button>
       {hasChildren && expanded && (
@@ -70,6 +80,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
               onEditProject={onEditProject}
               onDeleteProject={onDeleteProject}
               onCreateChild={onCreateChild}
+              onManageMembers={onManageMembers}
             />
           ))}
         </div>

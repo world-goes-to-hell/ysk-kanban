@@ -52,7 +52,7 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
             cursor: 'pointer',
           }}
         >
-          요약보기
+          새창보기
         </button>
       }
     >
