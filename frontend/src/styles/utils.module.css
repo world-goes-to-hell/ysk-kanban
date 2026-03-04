@@ -1,0 +1,27 @@
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(244, 245, 247, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-base);
+  backdrop-filter: blur(1px);
+}
+
+.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

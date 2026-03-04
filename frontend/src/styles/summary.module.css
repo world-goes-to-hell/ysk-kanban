@@ -1,0 +1,272 @@
+/* ── Summary Page (Instagram Feed Style) ─────────── */
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+
+.description {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Gallery (todo-level attachments) ────────────── */
+
+.gallery {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.galleryImg {
+  width: 100%;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transition: transform var(--duration-fast);
+  border: 1px solid var(--border-light);
+}
+
+.galleryImg:hover {
+  transform: scale(1.02);
+}
+
+/* ── Divider ─────────────────────────────────────── */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-light);
+  margin: 0 0 24px;
+}
+
+/* ── Comment Feed ────────────────────────────────── */
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  position: relative;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.authorName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dot {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.timeAgo {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.cardDeleteBtn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast);
+}
+
+.cardDeleteBtn:hover {
+  color: var(--danger, #dc2626);
+}
+
+/* ── Comment Images ──────────────────────────────── */
+
+.cardImages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardImg {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+  max-height: 500px;
+  background: var(--bg-page);
+}
+
+/* ── Comment Body ────────────────────────────────── */
+
+.cardBody {
+  padding: 12px 16px 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* ── Empty State ─────────────────────────────────── */
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 40px 0;
+}
+
+/* ── Loading ─────────────────────────────────────── */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ── Comment Input Section ───────────────────────── */
+
+.commentInputSection {
+  position: sticky;
+  bottom: 0;
+  margin-top: 32px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.commentTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  resize: none;
+  box-sizing: border-box;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  font-family: inherit;
+}
+
+.commentTextarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent);
+}
+
+.commentTextarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitBtn {
+  align-self: flex-end;
+  padding: 8px 20px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--brand);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast), opacity var(--duration-fast);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--brand-dark, #4f46e5);
+}
+
+.submitBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.submitError {
+  font-size: 0.78rem;
+  color: var(--danger, #dc2626);
+  margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .container {
+    padding: 20px 12px 48px;
+  }
+
+  .title {
+    font-size: 1.3rem;
+  }
+
+  .galleryGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}

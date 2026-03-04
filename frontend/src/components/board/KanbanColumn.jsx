@@ -1,0 +1,93 @@
+import { useState } from 'react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
+import TodoCard from './TodoCard';
+import EmptyState from './EmptyState';
+import styles from '../../styles/board.module.css';
+
+const COLUMN_CONFIG = {
+  TODO: {
+    title: '할 일',
+    dotClass: styles.dotTodo,
+    badgeClass: styles.badgeTodo,
+  },
+  IN_PROGRESS: {
+    title: '진행 중',
+    dotClass: styles.dotInprogress,
+    badgeClass: styles.badgeInprogress,
+  },
+  DONE: {
+    title: '완료',
+    dotClass: styles.dotDone,
+    badgeClass: styles.badgeDone,
+  },
+};
+
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  const itemDate = new Date(dateStr);
+  const now = new Date();
+  return (
+    itemDate.getFullYear() === now.getFullYear() &&
+    itemDate.getMonth() === now.getMonth() &&
+    itemDate.getDate() === now.getDate()
+  );
+}
+
+export default function KanbanColumn({ status, items, unreadCounts, onTransition, onEdit, onDelete, onCardClick, compact }) {
+  const config = COLUMN_CONFIG[status];
+  const [showOlder, setShowOlder] = useState(false);
+
+  const isDone = status === 'DONE';
+  const todayItems = isDone ? items.filter(item => isToday(item.updatedAt)) : items;
+  const olderItems = isDone ? items.filter(item => !isToday(item.updatedAt)) : [];
+  const visibleItems = isDone ? [...todayItems, ...(showOlder ? olderItems : [])] : items;
+
+  return (
+    <section className={styles.column}>
+      <div className={styles.columnHeader}>
+        <div className={styles.columnHeaderLeft}>
+          <span className={`${styles.columnDot} ${config.dotClass}`} />
+          <h3 className={styles.columnTitle}>{config.title}</h3>
+        </div>
+        <span className={`${styles.columnBadge} ${config.badgeClass}`}>{items.length}</span>
+      </div>
+      <Droppable droppableId={status}>
+        {(provided, snapshot) => (
+          <div
+            className={`${styles.columnBody} ${snapshot.isDraggingOver ? styles.columnBodyDragover : ''}`}
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+          >
+            {visibleItems.length === 0 && !snapshot.isDraggingOver && <EmptyState />}
+            {visibleItems.map((item, index) => (
+              <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
+                {(dragProvided, dragSnapshot) => (
+                  <TodoCard
+                    item={item}
+                    provided={dragProvided}
+                    isDragging={dragSnapshot.isDragging}
+                    unreadCount={unreadCounts?.[item.id] || 0}
+                    compact={compact}
+                    onTransition={(e) => onTransition(item, e)}
+                    onEdit={() => onEdit(item)}
+                    onDelete={() => onDelete(item)}
+                    onClick={() => onCardClick(item)}
+                  />
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+            {isDone && olderItems.length > 0 && (
+              <button
+                className={styles.doneToggleBtn}
+                onClick={() => setShowOlder(prev => !prev)}
+              >
+                {showOlder ? '접기' : `더보기 (${olderItems.length}건)`}
+              </button>
+            )}
+          </div>
+        )}
+      </Droppable>
+    </section>
+  );
+}
