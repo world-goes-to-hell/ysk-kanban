@@ -5,6 +5,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /home/junu/canvanboard/data:/app/data
-      - /home/junu/canvanboard/uploads:/app/uploads
+      - /home/junu/docker_data/kanvanboard/data:/app/data
+      - /home/junu/docker_data/kanvanboard/uploads:/app/uploads
     restart: unless-stopped

@@ -5,7 +5,6 @@ WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
-COPY src/main/resources/static/ /app/src/main/resources/static/
 RUN npm run build
 
 # ── Stage 2: Backend Build ──────────────────────────
