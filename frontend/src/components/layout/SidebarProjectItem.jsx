@@ -22,9 +22,12 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
 
   return (
     <div>
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         className={`${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}
         onClick={() => onProjectClick(project.id)}
+        onKeyDown={(e) => { if (e.key === 'Enter') onProjectClick(project.id); }}
         onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onCreateChild?.(e, project); }}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
       >
@@ -36,7 +39,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
           <span className={styles.sidebarTogglePlaceholder} />
         )}
         {isFavorite && depth === 0 && <span className={styles.favStar}>&#9733;</span>}
-        <span className={styles.sidebarItemLabel}>{project.name || project.projectKey || ''}</span>
+        <span className={styles.sidebarItemLabel} title={project.name || project.projectKey || ''}>{project.name || project.projectKey || ''}</span>
         <span className={styles.sidebarItemActions}>
           {depth === 0 && (
             <button
@@ -67,7 +70,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
             </>
           )}
         </span>
-      </button>
+      </div>
       {hasChildren && expanded && (
         <div>
           {project.children.map(child => (

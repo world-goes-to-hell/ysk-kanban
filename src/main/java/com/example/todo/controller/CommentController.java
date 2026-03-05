@@ -1,5 +1,6 @@
 package com.example.todo.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.todo.config.SseEmitterRegistry;
 import com.example.todo.entity.Comment;
+import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
 import com.example.todo.service.CommentService;
+import com.example.todo.service.NotificationService;
+import com.example.todo.service.TodoService;
 import com.example.todo.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,9 @@ public class CommentController {
 
     private final CommentService commentService;
     private final UserService userService;
+    private final TodoService todoService;
+    private final NotificationService notificationService;
+    private final SseEmitterRegistry sseEmitterRegistry;
 
     @GetMapping
     public ResponseEntity<List<Comment>> getComments(@PathVariable Long todoId) {
@@ -43,6 +51,9 @@ public class CommentController {
         String content = body.get("content");
         User currentUser = getCurrentUser();
         Comment created = commentService.createComment(todoId, content, currentUser);
+        Todo todo = todoService.getTodo(todoId);
+        notificationService.notifyCommentAdded(todo, currentUser);
+        sseEmitterRegistry.broadcast("comment_changed", commentEvent("created", todoId));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -54,6 +65,7 @@ public class CommentController {
         String content = body.get("content");
         User currentUser = getCurrentUser();
         Comment updated = commentService.updateComment(commentId, content, currentUser);
+        sseEmitterRegistry.broadcast("comment_changed", commentEvent("updated", todoId));
         return ResponseEntity.ok(updated);
     }
 
@@ -63,7 +75,15 @@ public class CommentController {
             @PathVariable Long commentId) {
         User currentUser = getCurrentUser();
         commentService.deleteComment(commentId, currentUser);
+        sseEmitterRegistry.broadcast("comment_changed", commentEvent("deleted", todoId));
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, Object> commentEvent(String action, Long todoId) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("action", action);
+        event.put("todoId", todoId);
+        return event;
     }
 
     private User getCurrentUser() {

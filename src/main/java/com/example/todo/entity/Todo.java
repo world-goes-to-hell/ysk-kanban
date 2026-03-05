@@ -18,6 +18,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
@@ -72,6 +74,16 @@ public class Todo {
     @JoinColumn(name = "created_by")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User createdBy;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "todo_assignees",
+            joinColumns = @JoinColumn(name = "todo_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @Builder.Default
+    private List<User> assignees = new ArrayList<>();
 
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

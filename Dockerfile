@@ -21,6 +21,7 @@ RUN gradle bootJar -x test --no-daemon
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
+RUN apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime && echo "Asia/Seoul" > /etc/timezone
 RUN mkdir -p /app/data /app/uploads
 
 COPY --from=build /app/build/libs/*.jar app.jar
@@ -28,4 +29,4 @@ COPY --from=build /app/build/libs/*.jar app.jar
 VOLUME ["/app/data", "/app/uploads"]
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar"]

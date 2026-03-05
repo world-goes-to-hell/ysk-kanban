@@ -167,6 +167,36 @@
   object-fit: cover;
 }
 
+.attachFile {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg-page);
+  cursor: pointer;
+  padding: 6px;
+}
+
+.attachFileIcon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.attachFileName {
+  font-size: 0.55rem;
+  color: var(--text-secondary);
+  text-align: center;
+  word-break: break-all;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+
 .attachOverlay {
   position: absolute;
   bottom: 0;

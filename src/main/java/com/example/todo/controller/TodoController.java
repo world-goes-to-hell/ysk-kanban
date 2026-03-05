@@ -23,6 +23,7 @@ import com.example.todo.config.SseEmitterRegistry;
 import com.example.todo.entity.Priority;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
+import com.example.todo.service.NotificationService;
 import com.example.todo.service.TodoService;
 import com.example.todo.service.UserService;
 
@@ -37,6 +38,7 @@ public class TodoController {
 
     private final TodoService todoService;
     private final UserService userService;
+    private final NotificationService notificationService;
     private final SseEmitterRegistry sseEmitterRegistry;
 
     @GetMapping("/{id}")
@@ -82,9 +84,14 @@ public class TodoController {
             dueDate = LocalDate.parse((String) body.get("dueDate"));
         }
 
+        List<Long> assigneeIds = parseAssigneeIds(body);
+
         User currentUser = getCurrentUser();
-        Todo created = todoService.createTodo(summary, description, priority, projectId, currentUser, dueDate);
+        Todo created = todoService.createTodo(summary, description, priority, projectId, currentUser, dueDate, assigneeIds);
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("created", projectId));
+        if (created.getAssignees() != null && !created.getAssignees().isEmpty()) {
+            notificationService.notifyAssigned(created, created.getAssignees(), currentUser);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -115,8 +122,24 @@ public class TodoController {
             dueDate = LocalDate.parse((String) body.get("dueDate"));
         }
 
-        Todo updated = todoService.updateTodo(id, summary, description, priority, projectId, dueDate);
+        List<Long> assigneeIds = parseAssigneeIds(body);
+
+        Todo before = todoService.getTodo(id);
+        java.util.Set<Long> oldAssigneeIds = before.getAssignees() != null
+                ? before.getAssignees().stream().map(User::getId).collect(java.util.stream.Collectors.toSet())
+                : java.util.Collections.emptySet();
+
+        Todo updated = todoService.updateTodo(id, summary, description, priority, projectId, dueDate, assigneeIds);
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("updated", projectId));
+
+        if (updated.getAssignees() != null) {
+            List<User> newlyAssigned = updated.getAssignees().stream()
+                    .filter(a -> !oldAssigneeIds.contains(a.getId()))
+                    .toList();
+            if (!newlyAssigned.isEmpty()) {
+                notificationService.notifyAssigned(updated, newlyAssigned, getCurrentUser());
+            }
+        }
         return ResponseEntity.ok(updated);
     }
 
@@ -134,9 +157,12 @@ public class TodoController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         Todo.Status status = Todo.Status.valueOf(body.get("status"));
+        Todo before = todoService.getTodo(id);
+        String oldStatus = before.getStatus().name();
         Todo updated = todoService.changeStatus(id, status);
         Long statusProjectId = updated.getProject() != null ? updated.getProject().getId() : null;
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("updated", statusProjectId));
+        notificationService.notifyStatusChanged(updated, oldStatus, status.name(), getCurrentUser());
         return ResponseEntity.ok(updated);
     }
 
@@ -147,6 +173,15 @@ public class TodoController {
         todoService.deleteTodo(id);
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("deleted", deleteProjectId));
         return ResponseEntity.noContent().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> parseAssigneeIds(Map<String, Object> body) {
+        if (!body.containsKey("assigneeIds") || body.get("assigneeIds") == null) {
+            return null;
+        }
+        List<Number> raw = (List<Number>) body.get("assigneeIds");
+        return raw.stream().map(Number::longValue).toList();
     }
 
     private Map<String, Object> todoEvent(String action, Long projectId) {

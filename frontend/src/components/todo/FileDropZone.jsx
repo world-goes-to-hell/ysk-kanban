@@ -19,7 +19,7 @@ export default function FileDropZone({ onFiles }) {
   const handleDrop = (e) => {
     e.preventDefault();
     zoneRef.current?.classList.remove(formStyles.fileDropZoneDragover);
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) onFiles(files);
   };
 
@@ -42,11 +42,11 @@ export default function FileDropZone({ onFiles }) {
         ref={inputRef}
         type="file"
         multiple
-        accept="image/*"
+        accept="*/*"
         hidden
         onChange={handleChange}
       />
-      <p className={formStyles.fileDropText}>이미지를 드래그하거나 클릭하여 업로드</p>
+      <p className={formStyles.fileDropText}>파일을 드래그하거나 클릭하여 업로드</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ConfirmDialog from '../common/ConfirmDialog';
+import { isImageType, getFileIcon } from '../../utils/fileUtils';
 import styles from '../../styles/detail.module.css';
 
 export default function AttachmentGrid({ attachments, getUrl, onDelete }) {
@@ -14,15 +15,23 @@ export default function AttachmentGrid({ attachments, getUrl, onDelete }) {
         <div className={styles.attachGrid}>
           {attachments.map(att => {
             const url = getUrl(att.id);
+            const image = isImageType(att);
             return (
               <div key={att.id} className={styles.attachThumb}>
-                <img
-                  src={url}
-                  alt={att.originalFilename || '첨부파일'}
-                  loading="lazy"
-                  className={styles.attachImg}
-                  onClick={() => window.open(url, '_blank')}
-                />
+                {image ? (
+                  <img
+                    src={url}
+                    alt={att.originalFilename || '첨부파일'}
+                    loading="lazy"
+                    className={styles.attachImg}
+                    onClick={() => window.open(url, '_blank')}
+                  />
+                ) : (
+                  <div className={styles.attachFile} onClick={() => window.open(url, '_blank')}>
+                    <span className={styles.attachFileIcon}>{getFileIcon(att.originalFilename)}</span>
+                    <span className={styles.attachFileName}>{att.originalFilename || '파일'}</span>
+                  </div>
+                )}
                 <div className={styles.attachOverlay}>
                   {att.originalFilename || '파일'}
                 </div>

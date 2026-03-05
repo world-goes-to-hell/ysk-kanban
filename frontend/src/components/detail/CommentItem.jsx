@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatTime } from '../../utils/formatters';
 import commentAttachmentAPI from '../../api/commentAttachments';
+import { isImageType, getFileIcon } from '../../utils/fileUtils';
 import styles from '../../styles/detail.module.css';
 
 export default function CommentItem({ comment, currentUser, onEdit, onDelete }) {
@@ -66,7 +67,14 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete }) 
                   const url = commentAttachmentAPI.getUrl(comment.id, att.id);
                   return (
                     <div key={att.id} className={styles.commentAttachThumb} onClick={() => window.open(url, '_blank')}>
-                      <img src={url} alt={att.originalFilename || '첨부'} className={styles.commentAttachImg} loading="lazy" />
+                      {isImageType(att) ? (
+                        <img src={url} alt={att.originalFilename || '첨부'} className={styles.commentAttachImg} loading="lazy" />
+                      ) : (
+                        <div className={styles.attachFile}>
+                          <span className={styles.attachFileIcon} style={{ fontSize: '1.2rem' }}>{getFileIcon(att.originalFilename)}</span>
+                          <span className={styles.attachFileName}>{att.originalFilename || '파일'}</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

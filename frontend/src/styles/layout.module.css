@@ -171,8 +171,9 @@
   cursor: pointer;
   transition: background var(--duration-fast), color var(--duration-fast);
   text-align: left;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-decoration: none;
 }
 
@@ -200,15 +201,19 @@
 }
 
 .sidebarItemLabel {
-  overflow: visible;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .sidebarItemActions {
   margin-left: auto;
   display: flex;
-  gap: 2px;
+  gap: 4px;
   opacity: 0;
+  flex-shrink: 0;
   transition: opacity var(--duration-fast);
 }
 
@@ -217,14 +222,14 @@
 }
 
 .sidebarItemBtn {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.6);
-  background: transparent;
+  font-size: 0.85rem;
+  color: #fff;
+  background: rgba(255,255,255,0.12);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -232,7 +237,7 @@
 }
 
 .sidebarItemBtn:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.25);
   color: #fff;
 }
 

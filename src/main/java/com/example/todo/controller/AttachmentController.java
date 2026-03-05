@@ -54,10 +54,12 @@ public class AttachmentController {
         Attachment attachment = attachmentService.getAttachment(attachmentId);
         Resource resource = attachmentService.downloadFile(attachmentId);
 
-        String contentType = attachment.getContentType();
-        String disposition = contentType != null && contentType.startsWith("image/")
-                ? "inline; filename=\"" + attachment.getOriginalFilename() + "\""
-                : "attachment; filename=\"" + attachment.getOriginalFilename() + "\"";
+        String contentType = attachment.getContentType() != null
+                ? attachment.getContentType()
+                : "application/octet-stream";
+        boolean inline = contentType.startsWith("image/") || contentType.equals("application/pdf");
+        String disposition = (inline ? "inline" : "attachment")
+                + "; filename=\"" + attachment.getOriginalFilename() + "\"";
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))

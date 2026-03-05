@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { useProjects } from '../../contexts/ProjectContext';
@@ -8,6 +8,7 @@ import { useTodoSync } from '../../hooks/useTodoSync';
 import { STATUSES } from '../../utils/constants';
 import KanbanColumn from './KanbanColumn';
 import TransitionDropdown from './TransitionDropdown';
+import FilterBar from './FilterBar';
 import TodoModal from '../todo/TodoModal';
 import DetailModal from '../detail/DetailModal';
 import ConfirmDialog from '../common/ConfirmDialog';
@@ -24,6 +25,7 @@ export default function BoardPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [transition, setTransition] = useState(null); // { item, anchorRect }
   const [compact, setCompact] = useState(false);
+  const [filters, setFilters] = useState({ keyword: '', priority: '', assigneeId: '' });
 
   const project = projects.find(p => String(p.id) === String(projectId));
   const title = project ? (project.name || project.projectKey) : '일감';
@@ -39,6 +41,17 @@ export default function BoardPage() {
     }
   }, [todos, loadUnreadCounts]);
 
+  // 댓글 변경 시 미읽음 카운트 실시간 갱신
+  useEffect(() => {
+    const handler = () => {
+      if (todos.length > 0) {
+        loadUnreadCounts(todos.map(t => t.id));
+      }
+    };
+    window.addEventListener('comment_changed', handler);
+    return () => window.removeEventListener('comment_changed', handler);
+  }, [todos, loadUnreadCounts]);
+
   const reload = useCallback(() => {
     loadTodos(projectId);
   }, [projectId, loadTodos]);
@@ -46,9 +59,23 @@ export default function BoardPage() {
   // 다른 사용자의 변경사항 실시간 수신
   useTodoSync(projectId, reload);
 
+  const filteredTodos = useMemo(() => {
+    return todos.filter(t => {
+      if (filters.keyword) {
+        const kw = filters.keyword.toLowerCase();
+        const matchSummary = t.summary?.toLowerCase().includes(kw);
+        const matchDesc = t.description?.toLowerCase().includes(kw);
+        if (!matchSummary && !matchDesc) return false;
+      }
+      if (filters.priority && t.priority !== filters.priority) return false;
+      if (filters.assigneeId && !t.assignees?.some(a => String(a.id) === filters.assigneeId)) return false;
+      return true;
+    });
+  }, [todos, filters]);
+
   const todosByStatus = {};
   STATUSES.forEach(s => { todosByStatus[s] = []; });
-  todos.forEach(t => {
+  filteredTodos.forEach(t => {
     if (todosByStatus[t.status]) {
       todosByStatus[t.status].push(t);
     }
@@ -134,6 +161,8 @@ export default function BoardPage() {
           </button>
         </div>
       </div>
+
+      <FilterBar filters={filters} onFilterChange={setFilters} todos={todos} />
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className={styles.board}>

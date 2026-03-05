@@ -804,6 +804,28 @@
   padding: 16px 0;
 }
 
+/* ── Assignee Chips ──────────────────────────────── */
+
+.cardAssignees {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.cardAssigneeChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #a5b4fc;
+  white-space: nowrap;
+}
+
 /* ── Responsive ───────────────────────────────────── */
 
 @media (max-width: 900px) {

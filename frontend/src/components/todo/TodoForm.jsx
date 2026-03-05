@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProjects } from '../../contexts/ProjectContext';
+import projectAPI from '../../api/projects';
 import FileDropZone from './FileDropZone';
 import FilePreviewList from './FilePreviewList';
 import ExistingAttachmentList from './ExistingAttachmentList';
@@ -14,6 +15,27 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
   );
   const [dueDate, setDueDate] = useState(item?.dueDate || '');
   const [errors, setErrors] = useState({});
+  const [members, setMembers] = useState([]);
+  const [selectedAssignees, setSelectedAssignees] = useState(
+    item?.assignees?.map(a => a.id) || []
+  );
+
+  useEffect(() => {
+    const pid = selectedProject || projectId;
+    if (pid) {
+      projectAPI.getMembers(pid).then(data => {
+        setMembers(data.map(m => m.user));
+      }).catch(() => setMembers([]));
+    } else {
+      setMembers([]);
+    }
+  }, [selectedProject, projectId]);
+
+  const toggleAssignee = (userId) => {
+    setSelectedAssignees(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
 
   // Expose form data to parent via ref
   if (formRef) {
@@ -30,6 +52,7 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
         priority,
         projectId: selectedProject || undefined,
         dueDate: dueDate || undefined,
+        assigneeIds: selectedAssignees.length > 0 ? selectedAssignees : undefined,
       }),
     };
   }
@@ -112,6 +135,35 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
           />
         </div>
       </div>
+      {members.length > 0 && (
+        <div className="form-group">
+          <label className="form-label">담당자</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {members.map(user => (
+              <label
+                key={user.id}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '4px 12px', borderRadius: '20px', cursor: 'pointer',
+                  fontSize: '0.82rem', fontWeight: 500,
+                  background: selectedAssignees.includes(user.id) ? '#e0e7ff' : '#f3f4f6',
+                  color: selectedAssignees.includes(user.id) ? '#4338ca' : '#6b7280',
+                  border: `1px solid ${selectedAssignees.includes(user.id) ? '#a5b4fc' : '#e5e7eb'}`,
+                  transition: 'all 0.15s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedAssignees.includes(user.id)}
+                  onChange={() => toggleAssignee(user.id)}
+                  style={{ display: 'none' }}
+                />
+                {user.displayName || user.username}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="form-group">
         <label className="form-label">파일 첨부</label>
         {isEdit && item?.id && (

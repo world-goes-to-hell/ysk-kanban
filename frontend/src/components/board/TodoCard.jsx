@@ -138,6 +138,15 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
             {dueInfo.text}
           </span>
         )}
+        {item.assignees?.length > 0 && (
+          <span className={styles.cardAssignees}>
+            {item.assignees.map(a => (
+              <span key={a.id} className={styles.cardAssigneeChip}>
+                {a.displayName || a.username}
+              </span>
+            ))}
+          </span>
+        )}
         {authorName && (
           <span className={styles.cardAuthor}>
             <span className={styles.cardAuthorIcon}>&#128100;</span>

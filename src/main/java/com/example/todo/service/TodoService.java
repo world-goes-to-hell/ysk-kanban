@@ -12,6 +12,7 @@ import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
 import com.example.todo.repository.ProjectRepository;
 import com.example.todo.repository.TodoRepository;
+import com.example.todo.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<Todo> getAllTodos() {
@@ -41,7 +43,7 @@ public class TodoService {
                 .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
     }
 
-    public Todo createTodo(String summary, String description, Priority priority, Long projectId, User createdBy, LocalDate dueDate) {
+    public Todo createTodo(String summary, String description, Priority priority, Long projectId, User createdBy, LocalDate dueDate, List<Long> assigneeIds) {
         Todo.TodoBuilder builder = Todo.builder()
                 .summary(summary)
                 .description(description)
@@ -58,6 +60,10 @@ public class TodoService {
             builder.project(project);
         }
 
+        if (assigneeIds != null && !assigneeIds.isEmpty()) {
+            builder.assignees(userRepository.findAllById(assigneeIds));
+        }
+
         Todo todo = builder.build();
 
         if (projectId != null) {
@@ -69,7 +75,7 @@ public class TodoService {
         return todoRepository.save(todo);
     }
 
-    public Todo updateTodo(Long id, String summary, String description, Priority priority, Long projectId, LocalDate dueDate) {
+    public Todo updateTodo(Long id, String summary, String description, Priority priority, Long projectId, LocalDate dueDate, List<Long> assigneeIds) {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
         todo.setSummary(summary);
@@ -85,6 +91,10 @@ public class TodoService {
             Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
             todo.setProject(project);
+        }
+
+        if (assigneeIds != null) {
+            todo.setAssignees(userRepository.findAllById(assigneeIds));
         }
 
         log.info("Updating todo #{}: {}", id, summary);

@@ -77,7 +77,7 @@ export default function CommentSection({ comments, onAdd, onEdit, onDelete }) {
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="*/*"
           hidden
           onChange={handleFileChange}
         />

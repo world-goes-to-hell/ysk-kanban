@@ -67,6 +67,14 @@ export default function DetailInfo({ item, projects }) {
             </div>
           </div>
         )}
+        {item.assignees?.length > 0 && (
+          <div className={styles.metaCard}>
+            <div className={styles.metaLabel}>담당자</div>
+            <div className={styles.metaValue}>
+              {item.assignees.map(a => a.displayName || a.username).join(', ')}
+            </div>
+          </div>
+        )}
         {item.createdBy && (
           <div className={styles.metaCard}>
             <div className={styles.metaLabel}>작성자</div>

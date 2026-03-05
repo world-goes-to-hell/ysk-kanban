@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useProjects } from '../../contexts/ProjectContext';
 import { useComments } from '../../hooks/useComments';
 import { useAttachments } from '../../hooks/useAttachments';
@@ -13,6 +13,8 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
   const { comments, loadComments, addComment, updateComment, deleteComment } = useComments(todoId);
   const { attachments, loadAttachments, deleteAttachment, getUrl } = useAttachments(todoId);
   const [fetchedItem, setFetchedItem] = useState(null);
+  const loadCommentsRef = useRef(loadComments);
+  loadCommentsRef.current = loadComments;
 
   useEffect(() => {
     if (todoId) {
@@ -21,6 +23,19 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
       onMarkRead?.(todoId);
     }
   }, [todoId, loadComments, loadAttachments, onMarkRead]);
+
+  // 댓글 실시간 갱신 — 모달이 열려있으면 새 댓글도 즉시 읽음 처리
+  useEffect(() => {
+    if (!todoId) return;
+    const handler = (e) => {
+      if (String(e.detail?.todoId) === String(todoId)) {
+        loadCommentsRef.current();
+        onMarkRead?.(todoId);
+      }
+    };
+    window.addEventListener('comment_changed', handler);
+    return () => window.removeEventListener('comment_changed', handler);
+  }, [todoId, onMarkRead]);
 
   const item = todos?.find(t => String(t.id) === String(todoId));
 
