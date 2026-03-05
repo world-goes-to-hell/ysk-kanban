@@ -3,6 +3,7 @@ package com.example.todo.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,7 +20,13 @@ public interface CommentReadRepository extends JpaRepository<CommentRead, Long> 
            "AND c.id NOT IN (SELECT cr.comment.id FROM CommentRead cr WHERE cr.user.id = :userId)")
     List<Long> findUnreadCommentIdsByTodoId(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
-    boolean existsByUserIdAndCommentId(Long userId, Long commentId);
+    @Modifying
+    @Query(value = "MERGE INTO comment_reads (user_id, comment_id, read_at) " +
+           "KEY (user_id, comment_id) " +
+           "SELECT :userId, c.id, NOW() FROM comments c " +
+           "WHERE c.todo_id = :todoId",
+           nativeQuery = true)
+    int bulkMarkAsRead(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
     void deleteByCommentId(Long commentId);
 }

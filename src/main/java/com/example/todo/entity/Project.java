@@ -46,7 +46,7 @@ public class Project {
     @Column(nullable = false, unique = true)
     private String projectKey;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "children", "parent"})
     private Project parent;
