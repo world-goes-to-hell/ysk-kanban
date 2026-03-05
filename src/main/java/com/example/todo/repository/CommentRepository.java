@@ -9,4 +9,6 @@ import com.example.todo.entity.Comment;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     List<Comment> findByTodoIdOrderByCreatedAtDesc(Long todoId);
+
+    List<Comment> findByTodoId(Long todoId);
 }

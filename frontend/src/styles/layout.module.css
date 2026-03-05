@@ -171,9 +171,8 @@
   cursor: pointer;
   transition: background var(--duration-fast), color var(--duration-fast);
   text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
   text-decoration: none;
 }
 
@@ -201,8 +200,8 @@
 }
 
 .sidebarItemLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  word-break: break-word;
 }
 
 .sidebarItemActions {

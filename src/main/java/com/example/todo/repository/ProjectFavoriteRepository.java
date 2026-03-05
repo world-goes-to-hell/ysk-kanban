@@ -16,4 +16,6 @@ public interface ProjectFavoriteRepository extends JpaRepository<ProjectFavorite
     Optional<ProjectFavorite> findByUserIdAndProjectId(Long userId, Long projectId);
 
     void deleteByUserIdAndProjectId(Long userId, Long projectId);
+
+    void deleteByProjectId(Long projectId);
 }

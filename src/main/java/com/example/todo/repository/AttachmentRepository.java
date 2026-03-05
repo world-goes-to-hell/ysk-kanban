@@ -13,4 +13,8 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     List<Attachment> findByTodoIdAndCommentIsNull(Long todoId);
 
     List<Attachment> findByCommentId(Long commentId);
+
+    void deleteByTodoId(Long todoId);
+
+    void deleteByCommentId(Long commentId);
 }

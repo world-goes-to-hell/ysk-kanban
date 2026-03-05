@@ -20,4 +20,6 @@ public interface CommentReadRepository extends JpaRepository<CommentRead, Long> 
     List<Long> findUnreadCommentIdsByTodoId(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
     boolean existsByUserIdAndCommentId(Long userId, Long commentId);
+
+    void deleteByCommentId(Long commentId);
 }

@@ -13,8 +13,13 @@ import com.example.todo.entity.Project;
 import com.example.todo.entity.ProjectMember;
 import com.example.todo.entity.ProjectRole;
 import com.example.todo.entity.User;
+import com.example.todo.repository.AttachmentRepository;
+import com.example.todo.repository.CommentReadRepository;
+import com.example.todo.repository.CommentRepository;
+import com.example.todo.repository.ProjectFavoriteRepository;
 import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
+import com.example.todo.repository.TodoRepository;
 import com.example.todo.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,11 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository memberRepository;
+    private final ProjectFavoriteRepository favoriteRepository;
+    private final TodoRepository todoRepository;
+    private final CommentRepository commentRepository;
+    private final CommentReadRepository commentReadRepository;
+    private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
@@ -202,6 +212,21 @@ public class ProjectService {
 
     public void deleteProject(Long id) {
         log.info("Deleting project #{}", id);
+
+        List<com.example.todo.entity.Todo> todos = todoRepository.findByProjectId(id);
+        for (com.example.todo.entity.Todo todo : todos) {
+            List<com.example.todo.entity.Comment> comments = commentRepository.findByTodoId(todo.getId());
+            for (com.example.todo.entity.Comment comment : comments) {
+                commentReadRepository.deleteByCommentId(comment.getId());
+                attachmentRepository.deleteByCommentId(comment.getId());
+            }
+            commentRepository.deleteAll(comments);
+            attachmentRepository.deleteByTodoId(todo.getId());
+        }
+        todoRepository.deleteAll(todos);
+
+        favoriteRepository.deleteByProjectId(id);
+        memberRepository.deleteByProjectId(id);
         projectRepository.deleteById(id);
     }
 }
