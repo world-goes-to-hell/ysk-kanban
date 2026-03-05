@@ -22,15 +22,22 @@ export function ProjectProvider({ children }) {
       setProjects(projectList);
 
       if (currentUser && projectList.length > 0) {
-        const roles = {};
-        await Promise.all(projectList.map(async (p) => {
-          try {
-            const members = await projectAPI.getMembers(p.id);
-            const me = members.find(m => m.user?.id === currentUser.id);
-            if (me) roles[p.id] = me.role;
-          } catch { /* ignore */ }
-        }));
-        setMyRoles(roles);
+        const isAdmin = currentUser.username === 'admin';
+        if (isAdmin) {
+          const roles = {};
+          projectList.forEach(p => { roles[p.id] = 'MASTER'; });
+          setMyRoles(roles);
+        } else {
+          const roles = {};
+          await Promise.all(projectList.map(async (p) => {
+            try {
+              const members = await projectAPI.getMembers(p.id);
+              const me = members.find(m => m.user?.id === currentUser.id);
+              if (me) roles[p.id] = me.role;
+            } catch { /* ignore */ }
+          }));
+          setMyRoles(roles);
+        }
       }
     } catch {
       setProjects([]);

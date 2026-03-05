@@ -15,6 +15,7 @@ import com.example.todo.entity.ProjectRole;
 import com.example.todo.entity.User;
 import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
+import com.example.todo.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class ProjectService {
 
+    private static final String ADMIN_USERNAME = "admin";
+
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository memberRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
@@ -35,6 +39,9 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<Project> getProjectsByUser(Long userId) {
+        if (isAdmin(userId)) {
+            return projectRepository.findAll();
+        }
         List<Long> projectIds = memberRepository.findByUserId(userId).stream()
                 .map(m -> m.getProject().getId())
                 .collect(Collectors.toList());
@@ -66,6 +73,9 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getProjectTreeByUser(Long userId) {
+        if (isAdmin(userId)) {
+            return getProjectTree();
+        }
         List<Project> userProjects = getProjectsByUser(userId);
         java.util.Set<Long> userProjectIds = userProjects.stream()
                 .map(Project::getId)
@@ -138,6 +148,7 @@ public class ProjectService {
     }
 
     public void validateMaster(Long projectId, Long userId) {
+        if (isAdmin(userId)) return;
         ProjectMember member = memberRepository.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new SecurityException("프로젝트 접근 권한이 없습니다."));
         if (member.getRole() != ProjectRole.MASTER) {
@@ -181,6 +192,12 @@ public class ProjectService {
             if (isDescendant(child.getId(), targetId)) return true;
         }
         return false;
+    }
+
+    private boolean isAdmin(Long userId) {
+        return userRepository.findById(userId)
+                .map(u -> ADMIN_USERNAME.equals(u.getUsername()))
+                .orElse(false);
     }
 
     public void deleteProject(Long id) {
