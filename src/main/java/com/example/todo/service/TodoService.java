@@ -106,6 +106,11 @@ public class TodoService {
                 .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
         log.info("Changing todo #{} status: {} -> {}", id, todo.getStatus(), status);
         todo.setStatus(status);
+        if (status == Todo.Status.DONE) {
+            todo.setCompletedAt(java.time.LocalDateTime.now());
+        } else {
+            todo.setCompletedAt(null);
+        }
         return todoRepository.save(todo);
     }
 

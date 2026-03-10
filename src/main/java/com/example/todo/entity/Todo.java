@@ -97,6 +97,7 @@ public class Todo {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime completedAt;
 
     @PrePersist
     protected void onCreate() {

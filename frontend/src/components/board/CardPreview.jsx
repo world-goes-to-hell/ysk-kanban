@@ -81,7 +81,12 @@ export default function CardPreview({ item, anchorRect, onMouseEnter, onMouseLea
           <span className={styles.previewAuthor}>&#128100; {authorName}</span>
         )}
         {item.createdAt && (
-          <span className={styles.previewDate}>등록: {formatTime(item.createdAt)}</span>
+          <span className={styles.previewDate}>
+            등록: {formatTime(item.createdAt)}
+            {item.completedAt && (
+              <> ~ 완료: {formatTime(item.completedAt)}</>
+            )}
+          </span>
         )}
       </div>
 

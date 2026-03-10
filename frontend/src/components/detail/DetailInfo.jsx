@@ -15,6 +15,15 @@ export default function DetailInfo({ item, projects }) {
     : null;
   const dueInfo = item.status !== 'DONE' ? formatDueDate(item.dueDate) : null;
 
+  const calcDuration = () => {
+    if (!item.createdAt) return null;
+    const start = new Date(item.createdAt);
+    const end = item.completedAt ? new Date(item.completedAt) : new Date();
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    return days;
+  };
+  const duration = calcDuration();
+
   return (
     <div>
       {/* Header: Title + Badges */}
@@ -83,14 +92,29 @@ export default function DetailInfo({ item, projects }) {
         )}
         {item.createdAt && (
           <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>생성일</div>
-            <div className={styles.metaValue}>{formatTime(item.createdAt)}</div>
-          </div>
-        )}
-        {item.updatedAt && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>수정일</div>
-            <div className={styles.metaValue}>{formatTime(item.updatedAt)}</div>
+            <div className={styles.metaLabel}>기간</div>
+            <div className={styles.metaValue}>
+              <span>{formatTime(item.createdAt)}</span>
+              <span style={{ margin: '0 6px', color: '#9ca3af' }}>~</span>
+              {item.completedAt ? (
+                <span style={{ color: '#059669', fontWeight: 600 }}>{formatTime(item.completedAt)}</span>
+              ) : (
+                <span style={{ color: '#6b7280', fontStyle: 'italic' }}>진행중</span>
+              )}
+              {duration !== null && (
+                <span style={{
+                  marginLeft: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  background: item.completedAt ? '#ecfdf5' : '#eff6ff',
+                  color: item.completedAt ? '#059669' : '#2563eb',
+                }}>
+                  {duration}일
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
