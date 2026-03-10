@@ -91,26 +91,18 @@ export default function DetailInfo({ item, projects }) {
           </div>
         )}
         {item.createdAt && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>기간</div>
-            <div className={styles.metaValue}>
+          <div className={styles.metaCardWide}>
+            <div className={styles.metaLabel}>작업 기간</div>
+            <div className={styles.durationRow}>
               <span>{formatTime(item.createdAt)}</span>
-              <span style={{ margin: '0 6px', color: '#9ca3af' }}>~</span>
+              <span className={styles.durationArrow}>→</span>
               {item.completedAt ? (
-                <span style={{ color: '#059669', fontWeight: 600 }}>{formatTime(item.completedAt)}</span>
+                <span className={styles.durationEndDone}>{formatTime(item.completedAt)}</span>
               ) : (
-                <span style={{ color: '#6b7280', fontStyle: 'italic' }}>진행중</span>
+                <span className={styles.durationEndProgress}>진행중</span>
               )}
               {duration !== null && (
-                <span style={{
-                  marginLeft: '8px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  background: item.completedAt ? '#ecfdf5' : '#eff6ff',
-                  color: item.completedAt ? '#059669' : '#2563eb',
-                }}>
+                <span className={item.completedAt ? styles.durationBadgeDone : styles.durationBadgeProgress}>
                   {duration}일
                 </span>
               )}

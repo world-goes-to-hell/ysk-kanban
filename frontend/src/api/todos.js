@@ -8,6 +8,13 @@ const todoAPI = {
   changeStatus: (id, status) => apiFetch(`/api/todos/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   reorder:      (orderedIds) => apiFetch('/api/todos/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) }),
   delete:       (id) => apiFetch(`/api/todos/${id}`, { method: 'DELETE' }),
+  report:       (params) => {
+    const query = Object.entries(params)
+      .filter(([, v]) => v !== null && v !== undefined && v !== '')
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join('&');
+    return apiFetch(`/api/todos/report${query ? `?${query}` : ''}`);
+  },
 };
 
 export default todoAPI;

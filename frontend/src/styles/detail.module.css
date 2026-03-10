@@ -109,6 +109,57 @@
   padding: 10px 14px;
 }
 
+.metaCardWide {
+  composes: metaCard;
+  grid-column: span 2;
+}
+
+.durationRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.durationArrow {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.durationEnd {
+  font-weight: 600;
+}
+
+.durationEndDone {
+  composes: durationEnd;
+  color: #059669;
+}
+
+.durationEndProgress {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.durationBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 2px;
+}
+
+.durationBadgeDone {
+  composes: durationBadge;
+  background: #064e3b;
+  color: #34d399;
+}
+
+.durationBadgeProgress {
+  composes: durationBadge;
+  background: #1e3a5f;
+  color: #60a5fa;
+}
+
 .metaLabel {
   font-size: 0.68rem;
   font-weight: 600;
@@ -472,6 +523,10 @@
 @media (max-width: 600px) {
   .metaGrid {
     grid-template-columns: 1fr;
+  }
+
+  .metaCardWide {
+    grid-column: span 1;
   }
 
   .attachThumb {

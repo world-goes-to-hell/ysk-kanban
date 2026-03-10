@@ -41,6 +41,21 @@ public class TodoController {
     private final NotificationService notificationService;
     private final SseEmitterRegistry sseEmitterRegistry;
 
+    @GetMapping("/report")
+    public ResponseEntity<List<Todo>> getReport(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) Long createdById,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) String status) {
+        java.time.LocalDateTime start = startDate != null ? LocalDate.parse(startDate).atStartOfDay() : null;
+        java.time.LocalDateTime end = endDate != null ? LocalDate.parse(endDate).atTime(23, 59, 59) : null;
+        Todo.Status st = status != null && !status.isEmpty() ? Todo.Status.valueOf(status) : null;
+        List<Todo> todos = todoService.findByFilters(start, end, assigneeId, createdById, projectId, st);
+        return ResponseEntity.ok(todos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Todo> getTodo(@PathVariable Long id) {
         Todo todo = todoService.getTodo(id);

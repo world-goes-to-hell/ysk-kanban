@@ -1,6 +1,7 @@
 package com.example.todo.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -35,6 +36,12 @@ public class TodoService {
     @Transactional(readOnly = true)
     public List<Todo> getTodosByProject(Long projectId) {
         return todoRepository.findByProjectIdOrderBySortOrderAscCreatedAtDesc(projectId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Todo> findByFilters(LocalDateTime startDate, LocalDateTime endDate,
+                                     Long assigneeId, Long createdById, Long projectId, Todo.Status status) {
+        return todoRepository.findByFilters(startDate, endDate, assigneeId, createdById, projectId, status);
     }
 
     @Transactional(readOnly = true)

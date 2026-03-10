@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.todo.entity.Todo;
 
-public interface TodoRepository extends JpaRepository<Todo, Long> {
+public interface TodoRepository extends JpaRepository<Todo, Long>, TodoRepositoryCustom {
 
     List<Todo> findAllByOrderBySortOrderAscCreatedAtDesc();
 
