@@ -96,7 +96,7 @@ public class SseEmitterRegistry {
                 emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data, MediaType.APPLICATION_JSON));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 emitters.remove(id);
                 log.debug("SSE 전송 실패로 연결 제거: {}", id);
             }
@@ -113,7 +113,7 @@ public class SseEmitterRegistry {
                 emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data, MediaType.APPLICATION_JSON));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 emitters.remove(id);
                 ids.remove(id);
                 log.debug("SSE 전송 실패로 연결 제거: {}", id);
