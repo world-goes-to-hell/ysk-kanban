@@ -48,6 +48,29 @@
   gap: 10px;
 }
 
+.columnSort {
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.columnSort:hover {
+  color: var(--text-primary);
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--bg-page));
+}
+
+.columnSort:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
 .columnDot {
   display: block;
   width: 10px;

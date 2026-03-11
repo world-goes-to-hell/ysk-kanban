@@ -26,6 +26,11 @@ export default function BoardPage() {
   const [transition, setTransition] = useState(null); // { item, anchorRect }
   const [compact, setCompact] = useState(false);
   const [filters, setFilters] = useState({ keyword: '', priority: '', assigneeId: '' });
+  const [sortByStatus, setSortByStatus] = useState({
+    TODO: 'default',
+    IN_PROGRESS: 'default',
+    DONE: 'default',
+  });
 
   const project = projects.find(p => String(p.id) === String(projectId));
   const title = project ? (project.name || project.projectKey) : '일감';
@@ -73,12 +78,45 @@ export default function BoardPage() {
     });
   }, [todos, filters]);
 
+  const sortItems = useCallback((items, sortKey) => {
+    if (sortKey === 'default') return items;
+    const sorted = [...items];
+    const priorityOrder = { HIGHEST: 0, HIGH: 1, MEDIUM: 2, LOW: 3, LOWEST: 4 };
+    switch (sortKey) {
+      case 'priority-high':
+        return sorted.sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9));
+      case 'priority-low':
+        return sorted.sort((a, b) => (priorityOrder[b.priority] ?? 9) - (priorityOrder[a.priority] ?? 9));
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'oldest':
+        return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case 'due-asc':
+        return sorted.sort((a, b) => {
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+      case 'completed-desc':
+        return sorted.sort((a, b) => {
+          if (!a.completedAt) return 1;
+          if (!b.completedAt) return -1;
+          return new Date(b.completedAt) - new Date(a.completedAt);
+        });
+      default:
+        return sorted;
+    }
+  }, []);
+
   const todosByStatus = {};
   STATUSES.forEach(s => { todosByStatus[s] = []; });
   filteredTodos.forEach(t => {
     if (todosByStatus[t.status]) {
       todosByStatus[t.status].push(t);
     }
+  });
+  STATUSES.forEach(s => {
+    todosByStatus[s] = sortItems(todosByStatus[s], sortByStatus[s]);
   });
 
   const handleDragEnd = async (result) => {
@@ -173,6 +211,8 @@ export default function BoardPage() {
               items={todosByStatus[status]}
               unreadCounts={unreadCounts}
               compact={compact}
+              sortKey={sortByStatus[status]}
+              onSortChange={(val) => setSortByStatus(prev => ({ ...prev, [status]: val }))}
               onTransition={handleTransition}
               onEdit={(item) => setTodoModal({ mode: 'edit', item })}
               onDelete={handleDelete}
