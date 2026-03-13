@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.todo.entity.Comment;
+import com.example.todo.entity.Project;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
 import com.example.todo.repository.CommentRepository;
@@ -119,10 +120,10 @@ public class DailyReportService {
 
     private void appendTodoTreeSection(StringBuilder sb, List<Todo> todos,
                                         Map<Long, List<Comment>> commentsByTodo, boolean showStatus) {
-        // 프로젝트명 기준 그룹핑 (null 프로젝트는 "기타"로)
+        // 최상위 프로젝트명 기준 그룹핑 (null 프로젝트는 "기타"로)
         Map<String, List<Todo>> byProject = todos.stream()
                 .collect(Collectors.groupingBy(
-                        t -> t.getProject() != null ? t.getProject().getName() : "기타",
+                        t -> getRootProjectName(t.getProject()),
                         LinkedHashMap::new,
                         Collectors.toList()));
 
@@ -149,6 +150,15 @@ public class DailyReportService {
                 sb.append("        💬 ").append(content).append("\n");
             }
         }
+    }
+
+    private String getRootProjectName(Project project) {
+        if (project == null) return "기타";
+        Project current = project;
+        while (current.getParent() != null) {
+            current = current.getParent();
+        }
+        return current.getName();
     }
 
     private boolean isMine(Todo todo, Long userId) {
