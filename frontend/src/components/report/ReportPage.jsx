@@ -11,6 +11,15 @@ function formatDate(dateStr) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function getRootProjectName(project) {
+  if (!project) return '-';
+  let current = project;
+  while (current.parent) {
+    current = current.parent;
+  }
+  return current.name;
+}
+
 export default function ReportPage() {
   const { projectTree } = useProjects();
   const [users, setUsers] = useState([]);
@@ -78,7 +87,7 @@ export default function ReportPage() {
       esc(t.summary),
       esc(formatStatus(t.status)),
       esc(getPriorityLabel(t.priority)),
-      esc(t.project?.name),
+      esc(getRootProjectName(t.project)),
       esc(t.assignees?.map(a => a.displayName || a.username).join(', ')),
       esc(t.createdBy?.displayName || t.createdBy?.username),
       esc(formatDate(t.createdAt)),
@@ -224,7 +233,7 @@ export default function ReportPage() {
                       <td className={styles.cellTitle}>{t.summary}</td>
                       <td><span className={`${styles.statusBadge} ${styles[`status_${t.status}`]}`}>{formatStatus(t.status)}</span></td>
                       <td>{getPriorityLabel(t.priority)}</td>
-                      <td>{t.project?.name || '-'}</td>
+                      <td>{getRootProjectName(t.project)}</td>
                       <td>{t.assignees?.map(a => a.displayName || a.username).join(', ') || '-'}</td>
                       <td>{t.createdBy?.displayName || t.createdBy?.username || '-'}</td>
                       <td className={styles.cellDate}>{formatDate(t.createdAt)}</td>

@@ -11,6 +11,7 @@ import com.example.todo.entity.Priority;
 import com.example.todo.entity.Project;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
+import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
 import com.example.todo.repository.TodoRepository;
 import com.example.todo.repository.UserRepository;
@@ -26,6 +27,7 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
@@ -35,7 +37,35 @@ public class TodoService {
 
     @Transactional(readOnly = true)
     public List<Todo> getTodosByProject(Long projectId) {
-        return todoRepository.findByProjectIdOrderBySortOrderAscCreatedAtDesc(projectId);
+        List<Long> projectIds = collectProjectIds(projectId);
+        return todoRepository.findByProjectIdInOrderBySortOrderAscCreatedAtDesc(projectIds);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Todo> getTodosByProjectWithPermission(Long projectId, Long userId) {
+        List<Long> projectIds = collectProjectIds(projectId);
+        List<Long> accessibleIds = projectIds.stream()
+                .filter(pid -> projectMemberRepository.existsByProjectIdAndUserId(pid, userId))
+                .toList();
+        if (accessibleIds.isEmpty()) {
+            return List.of();
+        }
+        return todoRepository.findByProjectIdInOrderBySortOrderAscCreatedAtDesc(accessibleIds);
+    }
+
+    private List<Long> collectProjectIds(Long projectId) {
+        List<Long> ids = new java.util.ArrayList<>();
+        ids.add(projectId);
+        collectChildIds(projectId, ids);
+        return ids;
+    }
+
+    private void collectChildIds(Long parentId, List<Long> ids) {
+        List<Long> childIds = projectRepository.findChildProjectIds(parentId);
+        for (Long childId : childIds) {
+            ids.add(childId);
+            collectChildIds(childId, ids);
+        }
     }
 
     @Transactional(readOnly = true)

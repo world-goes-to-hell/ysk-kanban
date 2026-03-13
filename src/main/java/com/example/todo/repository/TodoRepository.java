@@ -15,6 +15,9 @@ public interface TodoRepository extends JpaRepository<Todo, Long>, TodoRepositor
 
     List<Todo> findByProjectIdOrderBySortOrderAscCreatedAtDesc(Long projectId);
 
+    @Query("SELECT t FROM Todo t WHERE t.project.id IN :projectIds ORDER BY t.sortOrder ASC, t.createdAt DESC")
+    List<Todo> findByProjectIdInOrderBySortOrderAscCreatedAtDesc(@Param("projectIds") List<Long> projectIds);
+
     List<Todo> findByProjectId(Long projectId);
 
     @Query("SELECT COALESCE(MAX(t.sortOrder), 0) FROM Todo t WHERE t.project.id = :projectId AND t.status = :status")

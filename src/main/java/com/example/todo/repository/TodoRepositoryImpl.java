@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.todo.entity.Project;
 import com.example.todo.entity.Todo;
 
 import jakarta.persistence.EntityManager;
@@ -42,7 +43,8 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
             conditions.add("t.createdBy.id = :createdById");
         }
         if (projectId != null) {
-            conditions.add("t.project.id = :projectId");
+            List<Long> projectIds = collectProjectIds(projectId);
+            conditions.add("t.project.id IN :projectIds");
         }
         if (status != null) {
             conditions.add("t.status = :status");
@@ -60,9 +62,27 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
         if (startDate != null) query.setParameter("startDate", startDate);
         if (endDate != null) query.setParameter("endDate", endDate);
         if (createdById != null) query.setParameter("createdById", createdById);
-        if (projectId != null) query.setParameter("projectId", projectId);
+        if (projectId != null) query.setParameter("projectIds", collectProjectIds(projectId));
         if (status != null) query.setParameter("status", status);
 
         return query.getResultList();
+    }
+
+    private List<Long> collectProjectIds(Long projectId) {
+        List<Long> ids = new ArrayList<>();
+        ids.add(projectId);
+        collectChildIds(projectId, ids);
+        return ids;
+    }
+
+    private void collectChildIds(Long parentId, List<Long> ids) {
+        List<Project> children = em.createQuery(
+                "SELECT p FROM Project p WHERE p.parent.id = :parentId", Project.class)
+                .setParameter("parentId", parentId)
+                .getResultList();
+        for (Project child : children) {
+            ids.add(child.getId());
+            collectChildIds(child.getId(), ids);
+        }
     }
 }
