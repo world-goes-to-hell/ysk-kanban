@@ -109,15 +109,9 @@ server.tool(
     priority: z.enum(['HIGHEST', 'HIGH', 'MEDIUM', 'LOW', 'LOWEST']).optional().describe('우선순위'),
   },
   async ({ todoId, ...fields }) => {
-    const current = await apiFetch(`/api/todos/${todoId}`);
-    const merged = {
-      summary: fields.summary ?? current.summary,
-      description: fields.description ?? current.description ?? '',
-      priority: fields.priority ?? current.priority,
-    };
     await apiFetch(`/api/todos/${todoId}`, {
       method: 'PUT',
-      body: JSON.stringify(merged),
+      body: JSON.stringify(fields),
     });
     return {
       content: [{

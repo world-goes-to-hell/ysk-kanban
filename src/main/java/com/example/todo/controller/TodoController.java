@@ -128,12 +128,16 @@ public class TodoController {
     public ResponseEntity<Todo> updateTodo(
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
-        String summary = (String) body.get("summary");
-        String description = (String) body.getOrDefault("description", "");
+        Todo before = todoService.getTodo(id);
+
+        String summary = body.containsKey("summary") ? (String) body.get("summary") : before.getSummary();
+        String description = body.containsKey("description") ? (String) body.get("description") : (before.getDescription() != null ? before.getDescription() : "");
 
         Priority priority = null;
-        if (body.containsKey("priority")) {
+        if (body.containsKey("priority") && body.get("priority") != null) {
             priority = Priority.valueOf((String) body.get("priority"));
+        } else {
+            priority = before.getPriority();
         }
 
         Long projectId = null;
@@ -144,16 +148,19 @@ public class TodoController {
             } else if (raw instanceof String && !((String) raw).isEmpty()) {
                 projectId = Long.parseLong((String) raw);
             }
+        } else if (before.getProject() != null) {
+            projectId = before.getProject().getId();
         }
 
         LocalDate dueDate = null;
         if (body.containsKey("dueDate") && body.get("dueDate") != null) {
             dueDate = LocalDate.parse((String) body.get("dueDate"));
+        } else {
+            dueDate = before.getDueDate();
         }
 
         List<Long> assigneeIds = parseAssigneeIds(body);
 
-        Todo before = todoService.getTodo(id);
         java.util.Set<Long> oldAssigneeIds = before.getAssignees() != null
                 ? before.getAssignees().stream().map(User::getId).collect(java.util.stream.Collectors.toSet())
                 : java.util.Collections.emptySet();
