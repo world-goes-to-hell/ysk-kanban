@@ -114,7 +114,6 @@ server.tool(
       summary: fields.summary ?? current.summary,
       description: fields.description ?? current.description ?? '',
       priority: fields.priority ?? current.priority,
-      projectId: current.project?.id,
     };
     await apiFetch(`/api/todos/${todoId}`, {
       method: 'PUT',
