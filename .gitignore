@@ -43,6 +43,7 @@ src/main/resources/static/index.html
 ### Claude ###
 .omc/
 .mcp.json
+.claude/
 
 ### MCP Server ###
 mcp-server/node_modules/
