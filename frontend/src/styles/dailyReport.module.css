@@ -1,0 +1,273 @@
+/* ── Daily Report Modal ──────────────────────────── */
+
+.reportContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reportMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.metaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-column);
+  color: var(--text-secondary);
+}
+
+.metaBadgeDone {
+  composes: metaBadge;
+  background: #064e3b;
+  color: #34d399;
+}
+
+.metaBadgeWip {
+  composes: metaBadge;
+  background: #1e3a5f;
+  color: #60a5fa;
+}
+
+.metaBadgeNew {
+  composes: metaBadge;
+  background: #374151;
+  color: #9ca3af;
+}
+
+.metaBadgeComment {
+  composes: metaBadge;
+  background: #3b2f63;
+  color: #a78bfa;
+}
+
+.reportTextWrap {
+  position: relative;
+}
+
+.reportText {
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  font-family: 'Pretendard', 'Noto Sans KR', monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.copyBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.copyBtn:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.copiedBtn {
+  composes: copyBtn;
+  background: var(--done-color);
+  color: #fff;
+  border-color: var(--done-color);
+}
+
+.datePicker {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast);
+}
+
+.datePicker:hover,
+.datePicker:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Manual entry */
+.manualEntry {
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manualRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manualLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+.manualSelect {
+  flex: 1;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.manualSelect:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.manualInput {
+  flex: 1;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+}
+
+.manualInput:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.manualActions {
+  display: flex;
+  gap: 8px;
+}
+
+.manualAddBtn {
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.manualAddBtn:hover:not(:disabled) {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.manualAddBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.manualToggleBtn {
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.manualToggleBtn:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.manualBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: var(--brand);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.metaBadgeManual {
+  composes: metaBadge;
+  background: #78350f;
+  color: #fbbf24;
+}

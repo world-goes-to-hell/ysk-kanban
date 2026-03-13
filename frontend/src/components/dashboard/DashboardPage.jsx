@@ -8,6 +8,7 @@ import DashboardPanel from './DashboardPanel';
 import DashboardList from './DashboardList';
 import BarChart from './BarChart';
 import DetailModal from '../detail/DetailModal';
+import DailyReportModal from '../report/DailyReportModal';
 import styles from '../../styles/dashboard.module.css';
 
 function ProjectFilter({ value, onChange, projects }) {
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [detailTodoId, setDetailTodoId] = useState(null);
   const [createdFilter, setCreatedFilter] = useState('');
   const [completedFilter, setCompletedFilter] = useState('');
+  const [showDailyReport, setShowDailyReport] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -62,7 +64,12 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.dashboard}>
-      <h2 className={styles.dashboardTitle}>대시보드</h2>
+      <div className={styles.dashboardHeader}>
+        <h2 className={styles.dashboardTitle}>대시보드</h2>
+        <button className={styles.reportBtn} onClick={() => setShowDailyReport(true)}>
+          업무보고 출력
+        </button>
+      </div>
 
       <div className={styles.stats}>
         <StatCard value={data.totalProjects} label="전체 프로젝트" colorClass={styles.colorProjects} colorVar="#6366f1" />
@@ -124,6 +131,10 @@ export default function DashboardPage() {
           todoId={detailTodoId}
           onClose={() => setDetailTodoId(null)}
         />
+      )}
+
+      {showDailyReport && (
+        <DailyReportModal onClose={() => setShowDailyReport(false)} />
       )}
     </div>
   );

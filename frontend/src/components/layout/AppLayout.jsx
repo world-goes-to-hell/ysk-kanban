@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -9,14 +9,20 @@ import styles from '../../styles/layout.module.css';
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, handleSseNotification } = useNotifications();
+  const sseNotificationRef = useRef(handleSseNotification);
+  sseNotificationRef.current = handleSseNotification;
 
   useEffect(() => {
     const handleCommentChanged = (data) => {
       window.dispatchEvent(new CustomEvent('comment_changed', { detail: data }));
     };
-    const disconnect = createSseConnection(() => {}, handleSseNotification, handleCommentChanged);
+    const disconnect = createSseConnection(
+      () => {},
+      (data) => sseNotificationRef.current(data),
+      handleCommentChanged
+    );
     return disconnect;
-  }, [handleSseNotification]);
+  }, []);
 
   // 사이드바 외부 클릭 시 닫기 (모바일)
   useEffect(() => {
