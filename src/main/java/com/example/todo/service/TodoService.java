@@ -37,8 +37,7 @@ public class TodoService {
 
     @Transactional(readOnly = true)
     public List<Todo> getTodosByProject(Long projectId) {
-        List<Long> projectIds = collectProjectIds(projectId);
-        return todoRepository.findByProjectIdInOrderBySortOrderAscCreatedAtDesc(projectIds);
+        return todoRepository.findByProjectIdOrderBySortOrderAscCreatedAtDesc(projectId);
     }
 
     @Transactional(readOnly = true)
