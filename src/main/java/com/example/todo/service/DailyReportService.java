@@ -36,13 +36,15 @@ public class DailyReportService {
 
         Long userId = currentUser.getId();
 
-        // 1. 오늘 완료된 일감 (오늘 DONE으로 변경된 건, 내 일감만)
+        // 1. 오늘 완료된 일감 (오늘 DONE으로 변경된 건, 내 일감만, 보고서 포함 프로젝트만)
         List<Todo> completed = filterMine(
-                todoRepository.findByStatusAndUpdatedAtBetween(Todo.Status.DONE, dayStart, dayEnd), userId);
+                todoRepository.findByStatusAndUpdatedAtBetween(Todo.Status.DONE, dayStart, dayEnd), userId)
+                .stream().filter(this::isReportIncluded).collect(Collectors.toList());
 
         // 2. 오늘 활동이 있었던 일감 (updatedAt이 오늘이고 TODO가 아닌 건, 내 일감만)
         List<Todo> todayUpdated = todoRepository.findAll().stream()
                 .filter(t -> isMine(t, userId))
+                .filter(this::isReportIncluded)
                 .filter(t -> t.getUpdatedAt() != null
                         && !t.getUpdatedAt().isBefore(dayStart)
                         && t.getUpdatedAt().isBefore(dayEnd)
@@ -53,6 +55,7 @@ public class DailyReportService {
         List<Comment> todayComments = commentRepository.findByCreatedAtBetweenWithTodo(dayStart, dayEnd)
                 .stream()
                 .filter(c -> isMine(c.getTodo(), userId))
+                .filter(c -> isReportIncluded(c.getTodo()))
                 .collect(Collectors.toList());
         Map<Long, List<Comment>> commentsByTodo = todayComments.stream()
                 .collect(Collectors.groupingBy(
@@ -60,9 +63,10 @@ public class DailyReportService {
                         LinkedHashMap::new,
                         Collectors.toList()));
 
-        // 4. 진행 예정 = 현재 TODO 또는 IN_PROGRESS 상태 (내 일감만)
+        // 4. 진행 예정 = 현재 TODO 또는 IN_PROGRESS 상태 (내 일감만, 보고서 포함 프로젝트만)
         List<Todo> upcoming = todoRepository.findAll().stream()
                 .filter(t -> isMine(t, userId))
+                .filter(this::isReportIncluded)
                 .filter(t -> t.getStatus() == Todo.Status.TODO || t.getStatus() == Todo.Status.IN_PROGRESS)
                 .collect(Collectors.toList());
 
@@ -159,6 +163,11 @@ public class DailyReportService {
             current = current.getParent();
         }
         return current.getName();
+    }
+
+    private boolean isReportIncluded(Todo todo) {
+        if (todo.getProject() == null) return true;
+        return todo.getProject().isIncludeInReport();
     }
 
     private boolean isMine(Todo todo, Long userId) {

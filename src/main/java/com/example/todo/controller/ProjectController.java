@@ -70,7 +70,9 @@ public class ProjectController {
         String description = body.getOrDefault("description", "");
         String parentIdStr = body.get("parentId");
         Long parentId = (parentIdStr != null && !parentIdStr.isEmpty()) ? Long.parseLong(parentIdStr) : null;
-        Project updated = projectService.updateProject(id, name, description, parentId);
+        String includeInReportStr = body.get("includeInReport");
+        Boolean includeInReport = includeInReportStr != null ? Boolean.parseBoolean(includeInReportStr) : null;
+        Project updated = projectService.updateProject(id, name, description, parentId, includeInReport);
         return ResponseEntity.ok(updated);
     }
 

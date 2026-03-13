@@ -113,6 +113,7 @@ public class ProjectService {
         node.put("createdBy", project.getCreatedBy());
         node.put("createdAt", project.getCreatedAt());
         node.put("parentId", project.getParent() != null ? project.getParent().getId() : null);
+        node.put("includeInReport", project.isIncludeInReport());
 
         List<Project> children = childrenMap.getOrDefault(project.getId(), new ArrayList<>());
         node.put("children", children.stream()
@@ -171,10 +172,21 @@ public class ProjectService {
     }
 
     public Project updateProject(Long id, String name, String description, Long parentId) {
+        return updateProject(id, name, description, parentId, null);
+    }
+
+    public Project updateProject(Long id, String name, String description, Long parentId, Boolean includeInReport) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
-        project.setName(name);
-        project.setDescription(description);
+        if (name != null) {
+            project.setName(name);
+        }
+        if (description != null) {
+            project.setDescription(description);
+        }
+        if (includeInReport != null) {
+            project.setIncludeInReport(includeInReport);
+        }
 
         if (parentId != null) {
             if (parentId.equals(id)) {

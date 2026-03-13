@@ -12,7 +12,7 @@ import FilterBar from './FilterBar';
 import TodoModal from '../todo/TodoModal';
 import DetailModal from '../detail/DetailModal';
 import ConfirmDialog from '../common/ConfirmDialog';
-import ApiKeyModal from './ApiKeyModal';
+import ProjectSettingsModal from './ProjectSettingsModal';
 import styles from '../../styles/board.module.css';
 
 export default function BoardPage() {
@@ -32,7 +32,7 @@ export default function BoardPage() {
     IN_PROGRESS: 'default',
     DONE: 'default',
   });
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const project = projects.find(p => String(p.id) === String(projectId));
   const title = project ? (project.name || project.projectKey) : '일감';
@@ -196,8 +196,8 @@ export default function BoardPage() {
           >
             {compact ? '☰ 일반 보기' : '≡ 축소 보기'}
           </button>
-          <button className={styles.viewToggle} onClick={() => setShowApiKeyModal(true)}>
-            API Key
+          <button className={styles.viewToggle} onClick={() => setShowSettingsModal(true)}>
+            설정
           </button>
           <button className="btn btn-primary" onClick={() => setTodoModal({ mode: 'create', item: null })}>
             <span className="btn-icon-text">+</span> 새 일감
@@ -265,11 +265,11 @@ export default function BoardPage() {
         />
       )}
 
-      {showApiKeyModal && (
-        <ApiKeyModal
-          projectId={projectId}
-          projectName={title}
-          onClose={() => setShowApiKeyModal(false)}
+      {showSettingsModal && project && (
+        <ProjectSettingsModal
+          project={project}
+          onClose={() => setShowSettingsModal(false)}
+          onUpdated={reload}
         />
       )}
     </>

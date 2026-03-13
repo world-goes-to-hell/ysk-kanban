@@ -61,6 +61,10 @@ public class Project {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User createdBy;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean includeInReport = true;
+
     private LocalDateTime createdAt;
 
     @PrePersist
