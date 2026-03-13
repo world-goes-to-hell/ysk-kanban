@@ -9,6 +9,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
   const isActive = activeProjectId === String(project.id);
   const isFavorite = favoriteIds.has(project.id);
   const isMaster = myRoles[project.id] === 'MASTER';
+  const accessible = project.accessible !== false;
 
   const handleToggle = (e) => {
     e.stopPropagation();
@@ -20,16 +21,23 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
     toggleFavorite(project.id);
   };
 
+  const handleClick = () => {
+    if (accessible) {
+      onProjectClick(project.id);
+    }
+  };
+
   return (
     <div>
       <div
         role="button"
-        tabIndex={0}
-        className={`${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}
-        onClick={() => onProjectClick(project.id)}
-        onKeyDown={(e) => { if (e.key === 'Enter') onProjectClick(project.id); }}
-        onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onCreateChild?.(e, project); }}
+        tabIndex={accessible ? 0 : -1}
+        className={`${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''} ${!accessible ? styles.sidebarItemDisabled : ''}`}
+        onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
+        onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); if (accessible) onCreateChild?.(e, project); }}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
+        title={!accessible ? '접근 권한이 없습니다' : ''}
       >
         {hasChildren ? (
           <span className={styles.sidebarToggle2} onClick={handleToggle}>
@@ -40,7 +48,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
         )}
         {isFavorite && depth === 0 && <span className={styles.favStar}>&#9733;</span>}
         <span className={styles.sidebarItemLabel} title={project.name || project.projectKey || ''}>{project.name || project.projectKey || ''}</span>
-        <span className={styles.sidebarItemActions}>
+        {accessible && <span className={styles.sidebarItemActions}>
           {depth === 0 && (
             <button
               className={`${styles.sidebarItemBtn} ${isFavorite ? styles.sidebarFavActive : ''}`}
@@ -69,7 +77,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
               >&times;</button>
             </>
           )}
-        </span>
+        </span>}
       </div>
       {hasChildren && expanded && (
         <div>

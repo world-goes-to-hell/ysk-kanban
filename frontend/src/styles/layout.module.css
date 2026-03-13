@@ -193,6 +193,16 @@
   color: #fff;
 }
 
+.sidebarItemDisabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.sidebarItemDisabled:hover {
+  background: transparent;
+}
+
 .sidebarItemIcon {
   font-size: 0.9rem;
   flex-shrink: 0;

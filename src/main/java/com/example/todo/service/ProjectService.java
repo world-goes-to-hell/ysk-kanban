@@ -91,20 +91,41 @@ public class ProjectService {
                 .map(Project::getId)
                 .collect(java.util.stream.Collectors.toSet());
 
-        Map<Long, List<Project>> childrenMap = new HashMap<>();
+        // 권한 없는 조상 프로젝트도 트리에 포함 (비활성 표시용)
+        java.util.Set<Long> allNeededIds = new java.util.HashSet<>(userProjectIds);
         for (Project p : userProjects) {
-            Long parentId = (p.getParent() != null && userProjectIds.contains(p.getParent().getId()))
+            collectAncestors(p, allNeededIds);
+        }
+
+        // 필요한 프로젝트 전체 로드
+        List<Project> allNeeded = projectRepository.findAllById(allNeededIds);
+        Map<Long, List<Project>> childrenMap = new HashMap<>();
+        for (Project p : allNeeded) {
+            Long parentId = (p.getParent() != null && allNeededIds.contains(p.getParent().getId()))
                     ? p.getParent().getId() : null;
             childrenMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(p);
         }
 
         List<Project> roots = childrenMap.getOrDefault(null, new ArrayList<>());
         return roots.stream()
-                .map(root -> buildTreeNode(root, childrenMap))
+                .map(root -> buildTreeNode(root, childrenMap, userProjectIds))
                 .collect(Collectors.toList());
     }
 
+    private void collectAncestors(Project project, java.util.Set<Long> ids) {
+        Project current = project.getParent();
+        while (current != null) {
+            if (!ids.add(current.getId())) break;
+            current = current.getParent();
+        }
+    }
+
     private Map<String, Object> buildTreeNode(Project project, Map<Long, List<Project>> childrenMap) {
+        return buildTreeNode(project, childrenMap, null);
+    }
+
+    private Map<String, Object> buildTreeNode(Project project, Map<Long, List<Project>> childrenMap,
+                                               java.util.Set<Long> accessibleIds) {
         Map<String, Object> node = new HashMap<>();
         node.put("id", project.getId());
         node.put("name", project.getName());
@@ -114,10 +135,11 @@ public class ProjectService {
         node.put("createdAt", project.getCreatedAt());
         node.put("parentId", project.getParent() != null ? project.getParent().getId() : null);
         node.put("includeInReport", project.isIncludeInReport());
+        node.put("accessible", accessibleIds == null || accessibleIds.contains(project.getId()));
 
         List<Project> children = childrenMap.getOrDefault(project.getId(), new ArrayList<>());
         node.put("children", children.stream()
-                .map(child -> buildTreeNode(child, childrenMap))
+                .map(child -> buildTreeNode(child, childrenMap, accessibleIds))
                 .collect(Collectors.toList()));
 
         return node;
