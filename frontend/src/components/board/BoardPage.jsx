@@ -12,6 +12,7 @@ import FilterBar from './FilterBar';
 import TodoModal from '../todo/TodoModal';
 import DetailModal from '../detail/DetailModal';
 import ConfirmDialog from '../common/ConfirmDialog';
+import ApiKeyModal from './ApiKeyModal';
 import styles from '../../styles/board.module.css';
 
 export default function BoardPage() {
@@ -20,7 +21,7 @@ export default function BoardPage() {
   const { todos, setTodos, loadTodos, changeStatus, reorderTodos, deleteTodo } = useTodos();
   const { unreadCounts, loadUnreadCounts, markAsRead } = useUnreadComments();
 
-  const [todoModal, setTodoModal] = useState(null); // null | { mode, item }
+  const [todoModal, setTodoModal] = useState(null); // null | { mode, item, initialStatus }
   const [detailTodoId, setDetailTodoId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [transition, setTransition] = useState(null); // { item, anchorRect }
@@ -31,6 +32,7 @@ export default function BoardPage() {
     IN_PROGRESS: 'default',
     DONE: 'default',
   });
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const project = projects.find(p => String(p.id) === String(projectId));
   const title = project ? (project.name || project.projectKey) : '일감';
@@ -194,6 +196,9 @@ export default function BoardPage() {
           >
             {compact ? '☰ 일반 보기' : '≡ 축소 보기'}
           </button>
+          <button className={styles.viewToggle} onClick={() => setShowApiKeyModal(true)}>
+            API Key
+          </button>
           <button className="btn btn-primary" onClick={() => setTodoModal({ mode: 'create', item: null })}>
             <span className="btn-icon-text">+</span> 새 일감
           </button>
@@ -217,6 +222,7 @@ export default function BoardPage() {
               onEdit={(item) => setTodoModal({ mode: 'edit', item })}
               onDelete={handleDelete}
               onCardClick={(item) => setDetailTodoId(item.id)}
+              onAddTodo={() => setTodoModal({ mode: 'create', item: null, initialStatus: status })}
             />
           ))}
         </div>
@@ -236,6 +242,7 @@ export default function BoardPage() {
           mode={todoModal.mode}
           item={todoModal.item}
           projectId={projectId}
+          initialStatus={todoModal.initialStatus}
           onClose={() => setTodoModal(null)}
           onSaved={reload}
         />
@@ -255,6 +262,14 @@ export default function BoardPage() {
           message={`일감 #${confirmDelete.id}을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
           onConfirm={confirmDeleteTodo}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {showApiKeyModal && (
+        <ApiKeyModal
+          projectId={projectId}
+          projectName={title}
+          onClose={() => setShowApiKeyModal(false)}
         />
       )}
     </>

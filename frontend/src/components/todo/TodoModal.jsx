@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
 import { useTodos } from '../../hooks/useTodos';
 import attachmentAPI from '../../api/attachments';
+import todoAPI from '../../api/todos';
 import { useToast } from '../../hooks/useToast';
 import Modal from '../common/Modal';
 import TodoForm from './TodoForm';
 
-export default function TodoModal({ mode = 'create', item = null, projectId, onClose, onSaved }) {
+export default function TodoModal({ mode = 'create', item = null, projectId, initialStatus, onClose, onSaved }) {
   const { createTodo, updateTodo } = useTodos();
   const showToast = useToast();
   const [saving, setSaving] = useState(false);
@@ -48,13 +49,23 @@ export default function TodoModal({ mode = 'create', item = null, projectId, onC
         }
       } else {
         const saved = await createTodo(data);
-        // Upload pending files
-        if (saved?.id && pendingFiles.length > 0) {
-          for (const file of pendingFiles) {
+        if (saved?.id) {
+          // 초기 상태가 TODO가 아니면 상태 변경
+          if (initialStatus && initialStatus !== 'TODO') {
             try {
-              await attachmentAPI.upload(saved.id, file);
+              await todoAPI.changeStatus(saved.id, initialStatus);
             } catch (err) {
-              showToast(`파일 업로드 실패: ${file.name}`, 'error');
+              showToast(`상태 변경 실패: ${err.message}`, 'error');
+            }
+          }
+          // Upload pending files
+          if (pendingFiles.length > 0) {
+            for (const file of pendingFiles) {
+              try {
+                await attachmentAPI.upload(saved.id, file);
+              } catch (err) {
+                showToast(`파일 업로드 실패: ${file.name}`, 'error');
+              }
             }
           }
         }

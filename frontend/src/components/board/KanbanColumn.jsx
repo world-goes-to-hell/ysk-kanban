@@ -33,7 +33,7 @@ function isToday(dateStr) {
   );
 }
 
-export default function KanbanColumn({ status, items, unreadCounts, onTransition, onEdit, onDelete, onCardClick, compact, sortKey, onSortChange }) {
+export default function KanbanColumn({ status, items, unreadCounts, onTransition, onEdit, onDelete, onCardClick, onAddTodo, compact, sortKey, onSortChange }) {
   const config = COLUMN_CONFIG[status];
   const [showOlder, setShowOlder] = useState(false);
 
@@ -50,11 +50,13 @@ export default function KanbanColumn({ status, items, unreadCounts, onTransition
           <h3 className={styles.columnTitle}>{config.title}</h3>
           <span className={`${styles.columnBadge} ${config.badgeClass}`}>{items.length}</span>
         </div>
-        <select
-          className={styles.columnSort}
-          value={sortKey}
-          onChange={e => onSortChange(e.target.value)}
-        >
+        <div className={styles.columnHeaderRight}>
+          <button className={styles.columnAddBtn} onClick={onAddTodo} title="일감 추가">+</button>
+          <select
+            className={styles.columnSort}
+            value={sortKey}
+            onChange={e => onSortChange(e.target.value)}
+          >
           <option value="default">기본 정렬</option>
           <option value="priority-high">우선순위 높은순</option>
           <option value="priority-low">우선순위 낮은순</option>
@@ -62,7 +64,8 @@ export default function KanbanColumn({ status, items, unreadCounts, onTransition
           <option value="oldest">오래된순</option>
           <option value="due-asc">마감일순</option>
           {status === 'DONE' && <option value="completed-desc">완료일순</option>}
-        </select>
+          </select>
+        </div>
       </div>
       <Droppable droppableId={status}>
         {(provided, snapshot) => (

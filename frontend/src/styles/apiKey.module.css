@@ -1,0 +1,123 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.createForm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.createForm input {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.createForm select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.createdKeyBox {
+  background: var(--warning-bg, #fff8e1);
+  border: 1px solid var(--warning-border, #ffe082);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.createdKeyBox .label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warning-text, #e65100);
+}
+
+.createdKeyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyText {
+  flex: 1;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.copyBtn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.copyBtn:hover {
+  background: var(--hover);
+}
+
+.keyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.keyTable th,
+.keyTable td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.keyTable th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.revokeBtn {
+  padding: 4px 10px;
+  border: 1px solid var(--danger, #ef4444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--danger, #ef4444);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.revokeBtn:hover {
+  background: var(--danger, #ef4444);
+  color: #fff;
+}
+
+.emptyMsg {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+  font-size: 14px;
+}

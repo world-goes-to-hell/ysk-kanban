@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.todo.config.ApiKeyAuthFilter;
 import com.example.todo.config.SseEmitterRegistry;
 import com.example.todo.entity.Priority;
 import com.example.todo.entity.Todo;
@@ -26,6 +27,8 @@ import com.example.todo.entity.User;
 import com.example.todo.service.NotificationService;
 import com.example.todo.service.TodoService;
 import com.example.todo.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,18 +67,28 @@ public class TodoController {
 
     @GetMapping
     public ResponseEntity<List<Todo>> getAllTodos(
-            @RequestParam(required = false) Long projectId) {
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) String status,
+            HttpServletRequest request) {
+        Long effectiveProjectId = resolveProjectId(projectId, request);
         List<Todo> todos;
-        if (projectId != null) {
-            todos = todoService.getTodosByProject(projectId);
+        if (effectiveProjectId != null) {
+            todos = todoService.getTodosByProject(effectiveProjectId);
         } else {
             todos = todoService.getAllTodos();
+        }
+        if (status != null && !status.isEmpty()) {
+            Todo.Status filterStatus = Todo.Status.valueOf(status);
+            todos = todos.stream()
+                    .filter(t -> t.getStatus() == filterStatus)
+                    .toList();
         }
         return ResponseEntity.ok(todos);
     }
 
     @PostMapping
-    public ResponseEntity<Todo> createTodo(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Todo> createTodo(@RequestBody Map<String, Object> body,
+                                           HttpServletRequest request) {
         String summary = (String) body.get("summary");
         String description = (String) body.getOrDefault("description", "");
 
@@ -93,6 +106,7 @@ public class TodoController {
                 projectId = Long.parseLong((String) raw);
             }
         }
+        projectId = resolveProjectId(projectId, request);
 
         LocalDate dueDate = null;
         if (body.containsKey("dueDate") && body.get("dueDate") != null) {
@@ -209,5 +223,12 @@ public class TodoController {
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return userService.findByUsername(authentication.getName());
+    }
+
+    private Long resolveProjectId(Long projectId, HttpServletRequest request) {
+        if (projectId != null) return projectId;
+        Object apiKeyProjectId = request.getAttribute(ApiKeyAuthFilter.PROJECT_ID_ATTR);
+        if (apiKeyProjectId instanceof Long) return (Long) apiKeyProjectId;
+        return null;
     }
 }
