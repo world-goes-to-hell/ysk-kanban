@@ -139,28 +139,31 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
         <div className="form-group">
           <label className="form-label">담당자</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {members.map(user => (
-              <label
-                key={user.id}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  padding: '4px 12px', borderRadius: '20px', cursor: 'pointer',
-                  fontSize: '0.82rem', fontWeight: 500,
-                  background: selectedAssignees.includes(user.id) ? '#e0e7ff' : '#f3f4f6',
-                  color: selectedAssignees.includes(user.id) ? '#4338ca' : '#6b7280',
-                  border: `1px solid ${selectedAssignees.includes(user.id) ? '#a5b4fc' : '#e5e7eb'}`,
-                  transition: 'all 0.15s',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedAssignees.includes(user.id)}
-                  onChange={() => toggleAssignee(user.id)}
-                  style={{ display: 'none' }}
-                />
-                {user.displayName || user.username}
-              </label>
-            ))}
+            {members.map(user => {
+              const isSelected = selectedAssignees.includes(user.id);
+              return (
+                <label
+                  key={user.id}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '4px 12px', borderRadius: '20px', cursor: 'pointer',
+                    fontSize: '0.82rem', fontWeight: 500,
+                    background: isSelected ? 'var(--brand)' : 'var(--bg-column)',
+                    color: isSelected ? '#fff' : 'var(--text-secondary)',
+                    border: `1px solid ${isSelected ? 'var(--brand)' : 'var(--border-medium)'}`,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleAssignee(user.id)}
+                    style={{ display: 'none' }}
+                  />
+                  {user.displayName || user.username}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}

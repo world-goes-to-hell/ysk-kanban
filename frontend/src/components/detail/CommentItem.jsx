@@ -4,7 +4,7 @@ import commentAttachmentAPI from '../../api/commentAttachments';
 import { isImageType, getFileIcon } from '../../utils/fileUtils';
 import styles from '../../styles/detail.module.css';
 
-export default function CommentItem({ comment, currentUser, onEdit, onDelete }) {
+export default function CommentItem({ comment, currentUser, onEdit, onDelete, isMaster }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
 
@@ -35,6 +35,18 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete }) 
     }
   };
 
+  const renderContent = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(<<@\w+>>)/g);
+    return parts.map((part, i) => {
+      const match = part.match(/^<<@(\w+)>>$/);
+      if (match) {
+        return <span key={i} className={styles.mentionBadge}>@{match[1]}</span>;
+      }
+      return part;
+    });
+  };
+
   return (
     <div className={styles.commentItem}>
       <div className={styles.commentAvatar}>{initial}</div>
@@ -60,7 +72,7 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete }) 
           </>
         ) : (
           <>
-            <div className={styles.commentBody}>{comment.content}</div>
+            <div className={styles.commentBody}>{renderContent(comment.content)}</div>
             {attachments.length > 0 && (
               <div className={styles.commentAttachGrid}>
                 {attachments.map(att => {
@@ -80,15 +92,17 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete }) 
                 })}
               </div>
             )}
-            {isOwner && (
+            {(isOwner || isMaster) && (
               <div className={styles.commentActions}>
-                <button
-                  className={styles.commentEditBtn}
-                  onClick={() => setIsEditing(true)}
-                  title="수정"
-                >
-                  수정
-                </button>
+                {isOwner && (
+                  <button
+                    className={styles.commentEditBtn}
+                    onClick={() => setIsEditing(true)}
+                    title="수정"
+                  >
+                    수정
+                  </button>
+                )}
                 <button
                   className={styles.commentDeleteBtn}
                   onClick={() => onDelete(comment.id)}

@@ -11,7 +11,7 @@ const STATUS_CLASS_MAP = {
 
 const HOVER_DELAY = 300;
 
-export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick, provided, isDragging, unreadCount, compact }) {
+export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick, provided, isDragging, unreadCount, compact, canDelete }) {
   const priorityClass = getPriorityClass(item.priority);
   const priorityLabel = getPriorityLabel(item.priority);
   const [preview, setPreview] = useState(null);
@@ -83,11 +83,13 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
               onClick={(e) => handleCompactAction(e, onEdit)}
               title="편집"
             >&#9998;</button>
-            <button
-              className={`${styles.compactBtn} ${styles.compactBtnDelete}`}
-              onClick={(e) => handleCompactAction(e, onDelete)}
-              title="삭제"
-            >&#10005;</button>
+            {canDelete && (
+              <button
+                className={`${styles.compactBtn} ${styles.compactBtnDelete}`}
+                onClick={(e) => handleCompactAction(e, onDelete)}
+                title="삭제"
+              >&#10005;</button>
+            )}
           </div>
         </article>
         {preview && (
@@ -173,13 +175,15 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
         >
           편집
         </button>
-        <button
-          className={`${styles.cardBtn} ${styles.cardBtnDelete}`}
-          onClick={(e) => handleActionClick(e, onDelete)}
-          title="삭제"
-        >
-          삭제
-        </button>
+        {canDelete && (
+          <button
+            className={`${styles.cardBtn} ${styles.cardBtnDelete}`}
+            onClick={(e) => handleActionClick(e, onDelete)}
+            title="삭제"
+          >
+            삭제
+          </button>
+        )}
       </div>
     </article>
   );

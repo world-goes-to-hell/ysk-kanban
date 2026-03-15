@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useProjects } from '../../contexts/ProjectContext';
+import { useToast } from '../../hooks/useToast';
 import { PRIORITY_LABEL, PRIORITY_COLORS } from '../../utils/constants';
 import StatCard from './StatCard';
 import ChangeCard from './ChangeCard';
@@ -36,7 +37,17 @@ function filterByProject(items, projectId) {
 export default function DashboardPage() {
   const { data, loadDashboard } = useDashboard();
   const { projects } = useProjects();
+  const showToast = useToast();
   const [detailTodoId, setDetailTodoId] = useState(null);
+  const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
+
+  const handleItemClick = useCallback((todoId, projectId) => {
+    if (projectId && !accessibleProjectIds.has(projectId)) {
+      showToast('해당 프로젝트에 접근 권한이 없습니다.', 'error');
+      return;
+    }
+    setDetailTodoId(todoId);
+  }, [accessibleProjectIds, showToast]);
   const [createdFilter, setCreatedFilter] = useState('');
   const [completedFilter, setCompletedFilter] = useState('');
   const [showDailyReport, setShowDailyReport] = useState(false);
@@ -59,8 +70,10 @@ export default function DashboardPage() {
     color: 'var(--brand)',
   }));
 
-  const filteredCreated = filterByProject(data.todayCreated || [], createdFilter);
-  const filteredCompleted = filterByProject(data.todayCompleted || [], completedFilter);
+  const accessibleCreated = (data.todayCreated || []).filter(t => !t.project || accessibleProjectIds.has(t.project.id));
+  const accessibleCompleted = (data.todayCompleted || []).filter(t => !t.project || accessibleProjectIds.has(t.project.id));
+  const filteredCreated = filterByProject(accessibleCreated, createdFilter);
+  const filteredCompleted = filterByProject(accessibleCompleted, completedFilter);
 
   return (
     <div className={styles.dashboard}>
@@ -102,7 +115,7 @@ export default function DashboardPage() {
           <DashboardList
             items={filteredCreated}
             emptyText="오늘 등록된 일감이 없습니다."
-            onItemClick={setDetailTodoId}
+            onItemClick={handleItemClick}
           />
         </DashboardPanel>
         <DashboardPanel
@@ -112,7 +125,7 @@ export default function DashboardPage() {
           <DashboardList
             items={filteredCompleted}
             emptyText="오늘 처리된 일감이 없습니다."
-            onItemClick={setDetailTodoId}
+            onItemClick={handleItemClick}
           />
         </DashboardPanel>
       </div>

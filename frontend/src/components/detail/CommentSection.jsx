@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import CommentItem from './CommentItem';
 import ConfirmDialog from '../common/ConfirmDialog';
+import MentionInput from '../common/MentionInput';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../../styles/detail.module.css';
 
-export default function CommentSection({ comments, onAdd, onEdit, onDelete }) {
+export default function CommentSection({ comments, onAdd, onEdit, onDelete, projectId, isMaster }) {
   const { currentUser } = useAuth();
   const [input, setInput] = useState('');
   const [pendingFiles, setPendingFiles] = useState([]);
@@ -56,19 +57,19 @@ export default function CommentSection({ comments, onAdd, onEdit, onDelete }) {
               currentUser={currentUser}
               onEdit={onEdit}
               onDelete={(id) => setConfirmId(id)}
+              isMaster={isMaster}
             />
           ))
         )}
       </div>
       <div className={styles.commentForm}>
-        <textarea
-          className="form-input form-textarea--sm"
-          placeholder="댓글 작성..."
-          rows="2"
+        <MentionInput
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          style={{ flex: 1 }}
+          onChange={setInput}
+          onSubmit={handleAdd}
+          placeholder="댓글을 입력하세요... (@로 멘션)"
+          projectId={projectId}
+          currentUsername={currentUser?.username}
         />
         <button className={styles.clipBtn} onClick={handleFileSelect} title="파일 첨부">
           &#128206;

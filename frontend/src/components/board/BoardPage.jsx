@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { DragDropContext } from '@hello-pangea/dnd';
+import { useAuth } from '../../contexts/AuthContext';
 import { useProjects } from '../../contexts/ProjectContext';
 import { useTodos } from '../../hooks/useTodos';
 import { useUnreadComments } from '../../hooks/useUnreadComments';
@@ -17,7 +18,8 @@ import styles from '../../styles/board.module.css';
 
 export default function BoardPage() {
   const { projectId } = useParams();
-  const { projects } = useProjects();
+  const { currentUser } = useAuth();
+  const { projects, myRoles } = useProjects();
   const { todos, setTodos, loadTodos, changeStatus, reorderTodos, deleteTodo } = useTodos();
   const { unreadCounts, loadUnreadCounts, markAsRead } = useUnreadComments();
 
@@ -223,6 +225,8 @@ export default function BoardPage() {
               onDelete={handleDelete}
               onCardClick={(item) => setDetailTodoId(item.id)}
               onAddTodo={() => setTodoModal({ mode: 'create', item: null, initialStatus: status })}
+              currentUser={currentUser}
+              isMaster={myRoles[Number(projectId)] === 'MASTER'}
             />
           ))}
         </div>

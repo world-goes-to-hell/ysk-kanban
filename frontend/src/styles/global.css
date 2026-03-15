@@ -416,3 +416,120 @@ body {
     gap: 0;
   }
 }
+
+/* ── Dark Theme ──────────────────────────────────── */
+
+[data-theme="dark"] {
+  /* Surface */
+  --bg-page:        #0f1117;
+  --bg-card:        #1a1d27;
+  --bg-column:      #151821;
+  --bg-overlay:     rgba(0, 0, 0, 0.7);
+
+  /* Sidebar */
+  --sidebar-bg:     #0d1017;
+  --sidebar-hover:  #1a1f2e;
+  --sidebar-active: #0a0d14;
+  --sidebar-text:   #8b95a5;
+  --sidebar-text-bright: #e2e8f0;
+
+  /* Border */
+  --border-light:   #2a2d3a;
+  --border-medium:  #363a4a;
+
+  /* Text */
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  /* Column accent — 할 일 (blue) */
+  --todo-color:     #3b82f6;
+  --todo-bg:        #1e293b;
+  --todo-border:    #1e3a5f;
+
+  /* Column accent — 진행 중 (amber) */
+  --wip-color:      #f59e0b;
+  --wip-bg:         #1c1a11;
+  --wip-border:     #4a3f1a;
+
+  /* Column accent — 완료 (emerald) */
+  --done-color:     #10b981;
+  --done-bg:        #0f1f1a;
+  --done-border:    #1a3f2f;
+
+  /* Priority */
+  --p-highest:      #ef4444;
+  --p-high:         #f97316;
+  --p-medium:       #eab308;
+  --p-low:          #3b82f6;
+  --p-lowest:       #6b7280;
+
+  /* Brand */
+  --brand:          #3b82f6;
+  --brand-hover:    #2563eb;
+  --brand-light:    #1e293b;
+
+  /* Danger */
+  --danger:         #ef4444;
+  --danger-hover:   #dc2626;
+  --danger-light:   #2d1515;
+
+  /* Success */
+  --success:        #10b981;
+  --success-light:  #0f1f1a;
+
+  /* Shadows */
+  --shadow-xs:      0 1px 2px rgba(0,0,0,.2);
+  --shadow-sm:      0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+  --shadow-md:      0 4px 12px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
+  --shadow-lg:      0 10px 30px rgba(0,0,0,.5), 0 4px 10px rgba(0,0,0,.3);
+}
+
+/* Dark theme form elements */
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select {
+  background: #1a1d27;
+  color: #e2e8f0;
+  border-color: #363a4a;
+}
+
+[data-theme="dark"] .form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .btn-ghost {
+  color: #94a3b8;
+  border-color: #363a4a;
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  background: #1a1d27;
+  color: #e2e8f0;
+}
+
+/* Dark theme priority badges */
+[data-theme="dark"] .priority--highest {
+  background: #2d1515;
+  color: #ef4444;
+}
+
+[data-theme="dark"] .priority--high {
+  background: #2d1f0f;
+  color: #f97316;
+}
+
+[data-theme="dark"] .priority--medium {
+  background: #2d2a0f;
+  color: #eab308;
+}
+
+[data-theme="dark"] .priority--low {
+  background: #0f1a2d;
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .priority--lowest {
+  background: #1a1d27;
+  color: #6b7280;
+}

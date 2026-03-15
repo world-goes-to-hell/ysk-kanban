@@ -14,7 +14,7 @@ export default function DashboardList({ items, emptyText, onItemClick }) {
           <div
             key={item.id}
             className={styles.listItem}
-            onClick={() => onItemClick?.(item.id)}
+            onClick={() => onItemClick?.(item.id, item.project?.id)}
           >
             <span className={styles.listKey}>#{item.id}</span>
             <span className={styles.listSummary}>{item.summary}</span>

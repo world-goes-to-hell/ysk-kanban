@@ -19,6 +19,7 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
 
   const isDashboard = location.pathname === '/';
   const isReport = location.pathname === '/report';
+  const isCalendar = location.pathname === '/calendar';
   const activeProjectId = location.pathname.match(/^\/projects\/(\d+)/)?.[1];
 
   // Sort project tree: favorites first, then filter by search
@@ -101,6 +102,13 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
           >
             <span className={styles.sidebarItemIcon}>&#128196;</span>
             <span className={styles.sidebarItemLabel}>작업내역</span>
+          </button>
+          <button
+            className={`${styles.sidebarItem} ${isCalendar ? styles.sidebarItemActive : ''}`}
+            onClick={() => { navigate('/calendar'); onCloseSidebar?.(); }}
+          >
+            <span className={styles.sidebarItemIcon}>&#128197;</span>
+            <span className={styles.sidebarItemLabel}>캘린더</span>
           </button>
         </nav>
         <div className={styles.sidebarHeader}>

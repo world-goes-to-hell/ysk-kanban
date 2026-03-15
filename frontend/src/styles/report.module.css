@@ -69,6 +69,39 @@
   font-size: 0.85rem;
 }
 
+.datePresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.presetLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.presetBtn {
+  padding: 3px 10px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-column);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.presetBtn:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
 .filterActions {
   display: flex;
   gap: 8px;

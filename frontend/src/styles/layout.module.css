@@ -82,6 +82,21 @@
   color: var(--text-secondary);
 }
 
+.themeToggle {
+  background: none;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+  line-height: 1;
+}
+
+.themeToggle:hover {
+  background: var(--bg-column);
+}
+
 /* ── App Body (sidebar + main) ────────────────────── */
 
 .appBody {

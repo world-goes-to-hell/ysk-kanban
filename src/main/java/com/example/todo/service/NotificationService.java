@@ -80,6 +80,15 @@ public class NotificationService {
         }
     }
 
+    public void notifyMentioned(Todo todo, List<User> mentionedUsers, User commenter) {
+        String prefix = projectPrefix(todo);
+        for (User user : mentionedUsers) {
+            if (user.getId().equals(commenter.getId())) continue;
+            String message = prefix + commenter.getDisplayName() + "님이 [" + todo.getSummary() + "] 댓글에서 회원님을 언급했습니다.";
+            createAndPush(user.getId(), NotificationType.MENTIONED, message, todo.getId());
+        }
+    }
+
     private void createAndPush(Long userId, NotificationType type, String message, Long todoId) {
         Notification notification = Notification.builder()
                 .userId(userId)

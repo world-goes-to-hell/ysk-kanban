@@ -6,6 +6,7 @@ const TYPE_LABELS = {
   ASSIGNED: '배정',
   COMMENT_ADDED: '댓글',
   STATUS_CHANGED: '상태',
+  MENTIONED: '멘션',
 };
 
 export default function NotificationBell({ notifications, unreadCount, onMarkAsRead, onMarkAllAsRead }) {

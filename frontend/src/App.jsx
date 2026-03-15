@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/common/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProjectProvider } from './contexts/ProjectContext';
@@ -10,6 +11,7 @@ import DashboardPage from './components/dashboard/DashboardPage';
 import BoardPage from './components/board/BoardPage';
 import SummaryPage from './components/summary/SummaryPage';
 import ReportPage from './components/report/ReportPage';
+import CalendarPage from './components/calendar/CalendarPage';
 
 function RequireAuth() {
   const { currentUser, loading } = useAuth();
@@ -20,7 +22,8 @@ function RequireAuth() {
 
 export default function App() {
   return (
-    <ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
       <LoadingProvider>
         <AuthProvider>
           <Router>
@@ -31,6 +34,7 @@ export default function App() {
                 <Route element={<ProjectProvider><AppLayout /></ProjectProvider>}>
                   <Route index element={<DashboardPage />} />
                   <Route path="/report" element={<ReportPage />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/projects/:projectId" element={<BoardPage />} />
                 </Route>
               </Route>
@@ -39,6 +43,7 @@ export default function App() {
           <LoadingOverlay />
         </AuthProvider>
       </LoadingProvider>
-    </ToastProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

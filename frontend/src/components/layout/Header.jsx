@@ -1,9 +1,11 @@
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import NotificationBell from './NotificationBell';
 import styles from '../../styles/layout.module.css';
 
 export default function Header({ notifications, unreadCount, onMarkAsRead, onMarkAllAsRead }) {
   const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className={styles.header}>
@@ -19,6 +21,13 @@ export default function Header({ notifications, unreadCount, onMarkAsRead, onMar
             onMarkAsRead={onMarkAsRead || (() => {})}
             onMarkAllAsRead={onMarkAllAsRead || (() => {})}
           />
+          <button
+            className={styles.themeToggle}
+            onClick={toggleTheme}
+            title={theme === 'light' ? '다크 모드' : '라이트 모드'}
+          >
+            {theme === 'light' ? '\u{1F319}' : '\u{2600}\u{FE0F}'}
+          </button>
           <span className={styles.headerUser}>
             {currentUser?.displayName || currentUser?.username || ''}
           </span>

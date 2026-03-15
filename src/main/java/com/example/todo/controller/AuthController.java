@@ -1,5 +1,6 @@
 package com.example.todo.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -101,6 +102,19 @@ public class AuthController {
 
         int timeout = session.getMaxInactiveInterval();
         return ResponseEntity.ok(Map.of("timeout", timeout));
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<Map<String, Object>>> getUsers() {
+        List<User> users = userService.findAll();
+        List<Map<String, Object>> result = users.stream().map(u -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", u.getId());
+            m.put("username", u.getUsername());
+            m.put("displayName", u.getDisplayName());
+            return m;
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/me")

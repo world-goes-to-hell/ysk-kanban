@@ -1,0 +1,106 @@
+.mentionWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-bottom: 4px;
+  animation: dropdown-in var(--duration-fast) var(--ease-out) both;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.suggestionItem:hover,
+.selected {
+  background: var(--brand-light);
+}
+
+.checkArea {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.suggestionInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestionName {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.suggestionUsername {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.multiInsert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-column);
+}
+
+.multiCount {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--brand);
+}
+
+.multiBtn {
+  padding: 4px 14px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--brand);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.multiBtn:hover {
+  background: var(--brand-hover);
+}
+
+.multiHint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  width: 100%;
+  text-align: center;
+}

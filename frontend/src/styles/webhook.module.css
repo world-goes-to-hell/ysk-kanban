@@ -1,0 +1,167 @@
+.section {
+  padding: 4px 0;
+}
+
+.createForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px;
+  background: var(--bg-column);
+  border-radius: var(--radius-sm);
+}
+
+.formRow {
+  display: flex;
+  gap: 8px;
+}
+
+.formRow input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.formRow input:focus {
+  border-color: var(--brand);
+}
+
+.eventsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.eventCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.eventCheckbox input {
+  accent-color: var(--brand);
+}
+
+.webhookList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.webhookItem {
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast);
+}
+
+.webhookItem:hover {
+  border-color: var(--border-medium);
+}
+
+.webhookHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.webhookName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.webhookActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.statusBadge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.statusActive {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.statusInactive {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.webhookUrl {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.webhookMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.eventTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.eventTag {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  transition: background var(--duration-fast);
+}
+
+.actionBtn:hover {
+  background: var(--bg-column);
+}
+
+.deleteBtn {
+  color: var(--danger);
+}
+
+.deleteBtn:hover {
+  background: var(--danger-light);
+}
+
+.emptyMsg {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

@@ -1,0 +1,373 @@
+/* ── Calendar Page ────────────────────────────────── */
+
+.calendarPage {
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.calendarTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.calendarControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.projectFilter {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+  transition: border-color var(--duration-fast);
+}
+
+.projectFilter:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.calendarNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navBtn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.navBtn:hover {
+  background: var(--bg-column);
+  border-color: var(--brand);
+}
+
+.currentMonth {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 130px;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.todayBtn {
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.todayBtn:hover {
+  background: var(--brand-hover);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+/* ── Loading ─────────────────────────────────────── */
+
+.calendarLoading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Calendar Grid ───────────────────────────────── */
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+
+.dayHeader {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: var(--bg-column);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.dayHeader:nth-child(1) {
+  color: var(--danger);
+}
+
+.dayHeader:nth-child(7) {
+  color: var(--brand);
+}
+
+/* ── Day Cell ────────────────────────────────────── */
+
+.dayCell {
+  min-height: 130px;
+  padding: 8px 10px;
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: background var(--duration-fast);
+  display: flex;
+  flex-direction: column;
+}
+
+.dayCell:nth-child(7n) {
+  border-right: none;
+}
+
+.dayCell:hover {
+  background: var(--brand-light);
+}
+
+.otherMonth {
+  opacity: 0.35;
+  background: var(--bg-column);
+}
+
+.today {
+  background: var(--brand-light) !important;
+  position: relative;
+}
+
+.today::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--brand);
+}
+
+/* ── Day Number ──────────────────────────────────── */
+
+.dayNumber {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.daySunday .dayNumber {
+  color: var(--danger);
+}
+
+.daySaturday .dayNumber {
+  color: var(--brand);
+}
+
+.today .dayNumber {
+  background: var(--brand);
+  color: white;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* ── Day Todos ───────────────────────────────────── */
+
+.dayTodos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.todoItem {
+  font-size: 0.72rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--bg-column);
+  color: var(--text-primary);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid var(--brand);
+  transition: background var(--duration-fast), transform var(--duration-fast);
+  line-height: 1.4;
+}
+
+.todoItem:hover {
+  background: var(--border-light);
+  transform: translateX(1px);
+}
+
+.overdue {
+  background: var(--danger-light) !important;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.moreCount {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  cursor: default;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ── Project Legend ───────────────────────────────── */
+
+.legendBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+
+.legendLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legendClickable {
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+
+.legendClickable:hover {
+  background: var(--bg-column);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .calendarPage {
+    padding: 16px;
+  }
+
+  .calendarHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .calendarControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dayCell {
+    min-height: 100px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendarPage {
+    padding: 10px;
+  }
+
+  .calendarControls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .calendarNav {
+    justify-content: center;
+  }
+
+  .projectFilter {
+    width: 100%;
+  }
+
+  .dayCell {
+    min-height: 70px;
+    padding: 4px;
+  }
+
+  .dayNumber {
+    font-size: 0.72rem;
+  }
+
+  .todoItem {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  .today .dayNumber {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+}

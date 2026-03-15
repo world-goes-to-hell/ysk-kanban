@@ -21,12 +21,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.todo.config.ApiKeyAuthFilter;
 import com.example.todo.config.SseEmitterRegistry;
+import com.example.todo.entity.ActivityType;
 import com.example.todo.entity.Priority;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
+import com.example.todo.entity.ProjectRole;
+import com.example.todo.entity.WebhookEvent;
+import com.example.todo.repository.ProjectMemberRepository;
+import com.example.todo.service.ActivityLogService;
 import com.example.todo.service.NotificationService;
 import com.example.todo.service.TodoService;
 import com.example.todo.service.UserService;
+import com.example.todo.service.WebhookService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -43,6 +49,9 @@ public class TodoController {
     private final UserService userService;
     private final NotificationService notificationService;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final ActivityLogService activityLogService;
+    private final WebhookService webhookService;
+    private final ProjectMemberRepository projectMemberRepository;
 
     @GetMapping("/report")
     public ResponseEntity<List<Todo>> getReport(
@@ -62,6 +71,12 @@ public class TodoController {
     @GetMapping("/{id}")
     public ResponseEntity<Todo> getTodo(@PathVariable Long id) {
         Todo todo = todoService.getTodo(id);
+        User currentUser = getCurrentUser();
+        if (todo.getProject() != null
+                && !currentUser.getUsername().equals("admin")
+                && !projectMemberRepository.existsByProjectIdAndUserId(todo.getProject().getId(), currentUser.getId())) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(todo);
     }
 
@@ -121,6 +136,10 @@ public class TodoController {
         if (created.getAssignees() != null && !created.getAssignees().isEmpty()) {
             notificationService.notifyAssigned(created, created.getAssignees(), currentUser);
         }
+        activityLogService.log(created, currentUser, ActivityType.CREATED, "일감 생성: " + summary, null, null);
+        if (projectId != null) {
+            webhookService.fireEvent(WebhookEvent.TODO_CREATED, projectId, Map.of("todoId", created.getId(), "summary", summary, "actor", currentUser.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -176,6 +195,10 @@ public class TodoController {
                 notificationService.notifyAssigned(updated, newlyAssigned, getCurrentUser());
             }
         }
+        activityLogService.log(updated, getCurrentUser(), ActivityType.UPDATED, "일감 수정", null, null);
+        if (projectId != null) {
+            webhookService.fireEvent(WebhookEvent.TODO_UPDATED, projectId, Map.of("todoId", updated.getId(), "summary", summary, "actor", getCurrentUser().getUsername()));
+        }
         return ResponseEntity.ok(updated);
     }
 
@@ -199,13 +222,32 @@ public class TodoController {
         Long statusProjectId = updated.getProject() != null ? updated.getProject().getId() : null;
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("updated", statusProjectId));
         notificationService.notifyStatusChanged(updated, oldStatus, status.name(), getCurrentUser());
+        activityLogService.log(updated, getCurrentUser(), ActivityType.STATUS_CHANGED, "상태 변경", oldStatus, status.name());
+        if (statusProjectId != null) {
+            webhookService.fireEvent(WebhookEvent.TODO_STATUS_CHANGED, statusProjectId, Map.of("todoId", updated.getId(), "summary", updated.getSummary(), "oldStatus", oldStatus, "newStatus", status.name(), "actor", getCurrentUser().getUsername()));
+        }
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
         Todo todo = todoService.getTodo(id);
+        User currentUser = getCurrentUser();
+
+        boolean isCreator = todo.getCreatedBy() != null && todo.getCreatedBy().getId().equals(currentUser.getId());
+        boolean isMaster = currentUser.getUsername().equals("admin")
+                || (todo.getProject() != null && projectMemberRepository.findByProjectIdAndUserId(todo.getProject().getId(), currentUser.getId())
+                    .map(m -> m.getRole() == ProjectRole.MASTER).orElse(false));
+
+        if (!isCreator && !isMaster) {
+            return ResponseEntity.status(403).build();
+        }
+
         Long deleteProjectId = todo.getProject() != null ? todo.getProject().getId() : null;
+        activityLogService.log(todo, currentUser, ActivityType.DELETED, "일감 삭제: " + todo.getSummary(), null, null);
+        if (deleteProjectId != null) {
+            webhookService.fireEvent(WebhookEvent.TODO_DELETED, deleteProjectId, Map.of("todoId", todo.getId(), "summary", todo.getSummary(), "actor", getCurrentUser().getUsername()));
+        }
         todoService.deleteTodo(id);
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("deleted", deleteProjectId));
         return ResponseEntity.noContent().build();

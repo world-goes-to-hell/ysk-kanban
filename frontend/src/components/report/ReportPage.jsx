@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useProjects } from '../../contexts/ProjectContext';
 import { apiFetch } from '../../api/client';
 import todoAPI from '../../api/todos';
@@ -21,7 +21,8 @@ function getRootProjectName(project) {
 }
 
 export default function ReportPage() {
-  const { projectTree } = useProjects();
+  const { projectTree, projects } = useProjects();
+  const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
   const [users, setUsers] = useState([]);
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -48,13 +49,14 @@ export default function ReportPage() {
     setLoading(true);
     try {
       const data = await todoAPI.report(filters);
-      setResults(data);
+      const filtered = data.filter(t => !t.project || accessibleProjectIds.has(t.project.id));
+      setResults(filtered);
     } catch {
       setResults([]);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, accessibleProjectIds]);
 
   useEffect(() => {
     handleSearch();
@@ -113,6 +115,27 @@ export default function ReportPage() {
         <div className={styles.filterGroup}>
           <label className={styles.filterLabel}>기간</label>
           <div className={styles.dateRange}>
+            <select
+              className={styles.filterSelect}
+              onChange={e => {
+                const days = Number(e.target.value);
+                if (isNaN(days)) return;
+                const end = new Date();
+                const start = new Date();
+                start.setDate(start.getDate() - days);
+                setFilters(prev => ({ ...prev, startDate: toIso(start), endDate: toIso(end) }));
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>빠른 선택</option>
+              <option value="0">오늘</option>
+              <option value="1">1일</option>
+              <option value="3">3일</option>
+              <option value="7">7일</option>
+              <option value="15">15일</option>
+              <option value="30">1개월</option>
+              <option value="90">3개월</option>
+            </select>
             <input
               type="date"
               className={styles.filterInput}

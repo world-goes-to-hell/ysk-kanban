@@ -7,9 +7,10 @@ import Modal from '../common/Modal';
 import DetailInfo from './DetailInfo';
 import AttachmentGrid from './AttachmentGrid';
 import CommentSection from './CommentSection';
+import ActivityTimeline from './ActivityTimeline';
 
 export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
-  const { projects } = useProjects();
+  const { projects, myRoles } = useProjects();
   const { comments, loadComments, addComment, updateComment, deleteComment } = useComments(todoId);
   const { attachments, loadAttachments, deleteAttachment, getUrl } = useAttachments(todoId);
   const [fetchedItem, setFetchedItem] = useState(null);
@@ -82,7 +83,10 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
         onAdd={addComment}
         onEdit={updateComment}
         onDelete={deleteComment}
+        projectId={(item || fetchedItem)?.project?.id}
+        isMaster={myRoles[(item || fetchedItem)?.project?.id] === 'MASTER'}
       />
+      <ActivityTimeline todoId={todoId} />
     </Modal>
   );
 }

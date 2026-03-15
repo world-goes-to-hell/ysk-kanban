@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
 import com.example.todo.repository.CommentRepository;
 import com.example.todo.repository.TodoRepository;
+import com.example.todo.repository.UserReportSettingRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +30,7 @@ public class DailyReportService {
 
     private final TodoRepository todoRepository;
     private final CommentRepository commentRepository;
+    private final UserReportSettingRepository userReportSettingRepository;
 
     @Transactional(readOnly = true)
     public Map<String, Object> generateReport(LocalDate date, User currentUser) {
@@ -36,15 +39,22 @@ public class DailyReportService {
 
         Long userId = currentUser.getId();
 
+        // 사용자별 제외 프로젝트 목록
+        Set<Long> excludedProjectIds = userReportSettingRepository
+                .findByUserIdAndExcludedTrue(userId)
+                .stream()
+                .map(s -> s.getProjectId())
+                .collect(Collectors.toSet());
+
         // 1. 오늘 완료된 일감 (오늘 DONE으로 변경된 건, 내 일감만, 보고서 포함 프로젝트만)
         List<Todo> completed = filterMine(
                 todoRepository.findByStatusAndUpdatedAtBetween(Todo.Status.DONE, dayStart, dayEnd), userId)
-                .stream().filter(this::isReportIncluded).collect(Collectors.toList());
+                .stream().filter(t -> isReportIncluded(t, excludedProjectIds)).collect(Collectors.toList());
 
         // 2. 오늘 활동이 있었던 일감 (updatedAt이 오늘이고 TODO가 아닌 건, 내 일감만)
         List<Todo> todayUpdated = todoRepository.findAll().stream()
                 .filter(t -> isMine(t, userId))
-                .filter(this::isReportIncluded)
+                .filter(t -> isReportIncluded(t, excludedProjectIds))
                 .filter(t -> t.getUpdatedAt() != null
                         && !t.getUpdatedAt().isBefore(dayStart)
                         && t.getUpdatedAt().isBefore(dayEnd)
@@ -55,7 +65,7 @@ public class DailyReportService {
         List<Comment> todayComments = commentRepository.findByCreatedAtBetweenWithTodo(dayStart, dayEnd)
                 .stream()
                 .filter(c -> isMine(c.getTodo(), userId))
-                .filter(c -> isReportIncluded(c.getTodo()))
+                .filter(c -> isReportIncluded(c.getTodo(), excludedProjectIds))
                 .collect(Collectors.toList());
         Map<Long, List<Comment>> commentsByTodo = todayComments.stream()
                 .collect(Collectors.groupingBy(
@@ -66,7 +76,7 @@ public class DailyReportService {
         // 4. 진행 예정 = 현재 TODO 또는 IN_PROGRESS 상태 (내 일감만, 보고서 포함 프로젝트만)
         List<Todo> upcoming = todoRepository.findAll().stream()
                 .filter(t -> isMine(t, userId))
-                .filter(this::isReportIncluded)
+                .filter(t -> isReportIncluded(t, excludedProjectIds))
                 .filter(t -> t.getStatus() == Todo.Status.TODO || t.getStatus() == Todo.Status.IN_PROGRESS)
                 .collect(Collectors.toList());
 
@@ -132,9 +142,9 @@ public class DailyReportService {
                         Collectors.toList()));
 
         for (Map.Entry<String, List<Todo>> entry : byProject.entrySet()) {
-            sb.append("📁 ").append(entry.getKey()).append("\n");
+            sb.append("# ").append(entry.getKey()).append("\n");
             for (Todo todo : entry.getValue()) {
-                sb.append("    📌 ").append(todo.getSummary());
+                sb.append("  - ").append(todo.getSummary());
                 if (showStatus && todo.getStatus() == Todo.Status.DONE) {
                     sb.append(" (작업완료)");
                 }
@@ -150,8 +160,8 @@ public class DailyReportService {
         List<Comment> comments = commentsByTodo.get(todoId);
         if (comments != null && !comments.isEmpty()) {
             for (Comment c : comments) {
-                String content = truncate(c.getContent(), 80);
-                sb.append("        💬 ").append(content).append("\n");
+                String content = removeMentions(truncate(c.getContent(), 80));
+                sb.append("      > ").append(content).append("\n");
             }
         }
     }
@@ -165,9 +175,9 @@ public class DailyReportService {
         return current.getName();
     }
 
-    private boolean isReportIncluded(Todo todo) {
+    private boolean isReportIncluded(Todo todo, Set<Long> excludedProjectIds) {
         if (todo.getProject() == null) return true;
-        return todo.getProject().isIncludeInReport();
+        return !excludedProjectIds.contains(todo.getProject().getId());
     }
 
     private boolean isMine(Todo todo, Long userId) {
@@ -179,6 +189,11 @@ public class DailyReportService {
 
     private List<Todo> filterMine(List<Todo> todos, Long userId) {
         return todos.stream().filter(t -> isMine(t, userId)).collect(Collectors.toList());
+    }
+
+    private String removeMentions(String text) {
+        if (text == null) return "";
+        return text.replaceAll("<<@\\w+>>", "").replaceAll("\\s+", " ").trim();
     }
 
     private String truncate(String text, int maxLen) {

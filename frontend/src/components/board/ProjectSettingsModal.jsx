@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import Modal from '../common/Modal';
 import projectAPI from '../../api/projects';
 import apiKeyAPI from '../../api/apiKeys';
+import { webhookAPI } from '../../api/webhooks';
+import { apiFetch } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import settingsStyles from '../../styles/projectSettings.module.css';
 import membersStyles from '../../styles/members.module.css';
 import apiKeyStyles from '../../styles/apiKey.module.css';
+import webhookStyles from '../../styles/webhook.module.css';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -25,7 +28,7 @@ function ProjectTab({ project, onUpdated }) {
   const [members, setMembers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [includeInReport, setIncludeInReport] = useState(true);
+  const [excludedFromReport, setExcludedFromReport] = useState(false);
 
   const loadMembers = useCallback(async () => {
     try {
@@ -41,11 +44,19 @@ function ProjectTab({ project, onUpdated }) {
     } catch { setAllUsers([]); }
   }, []);
 
+  const loadReportSetting = useCallback(async () => {
+    try {
+      const settings = await apiFetch('/api/reports/report-settings');
+      const setting = settings.find(s => s.projectId === project.id);
+      setExcludedFromReport(setting ? setting.excluded : false);
+    } catch { /* ignore */ }
+  }, [project.id]);
+
   useEffect(() => {
     loadMembers();
     loadUsers();
-    setIncludeInReport(project.includeInReport !== false);
-  }, [loadMembers, loadUsers, project.includeInReport]);
+    loadReportSetting();
+  }, [loadMembers, loadUsers, loadReportSetting]);
 
   const memberIds = new Set(members.map(m => m.user?.id));
   const availableUsers = allUsers.filter(u => !memberIds.has(u.id));
@@ -87,16 +98,14 @@ function ProjectTab({ project, onUpdated }) {
   };
 
   const handleToggleReport = async () => {
-    const newValue = !includeInReport;
+    const newValue = !excludedFromReport;
     try {
-      await projectAPI.update(project.id, {
-        name: project.name,
-        description: project.description || '',
-        includeInReport: String(newValue),
+      await apiFetch(`/api/reports/report-settings/${project.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ excluded: newValue }),
       });
-      setIncludeInReport(newValue);
-      showToast(newValue ? '업무보고에 포함됩니다.' : '업무보고에서 제외됩니다.', 'success');
-      onUpdated?.();
+      setExcludedFromReport(newValue);
+      showToast(newValue ? '내 업무보고에서 제외됩니다.' : '내 업무보고에 포함됩니다.', 'success');
     } catch (err) {
       showToast('설정 변경 실패', 'error');
     }
@@ -179,17 +188,16 @@ function ProjectTab({ project, onUpdated }) {
         <h4 className={settingsStyles.settingTitle}>업무보고</h4>
         <div className={settingsStyles.toggleRow}>
           <div className={settingsStyles.toggleInfo}>
-            <span className={settingsStyles.toggleLabel}>업무보고에 포함</span>
+            <span className={settingsStyles.toggleLabel}>내 업무보고에서 제외</span>
             <span className={settingsStyles.toggleDesc}>
-              비활성화하면 이 프로젝트의 일감이 업무보고에 표시되지 않습니다
+              활성화하면 내 업무보고에서 이 프로젝트가 제외됩니다 (다른 사용자에게 영향 없음)
             </span>
           </div>
           <label className={settingsStyles.toggleSwitch}>
             <input
               type="checkbox"
-              checked={includeInReport}
+              checked={excludedFromReport}
               onChange={handleToggleReport}
-              disabled={!isMaster}
             />
             <span className={settingsStyles.toggleTrack} />
           </label>
@@ -331,6 +339,162 @@ function ApiTab({ projectId }) {
   );
 }
 
+const WEBHOOK_EVENTS = [
+  { value: 'TODO_CREATED', label: '일감 생성' },
+  { value: 'TODO_UPDATED', label: '일감 수정' },
+  { value: 'TODO_DELETED', label: '일감 삭제' },
+  { value: 'TODO_STATUS_CHANGED', label: '상태 변경' },
+  { value: 'COMMENT_ADDED', label: '댓글 추가' },
+  { value: 'COMMENT_DELETED', label: '댓글 삭제' },
+];
+
+function WebhookTab({ projectId }) {
+  const showToast = useToast();
+  const [webhooks, setWebhooks] = useState([]);
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+  const [secret, setSecret] = useState('');
+  const [selectedEvents, setSelectedEvents] = useState(new Set(WEBHOOK_EVENTS.map(e => e.value)));
+
+  const loadWebhooks = useCallback(async () => {
+    try {
+      const data = await webhookAPI.list(projectId);
+      setWebhooks(data);
+    } catch {
+      showToast('웹훅 목록 조회 실패', 'error');
+    }
+  }, [projectId, showToast]);
+
+  useEffect(() => { loadWebhooks(); }, [loadWebhooks]);
+
+  const toggleEvent = (event) => {
+    setSelectedEvents(prev => {
+      const next = new Set(prev);
+      if (next.has(event)) next.delete(event);
+      else next.add(event);
+      return next;
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!name.trim() || !url.trim()) {
+      showToast('이름과 URL을 입력하세요', 'error');
+      return;
+    }
+    if (selectedEvents.size === 0) {
+      showToast('최소 1개의 이벤트를 선택하세요', 'error');
+      return;
+    }
+    try {
+      await webhookAPI.create(projectId, {
+        name: name.trim(),
+        url: url.trim(),
+        events: Array.from(selectedEvents).join(','),
+        secret: secret.trim() || null,
+      });
+      showToast('웹훅이 생성되었습니다', 'success');
+      setName('');
+      setUrl('');
+      setSecret('');
+      loadWebhooks();
+    } catch {
+      showToast('웹훅 생성 실패', 'error');
+    }
+  };
+
+  const handleToggleActive = async (webhook) => {
+    try {
+      await webhookAPI.update(projectId, webhook.id, { active: !webhook.active });
+      showToast(webhook.active ? '웹훅 비활성화됨' : '웹훅 활성화됨', 'success');
+      loadWebhooks();
+    } catch {
+      showToast('상태 변경 실패', 'error');
+    }
+  };
+
+  const handleDelete = async (webhookId) => {
+    try {
+      await webhookAPI.remove(projectId, webhookId);
+      showToast('웹훅이 삭제되었습니다', 'success');
+      loadWebhooks();
+    } catch {
+      showToast('웹훅 삭제 실패', 'error');
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className={webhookStyles.section}>
+      <div className={webhookStyles.createForm}>
+        <div className={webhookStyles.formRow}>
+          <input placeholder="웹훅 이름" value={name} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className={webhookStyles.formRow}>
+          <input placeholder="URL (https://...)" value={url} onChange={e => setUrl(e.target.value)} />
+        </div>
+        <div className={webhookStyles.formRow}>
+          <input placeholder="Secret (선택사항)" value={secret} onChange={e => setSecret(e.target.value)} />
+        </div>
+        <div className={webhookStyles.eventsGrid}>
+          {WEBHOOK_EVENTS.map(evt => (
+            <label key={evt.value} className={webhookStyles.eventCheckbox}>
+              <input
+                type="checkbox"
+                checked={selectedEvents.has(evt.value)}
+                onChange={() => toggleEvent(evt.value)}
+              />
+              {evt.label}
+            </label>
+          ))}
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={handleCreate}>웹훅 추가</button>
+      </div>
+
+      {webhooks.length === 0 ? (
+        <div className={webhookStyles.emptyMsg}>등록된 웹훅이 없습니다</div>
+      ) : (
+        <div className={webhookStyles.webhookList}>
+          {webhooks.map(wh => (
+            <div key={wh.id} className={webhookStyles.webhookItem}>
+              <div className={webhookStyles.webhookHeader}>
+                <span className={webhookStyles.webhookName}>{wh.name}</span>
+                <div className={webhookStyles.webhookActions}>
+                  <span className={`${webhookStyles.statusBadge} ${wh.active ? webhookStyles.statusActive : webhookStyles.statusInactive}`}>
+                    {wh.active ? '활성' : '비활성'}
+                  </span>
+                  <button className={webhookStyles.actionBtn} onClick={() => handleToggleActive(wh)}>
+                    {wh.active ? '⏸' : '▶'}
+                  </button>
+                  <button className={`${webhookStyles.actionBtn} ${webhookStyles.deleteBtn}`} onClick={() => handleDelete(wh.id)}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <div className={webhookStyles.webhookUrl}>{wh.url}</div>
+              <div className={webhookStyles.eventTags}>
+                {(wh.events || '').split(',').filter(Boolean).map(evt => (
+                  <span key={evt} className={webhookStyles.eventTag}>
+                    {WEBHOOK_EVENTS.find(e => e.value === evt.trim())?.label || evt}
+                  </span>
+                ))}
+              </div>
+              <div className={webhookStyles.webhookMeta}>
+                <span>마지막 실행: {formatDate(wh.lastTriggeredAt)}</span>
+                {wh.lastResponseStatus && <span>응답: {wh.lastResponseStatus}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProjectSettingsModal({ project, onClose, onUpdated }) {
   const [activeTab, setActiveTab] = useState('project');
 
@@ -349,6 +513,12 @@ export default function ProjectSettingsModal({ project, onClose, onUpdated }) {
         >
           API 설정
         </button>
+        <button
+          className={`${settingsStyles.tabBtn} ${activeTab === 'webhook' ? settingsStyles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('webhook')}
+        >
+          웹훅
+        </button>
       </div>
 
       {activeTab === 'project' && (
@@ -356,6 +526,9 @@ export default function ProjectSettingsModal({ project, onClose, onUpdated }) {
       )}
       {activeTab === 'api' && (
         <ApiTab projectId={project?.id} />
+      )}
+      {activeTab === 'webhook' && (
+        <WebhookTab projectId={project?.id} />
       )}
     </Modal>
   );

@@ -14,7 +14,7 @@ export default function RegisterForm({ onSuccess }) {
     setError('');
 
     if (!username.trim() || !password.trim()) {
-      setError('사용자명과 비밀번호를 입력해주세요.');
+      setError('아이디와 비밀번호를 입력해주세요.');
       return;
     }
 
@@ -32,7 +32,7 @@ export default function RegisterForm({ onSuccess }) {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="form-group">
-        <label className="form-label" htmlFor="reg-username">사용자명</label>
+        <label className="form-label" htmlFor="reg-username">아이디</label>
         <input
           className="form-input"
           type="text"
@@ -58,7 +58,7 @@ export default function RegisterForm({ onSuccess }) {
         />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="reg-displayname">표시 이름</label>
+        <label className="form-label" htmlFor="reg-displayname">닉네임(표출될 이름)</label>
         <input
           className="form-input"
           type="text"

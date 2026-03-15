@@ -1,4 +1,19 @@
 services:
+  # PostgreSQL (운영환경에서 사용)
+  # 아래 postgres 서비스와 app의 환경변수 주석을 해제하세요
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: kanban-postgres
+  #   environment:
+  #     POSTGRES_DB: kanban
+  #     POSTGRES_USER: kanban
+  #     POSTGRES_PASSWORD: kanban
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
   app:
     image: ghcr.io/world-goes-to-hell/ysk-kanban:latest
     container_name: kanban-board
@@ -10,4 +25,14 @@ services:
     environment:
       - TZ=Asia/Seoul
       - JAVA_OPTS=-Duser.timezone=Asia/Seoul
+      # PostgreSQL 사용 시 아래 주석 해제
+      # - SPRING_PROFILES_ACTIVE=prod
+      # - DB_URL=jdbc:postgresql://postgres:5432/kanban
+      # - DB_USERNAME=kanban
+      # - DB_PASSWORD=kanban
+    # depends_on:
+    #   - postgres
     restart: unless-stopped
+
+# volumes:
+#   postgres_data:

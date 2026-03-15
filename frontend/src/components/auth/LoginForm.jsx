@@ -13,21 +13,21 @@ export default function LoginForm() {
     setError('');
 
     if (!username.trim() || !password.trim()) {
-      setError('사용자명과 비밀번호를 입력해주세요.');
+      setError('아이디와 비밀번호를 입력해주세요.');
       return;
     }
 
     try {
       await login(username.trim(), password.trim());
     } catch (err) {
-      setError('로그인에 실패했습니다. 사용자명과 비밀번호를 확인해주세요.');
+      setError('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="form-group">
-        <label className="form-label" htmlFor="login-username">사용자명</label>
+        <label className="form-label" htmlFor="login-username">아이디</label>
         <input
           className="form-input"
           type="text"

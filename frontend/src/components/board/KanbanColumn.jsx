@@ -33,7 +33,7 @@ function isToday(dateStr) {
   );
 }
 
-export default function KanbanColumn({ status, items, unreadCounts, onTransition, onEdit, onDelete, onCardClick, onAddTodo, compact, sortKey, onSortChange }) {
+export default function KanbanColumn({ status, items, unreadCounts, onTransition, onEdit, onDelete, onCardClick, onAddTodo, compact, sortKey, onSortChange, currentUser, isMaster }) {
   const config = COLUMN_CONFIG[status];
   const [showOlder, setShowOlder] = useState(false);
 
@@ -84,6 +84,7 @@ export default function KanbanColumn({ status, items, unreadCounts, onTransition
                     isDragging={dragSnapshot.isDragging}
                     unreadCount={unreadCounts?.[item.id] || 0}
                     compact={compact}
+                    canDelete={isMaster || (currentUser && item.createdBy?.id === currentUser.id)}
                     onTransition={(e) => onTransition(item, e)}
                     onEdit={() => onEdit(item)}
                     onDelete={() => onDelete(item)}
