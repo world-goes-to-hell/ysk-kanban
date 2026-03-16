@@ -148,6 +148,7 @@
 
 .dayCell {
   min-height: 130px;
+  min-width: 0;
   padding: 8px 10px;
   border-right: 1px solid var(--border-light);
   border-bottom: 1px solid var(--border-light);
@@ -155,6 +156,7 @@
   transition: background var(--duration-fast);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .dayCell:nth-child(7n) {
@@ -224,6 +226,8 @@
   flex-direction: column;
   gap: 3px;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .todoItem {
