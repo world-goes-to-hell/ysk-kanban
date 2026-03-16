@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -115,6 +116,61 @@ public class AuthController {
             return m;
         }).toList();
         return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Not authenticated"));
+        }
+
+        String displayName = body.get("displayName");
+        if (displayName == null || displayName.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "displayName is required"));
+        }
+
+        try {
+            String username = authentication.getName();
+            User user = userService.updateDisplayName(username, displayName.trim());
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Not authenticated"));
+        }
+
+        String currentPassword = body.get("currentPassword");
+        String newPassword = body.get("newPassword");
+
+        if (currentPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "currentPassword and newPassword are required"));
+        }
+
+        if (newPassword.length() < 4) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "새 비밀번호는 4자 이상이어야 합니다."));
+        }
+
+        try {
+            String username = authentication.getName();
+            userService.changePassword(username, currentPassword, newPassword);
+            return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/me")

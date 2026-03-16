@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import NotificationBell from './NotificationBell';
@@ -6,6 +7,7 @@ import styles from '../../styles/layout.module.css';
 export default function Header({ notifications, unreadCount, onMarkAsRead, onMarkAllAsRead }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <header className={styles.header}>
@@ -28,7 +30,12 @@ export default function Header({ notifications, unreadCount, onMarkAsRead, onMar
           >
             {theme === 'light' ? '\u{1F319}' : '\u{2600}\u{FE0F}'}
           </button>
-          <span className={styles.headerUser}>
+          <span
+            className={styles.headerUser}
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/mypage')}
+            title="마이페이지"
+          >
             {currentUser?.displayName || currentUser?.username || ''}
           </span>
           <button className="btn btn-ghost btn-sm" onClick={logout}>로그아웃</button>

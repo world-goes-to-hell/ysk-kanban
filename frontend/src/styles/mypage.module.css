@@ -1,0 +1,140 @@
+/* ── MyPage ─────────────────────────────────────── */
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 32px;
+}
+
+/* ── Section ────────────────────────────────────── */
+
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ── Info Row ───────────────────────────────────── */
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.infoLabel {
+  width: 100px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+/* ── Form ───────────────────────────────────────── */
+
+.formGroup {
+  margin-bottom: 14px;
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.formInput {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.formInput:focus {
+  border-color: var(--brand);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* ── Messages ──────────────────────────────────── */
+
+.successMsg {
+  font-size: 0.82rem;
+  color: var(--status-done);
+  margin-top: 8px;
+}
+
+.errorMsg {
+  font-size: 0.82rem;
+  color: var(--status-urgent);
+  margin-top: 8px;
+}
+
+/* ── Back Link ─────────────────────────────────── */
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: color var(--duration-fast);
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}
+
+/* ── Responsive ────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .section {
+    padding: 18px 16px;
+  }
+
+  .infoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}

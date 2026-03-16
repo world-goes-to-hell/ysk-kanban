@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
   }, [showLoading, hideLoading, doLogout]);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ currentUser, setCurrentUser, loading, login, register, logout }}>
       {children}
       {sessionWarning && (
         <div className="session-warning-overlay">

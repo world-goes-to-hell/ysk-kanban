@@ -12,6 +12,7 @@ import BoardPage from './components/board/BoardPage';
 import SummaryPage from './components/summary/SummaryPage';
 import ReportPage from './components/report/ReportPage';
 import CalendarPage from './components/calendar/CalendarPage';
+import MyPage from './components/mypage/MyPage';
 
 function RequireAuth() {
   const { currentUser, loading } = useAuth();
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="/login" element={<AuthPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="/todos/:todoId/summary" element={<SummaryPage />} />
+                <Route path="/mypage" element={<MyPage />} />
                 <Route element={<ProjectProvider><AppLayout /></ProjectProvider>}>
                   <Route index element={<DashboardPage />} />
                   <Route path="/report" element={<ReportPage />} />

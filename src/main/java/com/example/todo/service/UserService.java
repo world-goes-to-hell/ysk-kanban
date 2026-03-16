@@ -42,6 +42,23 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
     }
 
+    public User updateDisplayName(String username, String newDisplayName) {
+        User user = findByUsername(username);
+        user.setDisplayName(newDisplayName);
+        log.info("Updated display name for user: {}", username);
+        return userRepository.save(user);
+    }
+
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        User user = findByUsername(username);
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password changed for user: {}", username);
+    }
+
     @Transactional(readOnly = true)
     public List<User> findAll() {
         return userRepository.findAll();
