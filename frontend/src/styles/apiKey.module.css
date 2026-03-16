@@ -115,6 +115,31 @@
   color: #fff;
 }
 
+.downloadRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.downloadBtn:hover {
+  background: var(--hover);
+}
+
 .emptyMsg {
   text-align: center;
   color: var(--text-secondary);
