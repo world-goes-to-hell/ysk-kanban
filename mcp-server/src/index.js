@@ -100,6 +100,32 @@ server.tool(
 );
 
 server.tool(
+  'quick_todo',
+  '일감 생성 + 즉시 진행중 상태 전환 (원콜)',
+  {
+    summary: z.string().describe('일감 제목'),
+    description: z.string().optional().describe('일감 설명'),
+    priority: z.enum(['HIGHEST', 'HIGH', 'MEDIUM', 'LOW', 'LOWEST']).optional().describe('우선순위'),
+  },
+  async (args) => {
+    const data = await apiFetch('/api/todos', {
+      method: 'POST',
+      body: JSON.stringify(args),
+    });
+    await apiFetch(`/api/todos/${data.id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'IN_PROGRESS' }),
+    });
+    return {
+      content: [{
+        type: 'text',
+        text: `일감 #${data.id} 생성 → IN_PROGRESS: ${data.summary}`,
+      }],
+    };
+  }
+);
+
+server.tool(
   'update_todo',
   '일감 수정',
   {
