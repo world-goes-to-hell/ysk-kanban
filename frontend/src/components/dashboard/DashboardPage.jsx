@@ -75,6 +75,9 @@ export default function DashboardPage() {
   const filteredCreated = filterByProject(accessibleCreated, createdFilter);
   const filteredCompleted = filterByProject(accessibleCompleted, completedFilter);
 
+  const createdProjects = projects.filter(p => accessibleCreated.some(t => t.project?.id === p.id));
+  const completedProjects = projects.filter(p => accessibleCompleted.some(t => t.project?.id === p.id));
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
@@ -110,7 +113,7 @@ export default function DashboardPage() {
       <div className={styles.grid}>
         <DashboardPanel
           title="오늘 등록된 일감"
-          headerRight={<ProjectFilter value={createdFilter} onChange={setCreatedFilter} projects={projects} />}
+          headerRight={<ProjectFilter value={createdFilter} onChange={setCreatedFilter} projects={createdProjects} />}
         >
           <DashboardList
             items={filteredCreated}
@@ -120,7 +123,7 @@ export default function DashboardPage() {
         </DashboardPanel>
         <DashboardPanel
           title="오늘 처리된 일감"
-          headerRight={<ProjectFilter value={completedFilter} onChange={setCompletedFilter} projects={projects} />}
+          headerRight={<ProjectFilter value={completedFilter} onChange={setCompletedFilter} projects={completedProjects} />}
         >
           <DashboardList
             items={filteredCompleted}
