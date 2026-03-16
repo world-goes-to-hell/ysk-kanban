@@ -54,18 +54,20 @@ public class TodoController {
     private final ProjectMemberRepository projectMemberRepository;
 
     @GetMapping("/report")
-    public ResponseEntity<List<Todo>> getReport(
+    public ResponseEntity<?> getReport(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) Long assigneeId,
             @RequestParam(required = false) Long createdById,
             @RequestParam(required = false) Long projectId,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         java.time.LocalDateTime start = startDate != null ? LocalDate.parse(startDate).atStartOfDay() : null;
         java.time.LocalDateTime end = endDate != null ? LocalDate.parse(endDate).atTime(23, 59, 59) : null;
         Todo.Status st = status != null && !status.isEmpty() ? Todo.Status.valueOf(status) : null;
-        List<Todo> todos = todoService.findByFilters(start, end, assigneeId, createdById, projectId, st);
-        return ResponseEntity.ok(todos);
+        Map<String, Object> result = todoService.findByFiltersWithPage(start, end, assigneeId, createdById, projectId, st, page, size);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")

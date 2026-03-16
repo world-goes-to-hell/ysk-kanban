@@ -20,11 +20,17 @@ function getRootProjectName(project) {
   return current.name;
 }
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 export default function ReportPage() {
   const { projectTree, projects } = useProjects();
   const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
   const [users, setUsers] = useState([]);
   const [results, setResults] = useState(null);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
 
   const today = new Date();
@@ -45,22 +51,43 @@ export default function ReportPage() {
     apiFetch('/api/users').then(setUsers).catch(() => {});
   }, []);
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = useCallback(async (page = 0) => {
     setLoading(true);
     try {
-      const data = await todoAPI.report(filters);
-      const filtered = data.filter(t => !t.project || accessibleProjectIds.has(t.project.id));
-      setResults(filtered);
+      const data = await todoAPI.report(filters, { page, size: pageSize });
+      const content = (data.content || [])
+        .filter(t => !t.project || accessibleProjectIds.has(t.project.id));
+      setResults(content);
+      setTotalElements(data.totalElements || 0);
+      setTotalPages(data.totalPages || 0);
+      setCurrentPage(data.page || 0);
     } catch {
       setResults([]);
+      setTotalElements(0);
+      setTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [filters, accessibleProjectIds]);
+  }, [filters, pageSize, accessibleProjectIds]);
 
   useEffect(() => {
     handleSearch();
   }, []);
+
+  const handlePageChange = (page) => {
+    handleSearch(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(0);
+  };
+
+  useEffect(() => {
+    if (results !== null) {
+      handleSearch(0);
+    }
+  }, [pageSize]);
 
   const updateFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -78,33 +105,104 @@ export default function ReportPage() {
   };
   const projectOptions = flatProjects(projectTree);
 
-  const handleExportCsv = () => {
-    if (!results || results.length === 0) return;
+  const handleExportCsv = async () => {
+    if (!results || totalElements === 0) return;
 
-    const bom = '\uFEFF';
-    const esc = (v) => `"${String(v ?? '-').replace(/"/g, '""')}"`;
-    const header = ['ID', '제목', '상태', '우선순위', '프로젝트', '담당자', '작성자', '등록일', '완료일'];
-    const rows = results.map(t => [
-      t.id,
-      esc(t.summary),
-      esc(formatStatus(t.status)),
-      esc(getPriorityLabel(t.priority)),
-      esc(getRootProjectName(t.project)),
-      esc(t.assignees?.map(a => a.displayName || a.username).join(', ')),
-      esc(t.createdBy?.displayName || t.createdBy?.username),
-      esc(formatDate(t.createdAt)),
-      esc(formatDate(t.completedAt)),
-    ]);
+    try {
+      const allData = await todoAPI.report(filters, { page: 0, size: totalElements });
+      const allResults = (allData.content || [])
+        .filter(t => !t.project || accessibleProjectIds.has(t.project.id));
 
-    const csv = bom + [header.map(esc).join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `작업내역_${filters.startDate}_${filters.endDate}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const bom = '\uFEFF';
+      const esc = (v) => `"${String(v ?? '-').replace(/"/g, '""')}"`;
+      const header = ['ID', '제목', '상태', '우선순위', '프로젝트', '담당자', '작성자', '등록일', '완료일'];
+      const rows = allResults.map(t => [
+        t.id,
+        esc(t.summary),
+        esc(formatStatus(t.status)),
+        esc(getPriorityLabel(t.priority)),
+        esc(getRootProjectName(t.project)),
+        esc(t.assignees?.map(a => a.displayName || a.username).join(', ')),
+        esc(t.createdBy?.displayName || t.createdBy?.username),
+        esc(formatDate(t.createdAt)),
+        esc(formatDate(t.completedAt)),
+      ]);
+
+      const csv = bom + [header.map(esc).join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `작업내역_${filters.startDate}_${filters.endDate}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore
+    }
   };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const maxVisible = 5;
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible);
+    if (endPage - startPage < maxVisible) {
+      startPage = Math.max(0, endPage - maxVisible);
+    }
+
+    const pages = [];
+    for (let i = startPage; i < endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className={styles.pagination}>
+        <button
+          className={styles.pageBtn}
+          onClick={() => handlePageChange(0)}
+          disabled={currentPage === 0}
+        >
+          &laquo;
+        </button>
+        <button
+          className={styles.pageBtn}
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 0}
+        >
+          &lt;
+        </button>
+        {startPage > 0 && <span className={styles.pageEllipsis}>...</span>}
+        {pages.map(p => (
+          <button
+            key={p}
+            className={`${styles.pageBtn} ${p === currentPage ? styles.pageBtnActive : ''}`}
+            onClick={() => handlePageChange(p)}
+          >
+            {p + 1}
+          </button>
+        ))}
+        {endPage < totalPages && <span className={styles.pageEllipsis}>...</span>}
+        <button
+          className={styles.pageBtn}
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1}
+        >
+          &gt;
+        </button>
+        <button
+          className={styles.pageBtn}
+          onClick={() => handlePageChange(totalPages - 1)}
+          disabled={currentPage >= totalPages - 1}
+        >
+          &raquo;
+        </button>
+      </div>
+    );
+  };
+
+  const rangeStart = currentPage * pageSize + 1;
+  const rangeEnd = Math.min((currentPage + 1) * pageSize, totalElements);
 
   return (
     <div className={styles.report}>
@@ -211,13 +309,13 @@ export default function ReportPage() {
         </div>
 
         <div className={styles.filterActions}>
-          <button className={styles.searchBtn} onClick={handleSearch} disabled={loading}>
+          <button className={styles.searchBtn} onClick={() => handleSearch(0)} disabled={loading}>
             {loading ? '검색중...' : '검색'}
           </button>
           <button
             className={styles.exportBtn}
             onClick={handleExportCsv}
-            disabled={!results || results.length === 0}
+            disabled={totalElements === 0}
           >
             CSV 다운로드
           </button>
@@ -228,44 +326,63 @@ export default function ReportPage() {
       {results !== null && (
         <div className={styles.resultArea}>
           <div className={styles.resultHeader}>
-            <span className={styles.resultCount}>총 {results.length}건</span>
+            <span className={styles.resultCount}>
+              {totalElements > 0
+                ? `총 ${totalElements}건 중 ${rangeStart}-${rangeEnd}`
+                : '총 0건'}
+            </span>
+            <div className={styles.pageSizeWrap}>
+              <label className={styles.pageSizeLabel}>표시 건수</label>
+              <select
+                className={styles.pageSizeSelect}
+                value={pageSize}
+                onChange={e => handlePageSizeChange(Number(e.target.value))}
+              >
+                {PAGE_SIZE_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}건</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {results.length === 0 ? (
             <div className={styles.emptyResult}>조건에 맞는 일감이 없습니다.</div>
           ) : (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>제목</th>
-                    <th>상태</th>
-                    <th>우선순위</th>
-                    <th>프로젝트</th>
-                    <th>담당자</th>
-                    <th>작성자</th>
-                    <th>등록일</th>
-                    <th>완료일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map(t => (
-                    <tr key={t.id}>
-                      <td className={styles.cellId}>#{t.id}</td>
-                      <td className={styles.cellTitle}>{t.summary}</td>
-                      <td><span className={`${styles.statusBadge} ${styles[`status_${t.status}`]}`}>{formatStatus(t.status)}</span></td>
-                      <td>{getPriorityLabel(t.priority)}</td>
-                      <td>{getRootProjectName(t.project)}</td>
-                      <td>{t.assignees?.map(a => a.displayName || a.username).join(', ') || '-'}</td>
-                      <td>{t.createdBy?.displayName || t.createdBy?.username || '-'}</td>
-                      <td className={styles.cellDate}>{formatDate(t.createdAt)}</td>
-                      <td className={styles.cellDate}>{formatDate(t.completedAt)}</td>
+            <>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>제목</th>
+                      <th>상태</th>
+                      <th>우선순위</th>
+                      <th>프로젝트</th>
+                      <th>담당자</th>
+                      <th>작성자</th>
+                      <th>등록일</th>
+                      <th>완료일</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {results.map(t => (
+                      <tr key={t.id}>
+                        <td className={styles.cellId}>#{t.id}</td>
+                        <td className={styles.cellTitle}>{t.summary}</td>
+                        <td><span className={`${styles.statusBadge} ${styles[`status_${t.status}`]}`}>{formatStatus(t.status)}</span></td>
+                        <td>{getPriorityLabel(t.priority)}</td>
+                        <td>{getRootProjectName(t.project)}</td>
+                        <td>{t.assignees?.map(a => a.displayName || a.username).join(', ') || '-'}</td>
+                        <td>{t.createdBy?.displayName || t.createdBy?.username || '-'}</td>
+                        <td className={styles.cellDate}>{formatDate(t.createdAt)}</td>
+                        <td className={styles.cellDate}>{formatDate(t.completedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {renderPagination()}
+            </>
           )}
         </div>
       )}

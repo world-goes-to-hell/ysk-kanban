@@ -3,6 +3,7 @@ package com.example.todo.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,13 @@ public class TodoService {
     public List<Todo> findByFilters(LocalDateTime startDate, LocalDateTime endDate,
                                      Long assigneeId, Long createdById, Long projectId, Todo.Status status) {
         return todoRepository.findByFilters(startDate, endDate, assigneeId, createdById, projectId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> findByFiltersWithPage(LocalDateTime startDate, LocalDateTime endDate,
+                                                      Long assigneeId, Long createdById, Long projectId,
+                                                      Todo.Status status, int page, int size) {
+        return todoRepository.findByFiltersWithPage(startDate, endDate, assigneeId, createdById, projectId, status, page, size);
     }
 
     @Transactional(readOnly = true)
