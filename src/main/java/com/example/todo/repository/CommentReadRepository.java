@@ -21,10 +21,10 @@ public interface CommentReadRepository extends JpaRepository<CommentRead, Long> 
     List<Long> findUnreadCommentIdsByTodoId(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
     @Modifying
-    @Query(value = "MERGE INTO comment_reads (user_id, comment_id, read_at) " +
-           "KEY (user_id, comment_id) " +
+    @Query(value = "INSERT INTO comment_reads (user_id, comment_id, read_at) " +
            "SELECT :userId, c.id, NOW() FROM comments c " +
-           "WHERE c.todo_id = :todoId",
+           "WHERE c.todo_id = :todoId " +
+           "ON CONFLICT (user_id, comment_id) DO UPDATE SET read_at = NOW()",
            nativeQuery = true)
     int bulkMarkAsRead(@Param("todoId") Long todoId, @Param("userId") Long userId);
 
