@@ -28,6 +28,7 @@ export default function TodoModal({ mode = 'create', item = null, projectId, ini
           priority: data.priority,
           projectId: data.projectId,
           dueDate: data.dueDate || null,
+          assigneeIds: data.assigneeIds || [],
         });
         // Delete queued attachments
         for (const attId of deleteQueue) {

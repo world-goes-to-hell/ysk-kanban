@@ -52,7 +52,7 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
         priority,
         projectId: selectedProject || undefined,
         dueDate: dueDate || undefined,
-        assigneeIds: selectedAssignees.length > 0 ? selectedAssignees : undefined,
+        assigneeIds: selectedAssignees,
       }),
     };
   }
