@@ -377,7 +377,7 @@ function generatePowershellScript(apiKey) {
   return lines.join('\r\n');
 }
 
-function handleScriptDownload(apiKey, type) {
+export function handleScriptDownload(apiKey, type) {
   var script = type === 'bash'
     ? generateBashScript(apiKey)
     : generatePowershellScript(apiKey);

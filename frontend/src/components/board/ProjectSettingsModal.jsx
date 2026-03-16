@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import settingsStyles from '../../styles/projectSettings.module.css';
 import membersStyles from '../../styles/members.module.css';
 import apiKeyStyles from '../../styles/apiKey.module.css';
+import { handleScriptDownload } from './ApiKeyModal';
 import webhookStyles from '../../styles/webhook.module.css';
 
 function formatDate(dateStr) {
@@ -299,6 +300,14 @@ function ApiTab({ projectId }) {
           <div className={apiKeyStyles.createdKeyRow}>
             <span className={apiKeyStyles.keyText}>{createdKey}</span>
             <button className={apiKeyStyles.copyBtn} onClick={handleCopy}>복사</button>
+          </div>
+          <div className={apiKeyStyles.downloadRow}>
+            <button className={apiKeyStyles.downloadBtn} onClick={() => handleScriptDownload(createdKey, 'bash')}>
+              셋업 스크립트 (Bash)
+            </button>
+            <button className={apiKeyStyles.downloadBtn} onClick={() => handleScriptDownload(createdKey, 'powershell')}>
+              셋업 스크립트 (PowerShell)
+            </button>
           </div>
         </div>
       )}
