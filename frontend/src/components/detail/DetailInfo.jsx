@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { getPriorityClass, getPriorityLabel, formatStatus, formatTime, formatDueDate } from '../../utils/formatters';
 import styles from '../../styles/detail.module.css';
 
@@ -8,6 +11,8 @@ const STATUS_STYLE_MAP = {
 };
 
 export default function DetailInfo({ item, projects }) {
+  const [mdView, setMdView] = useState(false);
+
   if (!item) return null;
 
   const project = item.projectId
@@ -42,8 +47,22 @@ export default function DetailInfo({ item, projects }) {
       {/* Description Card */}
       {item.description && (
         <div className={styles.descriptionCard}>
-          <div className={styles.descriptionLabel}>설명</div>
-          <div className={styles.descriptionText}>{item.description}</div>
+          <div className={styles.descriptionLabelRow}>
+            <div className={styles.descriptionLabel}>설명</div>
+            <button
+              className={`${styles.mdToggleBtn} ${mdView ? styles.mdToggleBtnActive : ''}`}
+              onClick={() => setMdView(prev => !prev)}
+            >
+              {mdView ? '원문 보기' : 'Markdown'}
+            </button>
+          </div>
+          {mdView ? (
+            <div className={styles.mdContent}>
+              <Markdown remarkPlugins={[remarkGfm]}>{item.description}</Markdown>
+            </div>
+          ) : (
+            <div className={styles.descriptionText}>{item.description}</div>
+          )}
         </div>
       )}
 
