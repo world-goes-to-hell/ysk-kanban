@@ -16,8 +16,11 @@ export default function AppLayout() {
     const handleCommentChanged = (data) => {
       window.dispatchEvent(new CustomEvent('comment_changed', { detail: data }));
     };
+    const handleTodoChanged = (data) => {
+      window.dispatchEvent(new CustomEvent('todo_changed', { detail: data }));
+    };
     const disconnect = createSseConnection(
-      () => {},
+      handleTodoChanged,
       (data) => sseNotificationRef.current(data),
       handleCommentChanged
     );
