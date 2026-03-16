@@ -5,5 +5,7 @@ export async function fetchCalendarTodos(startDate, endDate, projectId) {
   if (startDate) params.append('startDate', startDate);
   if (endDate) params.append('endDate', endDate);
   if (projectId) params.append('projectId', projectId);
-  return apiFetch(`/api/todos/report?${params.toString()}`);
+  params.append('size', '9999');
+  const data = await apiFetch(`/api/todos/report?${params.toString()}`);
+  return data.content || [];
 }
