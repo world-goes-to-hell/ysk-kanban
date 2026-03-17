@@ -204,6 +204,41 @@ public class TodoController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/{parentId}/subtasks")
+    public ResponseEntity<Todo> createSubtask(
+            @PathVariable Long parentId,
+            @RequestBody Map<String, Object> body) {
+        String summary = (String) body.get("summary");
+        String description = (String) body.getOrDefault("description", "");
+
+        Priority priority = null;
+        if (body.containsKey("priority") && body.get("priority") != null) {
+            priority = Priority.valueOf((String) body.get("priority"));
+        }
+
+        LocalDate dueDate = null;
+        if (body.containsKey("dueDate") && body.get("dueDate") != null) {
+            dueDate = LocalDate.parse((String) body.get("dueDate"));
+        }
+
+        List<Long> assigneeIds = parseAssigneeIds(body);
+
+        User currentUser = getCurrentUser();
+        Todo created = todoService.createSubtask(parentId, summary, description, priority, currentUser, dueDate, assigneeIds);
+
+        Long projectId = created.getProject() != null ? created.getProject().getId() : null;
+        sseEmitterRegistry.broadcast("todo_changed", todoEvent("created", projectId));
+        activityLogService.log(created, currentUser, ActivityType.CREATED, "하위 일감 생성: " + summary, null, null);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/{parentId}/subtasks")
+    public ResponseEntity<List<Todo>> getSubtasks(@PathVariable Long parentId) {
+        List<Todo> subtasks = todoService.getSubtasks(parentId);
+        return ResponseEntity.ok(subtasks);
+    }
+
     @SuppressWarnings("unchecked")
     @PutMapping("/reorder")
     public ResponseEntity<Void> reorderTodos(@RequestBody Map<String, Object> body) {

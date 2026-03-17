@@ -707,3 +707,244 @@
   background: #1e3a5f;
   color: #60a5fa;
 }
+
+/* ── Two-Panel Layout ──────────────────────────── */
+
+.detailTwoPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .detailTwoPanel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Subtask Board ─────────────────────────────── */
+
+.subtaskBoard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subtaskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subtaskTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subtaskAddBtn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-card);
+  color: var(--brand);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.subtaskAddBtn:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.subtaskAddForm {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.subtaskAddInput {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.subtaskAddInput:focus {
+  border-color: var(--brand);
+}
+
+.subtaskAddConfirm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+}
+
+.subtaskAddConfirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.subtaskAddCancel {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.subtaskColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.subtaskColumn {
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  min-height: 120px;
+}
+
+.subtaskColumnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.subtaskColumnCount {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--bg-column);
+  color: var(--text-muted);
+}
+
+.subtaskColumnBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subtaskCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  cursor: grab;
+  transition: box-shadow var(--duration-fast), transform var(--duration-fast);
+}
+
+.subtaskCard:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.subtaskCard:active {
+  cursor: grabbing;
+}
+
+.subtaskCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.subtaskCardKey {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.subtaskCardPriority {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.subtaskCardSummary {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin: 0 0 4px;
+  word-break: break-word;
+}
+
+.subtaskCardAssignees {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.subtaskCardAssignee {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--bg-column);
+  color: var(--text-secondary);
+}
+
+.subtaskCardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.subtaskCardStatus {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.subtaskMoveBtn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.subtaskMoveBtn:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}

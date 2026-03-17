@@ -8,6 +8,8 @@ const todoAPI = {
   changeStatus: (id, status) => apiFetch(`/api/todos/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   reorder:      (orderedIds) => apiFetch('/api/todos/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) }),
   delete:       (id) => apiFetch(`/api/todos/${id}`, { method: 'DELETE' }),
+  subtasks:     (parentId) => apiFetch(`/api/todos/${parentId}/subtasks`),
+  createSubtask:(parentId, data) => apiFetch(`/api/todos/${parentId}/subtasks`, { method: 'POST', body: JSON.stringify(data) }),
   report:       (params, { page = 0, size = 20 } = {}) => {
     const allParams = { ...params, page, size };
     const query = Object.entries(allParams)

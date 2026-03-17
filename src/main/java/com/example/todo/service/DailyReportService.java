@@ -32,6 +32,14 @@ public class DailyReportService {
     private final CommentRepository commentRepository;
     private final UserReportSettingRepository userReportSettingRepository;
 
+    private int[] getSubtaskProgress(Long parentId) {
+        List<Todo> children = todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(parentId);
+        if (children.isEmpty()) return null;
+        int total = children.size();
+        int done = (int) children.stream().filter(c -> c.getStatus() == Todo.Status.DONE).count();
+        return new int[]{total, done};
+    }
+
     @Transactional(readOnly = true)
     public Map<String, Object> generateReport(LocalDate date, User currentUser) {
         LocalDateTime dayStart = date.atStartOfDay();
@@ -144,13 +152,35 @@ public class DailyReportService {
         for (Map.Entry<String, List<Todo>> entry : byProject.entrySet()) {
             sb.append("# ").append(entry.getKey()).append("\n");
             for (Todo todo : entry.getValue()) {
+                // 하위 일감이면 건너뜀 (상위 일감에서 표시)
+                if (todo.getParent() != null) continue;
+
+                int[] progress = getSubtaskProgress(todo.getId());
                 sb.append("  - ").append(todo.getSummary());
-                if (showStatus && todo.getStatus() == Todo.Status.DONE) {
+                if (progress != null) {
+                    sb.append(" (").append(progress[1]).append("/").append(progress[0]).append(" 하위일감 완료)");
+                } else if (showStatus && todo.getStatus() == Todo.Status.DONE) {
                     sb.append(" (작업완료)");
                 }
                 sb.append("\n");
                 if (showStatus) {
                     appendComments(sb, todo.getId(), commentsByTodo);
+                }
+
+                // 하위 일감 들여쓰기 표시
+                if (progress != null) {
+                    List<Todo> children = todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(todo.getId());
+                    for (int i = 0; i < children.size(); i++) {
+                        Todo child = children.get(i);
+                        String prefix = (i == children.size() - 1) ? "    └ " : "    ├ ";
+                        sb.append(prefix).append(child.getSummary());
+                        if (child.getStatus() == Todo.Status.DONE) {
+                            sb.append(" ✓");
+                        } else if (child.getStatus() == Todo.Status.IN_PROGRESS) {
+                            sb.append(" (진행중)");
+                        }
+                        sb.append("\n");
+                    }
                 }
             }
         }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import styles from '../../styles/modal.module.css';
 
-export default function Modal({ title, wide, children, footer, onClose, headerRight }) {
+export default function Modal({ title, wide, extraWide, children, footer, onClose, headerRight }) {
   const overlayRef = useRef(null);
   const mouseDownTarget = useRef(null);
 
@@ -33,7 +33,7 @@ export default function Modal({ title, wide, children, footer, onClose, headerRi
       aria-modal="true"
       role="dialog"
     >
-      <div className={`${styles.modal} ${wide ? styles.wide : ''}`}>
+      <div className={`${styles.modal} ${extraWide ? styles.extraWide : wide ? styles.wide : ''}`}>
         <div className={styles.header}>
           <h2 className={styles.title}>{title}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

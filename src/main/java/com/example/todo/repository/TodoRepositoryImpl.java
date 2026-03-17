@@ -35,6 +35,8 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
             conditions.add("a.id = :assigneeId");
         }
 
+        conditions.add("t.parent IS NULL");
+
         if (startDate != null) {
             conditions.add("t.createdAt >= :startDate");
         }
@@ -93,6 +95,8 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
             countJpql.append(" JOIN t.assignees a");
             conditions.add("a.id = :assigneeId");
         }
+
+        conditions.add("t.parent IS NULL");
 
         if (startDate != null) conditions.add("t.createdAt >= :startDate");
         if (endDate != null) conditions.add("t.createdAt <= :endDate");

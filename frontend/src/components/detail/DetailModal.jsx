@@ -8,22 +8,32 @@ import DetailInfo from './DetailInfo';
 import AttachmentGrid from './AttachmentGrid';
 import CommentSection from './CommentSection';
 import ActivityTimeline from './ActivityTimeline';
+import SubtaskBoard from './SubtaskBoard';
+import detailStyles from '../../styles/detail.module.css';
 
 export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
   const { projects, myRoles } = useProjects();
   const { comments, loadComments, addComment, updateComment, deleteComment } = useComments(todoId);
   const { attachments, loadAttachments, deleteAttachment, getUrl } = useAttachments(todoId);
   const [fetchedItem, setFetchedItem] = useState(null);
+  const [subtasks, setSubtasks] = useState([]);
   const loadCommentsRef = useRef(loadComments);
   loadCommentsRef.current = loadComments;
+
+  const loadSubtasks = useCallback(() => {
+    if (todoId) {
+      todoAPI.subtasks(todoId).then(setSubtasks).catch(() => setSubtasks([]));
+    }
+  }, [todoId]);
 
   useEffect(() => {
     if (todoId) {
       loadComments();
       loadAttachments();
+      loadSubtasks();
       onMarkRead?.(todoId);
     }
-  }, [todoId, loadComments, loadAttachments, onMarkRead]);
+  }, [todoId, loadComments, loadAttachments, loadSubtasks, onMarkRead]);
 
   // 댓글 실시간 갱신 — 모달이 열려있으면 새 댓글도 즉시 읽음 처리
   useEffect(() => {
@@ -50,10 +60,15 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
     window.open(`/todos/${todoId}/summary`, '_blank', 'width=680,height=900');
   };
 
+  const currentItem = item || fetchedItem;
+  const hasSubtasks = subtasks.length > 0;
+  const isParentTodo = hasSubtasks || (currentItem && !currentItem.parent);
+
   return (
     <Modal
       title={`일감 #${todoId} 상세`}
       wide
+      extraWide={hasSubtasks}
       onClose={onClose}
       headerRight={
         <button
@@ -72,21 +87,32 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
         </button>
       }
     >
-      <DetailInfo item={item || fetchedItem} projects={projects} />
-      <AttachmentGrid
-        attachments={attachments}
-        getUrl={getUrl}
-        onDelete={deleteAttachment}
-      />
-      <CommentSection
-        comments={comments}
-        onAdd={addComment}
-        onEdit={updateComment}
-        onDelete={deleteComment}
-        projectId={(item || fetchedItem)?.project?.id}
-        isMaster={myRoles[(item || fetchedItem)?.project?.id] === 'MASTER'}
-      />
-      <ActivityTimeline todoId={todoId} />
+      <div className={hasSubtasks ? detailStyles.detailTwoPanel : undefined}>
+        <div>
+          <DetailInfo item={currentItem} projects={projects} />
+          <AttachmentGrid
+            attachments={attachments}
+            getUrl={getUrl}
+            onDelete={deleteAttachment}
+          />
+          <CommentSection
+            comments={comments}
+            onAdd={addComment}
+            onEdit={updateComment}
+            onDelete={deleteComment}
+            projectId={currentItem?.project?.id}
+            isMaster={myRoles[currentItem?.project?.id] === 'MASTER'}
+          />
+          <ActivityTimeline todoId={todoId} />
+        </div>
+        {hasSubtasks && (
+          <SubtaskBoard
+            parentId={todoId}
+            subtasks={subtasks}
+            onRefresh={loadSubtasks}
+          />
+        )}
+      </div>
     </Modal>
   );
 }

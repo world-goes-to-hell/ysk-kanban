@@ -47,13 +47,57 @@ server.tool(
     let path = '/api/todos';
     if (status) path += `?status=${status}`;
     const data = await apiFetch(path);
-    const summary = data.map(t =>
-      `#${t.id} [${t.status}] ${t.priority || ''} ${t.summary}`
-    ).join('\n');
+    const summary = data.map(t => {
+      const subtaskInfo = t.subtaskTotal > 0 ? ` [${t.subtaskDone}/${t.subtaskTotal}]` : '';
+      return `#${t.id} [${t.status}] ${t.priority || ''} ${t.summary}${subtaskInfo}`;
+    }).join('\n');
     return {
       content: [{
         type: 'text',
         text: summary || '일감이 없습니다.',
+      }],
+    };
+  }
+);
+
+server.tool(
+  'create_subtask',
+  '상위 일감의 하위 일감 생성',
+  {
+    parentId: z.number().describe('상위 일감 ID'),
+    summary: z.string().describe('하위 일감 제목'),
+    description: z.string().optional().describe('하위 일감 설명'),
+    priority: z.enum(['HIGHEST', 'HIGH', 'MEDIUM', 'LOW', 'LOWEST']).optional().describe('우선순위'),
+  },
+  async ({ parentId, ...fields }) => {
+    const data = await apiFetch(`/api/todos/${parentId}/subtasks`, {
+      method: 'POST',
+      body: JSON.stringify(fields),
+    });
+    return {
+      content: [{
+        type: 'text',
+        text: `하위 일감 #${data.id} 생성됨 (상위 #${parentId}): ${data.summary}`,
+      }],
+    };
+  }
+);
+
+server.tool(
+  'list_subtasks',
+  '상위 일감의 하위 일감 목록 조회',
+  {
+    parentId: z.number().describe('상위 일감 ID'),
+  },
+  async ({ parentId }) => {
+    const data = await apiFetch(`/api/todos/${parentId}/subtasks`);
+    const summary = data.map(t =>
+      `  #${t.id} [${t.status}] ${t.priority || ''} ${t.summary}`
+    ).join('\n');
+    return {
+      content: [{
+        type: 'text',
+        text: summary || '하위 일감이 없습니다.',
       }],
     };
   }

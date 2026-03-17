@@ -68,6 +68,9 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
         >
           <span className={styles.cardCompactKey}>#{item.id}</span>
           <span className={styles.cardCompactSummary}>{item.summary}</span>
+          {item.subtaskTotal > 0 && (
+            <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>
+          )}
           {unreadCount > 0 && (
             <span className={styles.unreadBadge}>&#128172; {unreadCount}</span>
           )}
@@ -124,6 +127,9 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
       <div className={styles.cardTop}>
         <span className={styles.cardKey}>#{item.id}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {item.subtaskTotal > 0 && (
+            <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>
+          )}
           {unreadCount > 0 && (
             <span className={styles.unreadBadge}>
               &#128172; {unreadCount}

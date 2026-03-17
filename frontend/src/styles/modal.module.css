@@ -29,6 +29,10 @@
   max-width: 640px;
 }
 
+.extraWide {
+  max-width: 1200px;
+}
+
 .header {
   display: flex;
   align-items: center;

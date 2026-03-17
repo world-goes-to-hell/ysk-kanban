@@ -490,6 +490,19 @@
 
 /* ── Unread Badge ────────────────────────────────── */
 
+.subtaskBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--bg-column);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
 .unreadBadge {
   display: inline-flex;
   align-items: center;

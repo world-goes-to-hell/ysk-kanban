@@ -25,6 +25,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -85,6 +86,22 @@ public class Todo {
     @Builder.Default
     private List<User> assignees = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    @JsonIgnoreProperties({"children", "comments", "attachments", "parent"})
+    private Todo parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @Builder.Default
+    private List<Todo> children = new ArrayList<>();
+
+    @Transient
+    private Integer subtaskTotal;
+
+    @Transient
+    private Integer subtaskDone;
+
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default
@@ -103,11 +120,19 @@ public class Todo {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        validateParentDepth();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        validateParentDepth();
+    }
+
+    private void validateParentDepth() {
+        if (parent != null && parent.getParent() != null) {
+            throw new IllegalStateException("하위 일감은 1단계까지만 허용됩니다.");
+        }
     }
 
     public enum Status {
