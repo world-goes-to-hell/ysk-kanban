@@ -131,7 +131,8 @@ function generateBashScript(apiKey) {
   lines.push('echo "  ✅ hooks/task-tracking-guard.sh"');
   lines.push('');
   lines.push("# ── Skill 파일 생성 ──");
-  lines.push("cat > \"$BASE_DIR/skills/track.md\" << 'SKILL_EOF'");
+  lines.push('mkdir -p "$BASE_DIR/skills/track"');
+  lines.push("cat > \"$BASE_DIR/skills/track/SKILL.md\" << 'SKILL_EOF'");
   lines.push('---');
   lines.push('description: 작업 이력을 MCP(jira-test)로 자동 추적. 일감 등록, 상태 변경, 댓글 기록을 일관성 있게 수행.');
   lines.push('---');
@@ -150,7 +151,7 @@ function generateBashScript(apiKey) {
   lines.push('### 업무보고');
   lines.push('`/track report [날짜]`');
   lines.push('SKILL_EOF');
-  lines.push('echo "  ✅ skills/track.md"');
+  lines.push('echo "  ✅ skills/track/SKILL.md"');
   lines.push('');
   lines.push('# ── settings.json 훅 병합 ──');
   lines.push('SETTINGS_FILE="$BASE_DIR/settings.json"');
@@ -321,8 +322,9 @@ function generatePowershellScript(apiKey) {
   lines.push('/track list [status] - 일감 목록');
   lines.push('/track report [날짜] - 업무보고');
   lines.push("'@");
-  lines.push('Set-Content -Path (Join-Path $BaseDir "skills/track.md") -Value $SkillContent -Encoding UTF8');
-  lines.push('Write-Host "  skills/track.md" -ForegroundColor Green');
+  lines.push('New-Item -ItemType Directory -Force -Path (Join-Path $BaseDir "skills/track") | Out-Null');
+  lines.push('Set-Content -Path (Join-Path $BaseDir "skills/track/SKILL.md") -Value $SkillContent -Encoding UTF8');
+  lines.push('Write-Host "  skills/track/SKILL.md" -ForegroundColor Green');
   lines.push('');
   lines.push('# ── settings.json 훅 병합 ──');
   lines.push('$SettingsFile = Join-Path $BaseDir "settings.json"');
