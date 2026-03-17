@@ -1,6 +1,6 @@
 {
   "name": "@dksktjdrhks2/kanban-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for kanban board task tracking - manage todos via Claude Code",
   "type": "module",
   "bin": {

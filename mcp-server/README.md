@@ -41,7 +41,8 @@ npx -y @dksktjdrhks2/kanban-mcp
 | `list_todos` | 일감 목록 조회 (상태 필터 가능) |
 | `get_todo` | 일감 상세 조회 |
 | `create_todo` | 새 일감 생성 |
-| `quick_todo` | 일감 생성 + 즉시 진행중 전환 |
+| `quick_todo` | 일감 생성 + 즉시 진행중 전환 (완료 시 사용할 ID 안내) |
+| `complete_todo` | 일감 완료 (description + DONE + 댓글 한번에) |
 | `update_todo` | 일감 수정 |
 | `change_todo_status` | 상태 변경 (TODO/IN_PROGRESS/DONE) |
 | `add_comment` | 댓글 추가 |

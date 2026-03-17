@@ -119,7 +119,7 @@ server.tool(
     return {
       content: [{
         type: 'text',
-        text: `일감 #${data.id} 생성 → IN_PROGRESS: ${data.summary}`,
+        text: `일감 #${data.id} 생성 → IN_PROGRESS: ${data.summary}\n\n완료 시: complete_todo(todoId: ${data.id}, comment: "한줄요약", description: "상세 내역")`,
       }],
     };
   }
@@ -164,6 +164,38 @@ server.tool(
       content: [{
         type: 'text',
         text: `일감 #${todoId} 상태 → ${status}`,
+      }],
+    };
+  }
+);
+
+server.tool(
+  'complete_todo',
+  '일감 완료 처리 (description 업데이트 + DONE 상태 변경 + 댓글 추가를 한번에)',
+  {
+    todoId: z.number().describe('일감 ID'),
+    comment: z.string().describe('작업 한줄요약 (댓글)'),
+    description: z.string().optional().describe('상세 작업 내역 (description 업데이트)'),
+  },
+  async ({ todoId, comment, description }) => {
+    if (description) {
+      await apiFetch(`/api/todos/${todoId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ description }),
+      });
+    }
+    await apiFetch(`/api/todos/${todoId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'DONE' }),
+    });
+    const commentData = await apiFetch(`/api/todos/${todoId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content: comment }),
+    });
+    return {
+      content: [{
+        type: 'text',
+        text: `일감 #${todoId} 완료 (댓글 #${commentData.id}: ${comment})`,
       }],
     };
   }
