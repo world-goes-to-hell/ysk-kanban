@@ -1,0 +1,137 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--brand);
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.avatarBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.avatarBtn:hover {
+  background: var(--bg-column);
+}
+
+.avatarSelected {
+  border-color: var(--brand);
+  background: var(--bg-column);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.15s;
+  border: 2px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.avatarSelected .avatar {
+  border-color: transparent;
+}
+
+.checkMark {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.avatarName {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatarSelected .avatarName {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.selectedRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-light);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--brand);
+  color: #fff;
+}
+
+.chipRemove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chipRemove:hover {
+  color: #fff;
+}
+
+.emptyMsg {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+  padding: 12px 0;
+}

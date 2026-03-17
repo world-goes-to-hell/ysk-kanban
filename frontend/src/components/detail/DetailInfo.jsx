@@ -22,6 +22,7 @@ export default function DetailInfo({ item, projects }) {
 
   const calcDuration = () => {
     if (!item.createdAt) return null;
+    if (item.status === 'TODO') return null;
     const start = new Date(item.createdAt);
     const end = item.completedAt ? new Date(item.completedAt) : new Date();
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
@@ -117,8 +118,10 @@ export default function DetailInfo({ item, projects }) {
               <span className={styles.durationArrow}>→</span>
               {item.completedAt ? (
                 <span className={styles.durationEndDone}>{formatTime(item.completedAt)}</span>
-              ) : (
+              ) : item.status === 'IN_PROGRESS' ? (
                 <span className={styles.durationEndProgress}>진행중</span>
+              ) : (
+                <span className={styles.durationEndProgress}>대기중</span>
               )}
               {duration !== null && (
                 <span className={item.completedAt ? styles.durationBadgeDone : styles.durationBadgeProgress}>

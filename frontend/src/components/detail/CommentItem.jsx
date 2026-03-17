@@ -37,13 +37,22 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete, is
 
   const renderContent = (text) => {
     if (!text) return null;
-    const parts = text.split(/(<<@\w+>>)/g);
-    return parts.map((part, i) => {
-      const match = part.match(/^<<@(\w+)>>$/);
-      if (match) {
-        return <span key={i} className={styles.mentionBadge}>@{match[1]}</span>;
-      }
-      return part;
+    const lines = text.split('\n');
+    return lines.map((line, lineIdx) => {
+      const parts = line.split(/(<<@\w+>>)/g);
+      const rendered = parts.map((part, i) => {
+        const match = part.match(/^<<@(\w+)>>$/);
+        if (match) {
+          return <span key={i} className={styles.mentionBadge}>@{match[1]}</span>;
+        }
+        return part;
+      });
+      return (
+        <span key={lineIdx}>
+          {rendered}
+          {lineIdx < lines.length - 1 && <br />}
+        </span>
+      );
     });
   };
 

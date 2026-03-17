@@ -4,6 +4,7 @@ import projectAPI from '../../api/projects';
 import FileDropZone from './FileDropZone';
 import FilePreviewList from './FilePreviewList';
 import ExistingAttachmentList from './ExistingAttachmentList';
+import AssigneeGrid from './AssigneeGrid';
 
 export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPendingFiles, deleteQueue, setDeleteQueue, formRef }) {
   const { projects } = useProjects();
@@ -138,33 +139,11 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
       {members.length > 0 && (
         <div className="form-group">
           <label className="form-label">담당자</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {members.map(user => {
-              const isSelected = selectedAssignees.includes(user.id);
-              return (
-                <label
-                  key={user.id}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    padding: '4px 12px', borderRadius: '20px', cursor: 'pointer',
-                    fontSize: '0.82rem', fontWeight: 500,
-                    background: isSelected ? 'var(--brand)' : 'var(--bg-column)',
-                    color: isSelected ? '#fff' : 'var(--text-secondary)',
-                    border: `1px solid ${isSelected ? 'var(--brand)' : 'var(--border-medium)'}`,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleAssignee(user.id)}
-                    style={{ display: 'none' }}
-                  />
-                  {user.displayName || user.username}
-                </label>
-              );
-            })}
-          </div>
+          <AssigneeGrid
+            members={members}
+            selectedIds={selectedAssignees}
+            onToggle={toggleAssignee}
+          />
         </div>
       )}
       <div className="form-group">
