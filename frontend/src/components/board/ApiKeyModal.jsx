@@ -195,8 +195,8 @@ function generateBashScript(apiKey) {
   lines.push('{');
   lines.push('  "mcpServers": {');
   lines.push('    "jira-test": {');
-  lines.push('      "command": "node",');
-  lines.push('      "args": ["./mcp-server/src/index.js"],');
+  lines.push('      "command": "npx",');
+  lines.push('      "args": ["-y", "@dksktjdrhks2/kanban-mcp"],');
   lines.push('      "env": {');
   lines.push('        "JIRA_TEST_API_URL": "https://kanban.junu.me",');
   lines.push('        "JIRA_TEST_API_KEY": "$API_KEY"');
@@ -229,6 +229,8 @@ function generatePowershellScript(apiKey) {
   lines.push('# ============================================================');
   lines.push('');
   lines.push('$ErrorActionPreference = "Stop"');
+  lines.push('[Console]::OutputEncoding = [System.Text.Encoding]::UTF8');
+  lines.push('$OutputEncoding = [System.Text.Encoding]::UTF8');
   lines.push('');
   lines.push('Write-Host "==========================================" -ForegroundColor Cyan');
   lines.push('Write-Host "  일감 추적 시스템 설치" -ForegroundColor Cyan');
@@ -354,8 +356,8 @@ function generatePowershellScript(apiKey) {
   lines.push('{');
   lines.push('  "mcpServers": {');
   lines.push('    "jira-test": {');
-  lines.push('      "command": "node",');
-  lines.push('      "args": ["./mcp-server/src/index.js"],');
+  lines.push('      "command": "npx",');
+  lines.push('      "args": ["-y", "@dksktjdrhks2/kanban-mcp"],');
   lines.push('      "env": {');
   lines.push('        "JIRA_TEST_API_URL": "https://kanban.junu.me",');
   lines.push('        "JIRA_TEST_API_KEY": "$ApiKey"');
@@ -384,7 +386,8 @@ export function handleScriptDownload(apiKey, type) {
     ? generateBashScript(apiKey)
     : generatePowershellScript(apiKey);
   var filename = type === 'bash' ? 'setup-task-tracking.sh' : 'setup-task-tracking.ps1';
-  var blob = new Blob([script], { type: 'text/plain;charset=utf-8' });
+  var bom = type === 'powershell' ? '\uFEFF' : '';
+  var blob = new Blob([bom + script], { type: 'text/plain;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;

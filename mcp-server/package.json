@@ -1,9 +1,31 @@
 {
-  "name": "jira-test-mcp-server",
+  "name": "@dksktjdrhks2/kanban-mcp",
   "version": "1.0.0",
+  "description": "MCP server for kanban board task tracking - manage todos via Claude Code",
   "type": "module",
   "bin": {
-    "jira-test-mcp": "./src/index.js"
+    "kanban-mcp": "src/index.js"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    ".env.example"
+  ],
+  "keywords": [
+    "mcp",
+    "kanban",
+    "todo",
+    "task-tracking",
+    "claude-code",
+    "model-context-protocol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ysk/jira-test.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
