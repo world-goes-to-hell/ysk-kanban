@@ -12,7 +12,7 @@ npx -y @dksktjdrhks2/kanban-mcp
 
 | 변수 | 필수 | 설명 |
 |------|------|------|
-| `JIRA_TEST_API_URL` | O | 칸반 서버 URL (예: `https://kanban.junu.me`) |
+| `JIRA_TEST_API_URL` | O | 칸반 서버 URL (예: `https://your-kanban-server.com`) |
 | `JIRA_TEST_API_KEY` | O | 프로젝트 API Key |
 
 ## Claude Code에서 사용하기
@@ -26,7 +26,7 @@ npx -y @dksktjdrhks2/kanban-mcp
       "command": "npx",
       "args": ["-y", "@dksktjdrhks2/kanban-mcp"],
       "env": {
-        "JIRA_TEST_API_URL": "https://kanban.junu.me",
+        "JIRA_TEST_API_URL": "https://your-kanban-server.com",
         "JIRA_TEST_API_KEY": "YOUR_API_KEY"
       }
     }
