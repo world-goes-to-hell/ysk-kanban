@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,10 +55,14 @@ public class DailyReportService {
                 .map(s -> s.getProjectId())
                 .collect(Collectors.toSet());
 
+        Comparator<Todo> bySortOrder = Comparator.comparingInt(t -> t.getSortOrder() != null ? t.getSortOrder() : Integer.MAX_VALUE);
+
         // 1. 오늘 완료된 일감 (오늘 DONE으로 변경된 건, 내 일감만, 보고서 포함 프로젝트만)
         List<Todo> completed = filterMine(
                 todoRepository.findByStatusAndUpdatedAtBetween(Todo.Status.DONE, dayStart, dayEnd), userId)
-                .stream().filter(t -> isReportIncluded(t, excludedProjectIds)).collect(Collectors.toList());
+                .stream().filter(t -> isReportIncluded(t, excludedProjectIds))
+                .sorted(bySortOrder)
+                .collect(Collectors.toList());
 
         // 2. 오늘 활동이 있었던 일감 (updatedAt이 오늘이고 TODO가 아닌 건, 내 일감만)
         List<Todo> todayUpdated = todoRepository.findAll().stream()
@@ -67,6 +72,7 @@ public class DailyReportService {
                         && !t.getUpdatedAt().isBefore(dayStart)
                         && t.getUpdatedAt().isBefore(dayEnd)
                         && t.getStatus() != Todo.Status.TODO)
+                .sorted(bySortOrder)
                 .collect(Collectors.toList());
 
         // 3. 오늘 작성된 댓글 (내 일감에 달린 것만, 일감별 그룹핑)
@@ -86,6 +92,7 @@ public class DailyReportService {
                 .filter(t -> isMine(t, userId))
                 .filter(t -> isReportIncluded(t, excludedProjectIds))
                 .filter(t -> t.getStatus() == Todo.Status.TODO || t.getStatus() == Todo.Status.IN_PROGRESS)
+                .sorted(bySortOrder)
                 .collect(Collectors.toList());
 
         // 보고서 텍스트 생성
