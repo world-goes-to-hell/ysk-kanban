@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { getPriorityClass, getPriorityLabel, truncate, formatStatus, formatDueDate } from '../../utils/formatters';
+import { getPriorityClass, getPriorityLabel, truncate, formatStatus, formatDueDate, getBotColor } from '../../utils/formatters';
 import CardPreview from './CardPreview';
 import styles from '../../styles/board.module.css';
 
@@ -148,11 +148,25 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
         )}
         {item.assignees?.length > 0 && (
           <span className={styles.cardAssignees}>
-            {item.assignees.map(a => (
-              <span key={a.id} className={styles.cardAssigneeChip}>
-                {a.displayName || a.username}
-              </span>
-            ))}
+            {item.assignees.map(a => {
+              if (a.bot) {
+                const botColor = getBotColor(a.displayName || a.username);
+                return (
+                  <span
+                    key={a.id}
+                    className={styles.cardAssigneeChip}
+                    style={{ background: botColor.bg, color: botColor.color, borderColor: botColor.border }}
+                  >
+                    🤖 {a.displayName || a.username}
+                  </span>
+                );
+              }
+              return (
+                <span key={a.id} className={styles.cardAssigneeChip}>
+                  {a.displayName || a.username}
+                </span>
+              );
+            })}
           </span>
         )}
         {authorName && (

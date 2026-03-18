@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import todoAPI from '../../api/todos';
-import { getPriorityClass, getPriorityLabel, formatStatus } from '../../utils/formatters';
+import { getPriorityClass, getPriorityLabel, formatStatus, getBotColor } from '../../utils/formatters';
 import styles from '../../styles/detail.module.css';
 
 const COLUMNS = [
@@ -62,7 +62,7 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
     <div className={styles.subtaskBoard}>
       <div className={styles.subtaskHeader}>
         <span className={styles.subtaskTitle}>
-          하위 일감 ({doneCount}/{totalCount})
+          하위 일감 ({doneCount}/{totalCount}){totalCount > 0 && ` ${Math.round((doneCount / totalCount) * 100)}%`}
         </span>
         <button
           className={styles.subtaskAddBtn}
@@ -125,14 +125,25 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
                   <p className={styles.subtaskCardSummary}>{task.summary}</p>
                   {task.assignees?.length > 0 && (
                     <div className={styles.subtaskCardAssignees}>
-                      {task.assignees.map(a => (
-                        <span
-                          key={a.id}
-                          className={a.bot ? styles.subtaskCardAssigneeBot : styles.subtaskCardAssignee}
-                        >
-                          {a.bot ? '🤖 ' : ''}{a.displayName || a.username}
-                        </span>
-                      ))}
+                      {task.assignees.map(a => {
+                        if (a.bot) {
+                          const botColor = getBotColor(a.displayName || a.username);
+                          return (
+                            <span
+                              key={a.id}
+                              className={styles.subtaskCardAssigneeBot}
+                              style={{ background: botColor.bg, color: botColor.color, borderColor: botColor.border }}
+                            >
+                              🤖 {a.displayName || a.username}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span key={a.id} className={styles.subtaskCardAssignee}>
+                            {a.displayName || a.username}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                   <div className={styles.subtaskCardActions}>

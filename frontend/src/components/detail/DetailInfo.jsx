@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getPriorityClass, getPriorityLabel, formatStatus, formatTime, formatDueDate } from '../../utils/formatters';
+import { getPriorityClass, getPriorityLabel, formatStatus, formatTime, formatDueDate, getBotColor } from '../../utils/formatters';
 import styles from '../../styles/detail.module.css';
 
 const STATUS_STYLE_MAP = {
@@ -99,8 +99,29 @@ export default function DetailInfo({ item, projects }) {
         {item.assignees?.length > 0 && (
           <div className={styles.metaCard}>
             <div className={styles.metaLabel}>담당자</div>
-            <div className={styles.metaValue}>
-              {item.assignees.map(a => a.displayName || a.username).join(', ')}
+            <div className={styles.metaValue} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {item.assignees.map(a => {
+                if (a.bot) {
+                  const botColor = getBotColor(a.displayName || a.username);
+                  return (
+                    <span
+                      key={a.id}
+                      style={{
+                        padding: '1px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: botColor.bg,
+                        color: botColor.color,
+                        border: `1px solid ${botColor.border}`,
+                      }}
+                    >
+                      🤖 {a.displayName || a.username}
+                    </span>
+                  );
+                }
+                return <span key={a.id}>{a.displayName || a.username}</span>;
+              })}
             </div>
           </div>
         )}

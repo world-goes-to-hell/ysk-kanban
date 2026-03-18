@@ -45,6 +45,26 @@ export function formatTime(dateStr) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const BOT_COLORS = [
+  { bg: '#7c3aed20', color: '#7c3aed', border: '#7c3aed40' },
+  { bg: '#0891b220', color: '#0891b2', border: '#0891b240' },
+  { bg: '#05966920', color: '#059669', border: '#05966940' },
+  { bg: '#d9730620', color: '#d97306', border: '#d9730640' },
+  { bg: '#dc262620', color: '#dc2626', border: '#dc262640' },
+  { bg: '#2563eb20', color: '#2563eb', border: '#2563eb40' },
+  { bg: '#c026d320', color: '#c026d3', border: '#c026d340' },
+  { bg: '#65a30d20', color: '#65a30d', border: '#65a30d40' },
+];
+
+export function getBotColor(name) {
+  if (!name) return BOT_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return BOT_COLORS[Math.abs(hash) % BOT_COLORS.length];
+}
+
 export function formatDueDate(dateStr) {
   if (!dateStr) return null;
   const today = new Date();
