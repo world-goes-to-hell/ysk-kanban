@@ -33,7 +33,7 @@ public class DailyReportService {
     private final UserReportSettingRepository userReportSettingRepository;
 
     private int[] getSubtaskProgress(Long parentId) {
-        List<Todo> children = todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(parentId);
+        List<Todo> children = todoRepository.findByParent_IdOrderBySortOrderAscCreatedAtDesc(parentId);
         if (children.isEmpty()) return null;
         int total = children.size();
         int done = (int) children.stream().filter(c -> c.getStatus() == Todo.Status.DONE).count();
@@ -169,7 +169,7 @@ public class DailyReportService {
 
                 // 하위 일감 들여쓰기 표시
                 if (progress != null) {
-                    List<Todo> children = todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(todo.getId());
+                    List<Todo> children = todoRepository.findByParent_IdOrderBySortOrderAscCreatedAtDesc(todo.getId());
                     for (int i = 0; i < children.size(); i++) {
                         Todo child = children.get(i);
                         String prefix = (i == children.size() - 1) ? "    └ " : "    ├ ";

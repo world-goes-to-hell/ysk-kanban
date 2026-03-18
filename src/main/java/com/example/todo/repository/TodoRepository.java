@@ -25,9 +25,9 @@ public interface TodoRepository extends JpaRepository<Todo, Long>, TodoRepositor
     @Query("SELECT t FROM Todo t WHERE t.project.id IN :projectIds AND t.parent IS NULL ORDER BY t.sortOrder ASC, t.createdAt DESC")
     List<Todo> findByProjectIdInAndParentIsNullOrderBySortOrderAscCreatedAtDesc(@Param("projectIds") List<Long> projectIds);
 
-    List<Todo> findByParentIdOrderBySortOrderAscCreatedAtDesc(Long parentId);
+    List<Todo> findByParent_IdOrderBySortOrderAscCreatedAtDesc(Long parentId);
 
-    long countByParentId(Long parentId);
+    long countByParent_Id(Long parentId);
 
     @Query("SELECT t.parent.id, t.status, COUNT(t) FROM Todo t WHERE t.parent.id IN :parentIds GROUP BY t.parent.id, t.status")
     List<Object[]> countSubtasksByParentIds(@Param("parentIds") List<Long> parentIds);

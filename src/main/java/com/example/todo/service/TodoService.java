@@ -172,7 +172,7 @@ public class TodoService {
     }
 
     private void autoCompleteParent(Long parentId) {
-        List<Todo> siblings = todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(parentId);
+        List<Todo> siblings = todoRepository.findByParent_IdOrderBySortOrderAscCreatedAtDesc(parentId);
         boolean allDone = siblings.stream().allMatch(t -> t.getStatus() == Todo.Status.DONE);
         if (allDone) {
             Todo parent = todoRepository.findById(parentId)
@@ -223,7 +223,7 @@ public class TodoService {
 
     @Transactional(readOnly = true)
     public List<Todo> getSubtasks(Long parentId) {
-        return todoRepository.findByParentIdOrderBySortOrderAscCreatedAtDesc(parentId);
+        return todoRepository.findByParent_IdOrderBySortOrderAscCreatedAtDesc(parentId);
     }
 
     private void fillSubtaskCounts(List<Todo> todos) {
