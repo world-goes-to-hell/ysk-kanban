@@ -40,7 +40,8 @@ public class User {
     private String displayName;
 
     @Builder.Default
-    private boolean bot = false;
+    @Column(columnDefinition = "boolean default false")
+    private Boolean bot = false;
 
     private LocalDateTime createdAt;
 
