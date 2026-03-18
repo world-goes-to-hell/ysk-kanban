@@ -88,8 +88,12 @@ public class Todo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    @JsonIgnoreProperties({"children", "comments", "attachments", "parent"})
+    @JsonIgnore
     private Todo parent;
+
+    public Long getParentId() {
+        return parent != null ? parent.getId() : null;
+    }
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

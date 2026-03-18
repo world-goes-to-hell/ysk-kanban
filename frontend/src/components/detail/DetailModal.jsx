@@ -62,7 +62,7 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
 
   const currentItem = item || fetchedItem;
   const hasSubtasks = subtasks.length > 0;
-  const isParentTodo = hasSubtasks || (currentItem && !currentItem.parent);
+  const isParentTodo = hasSubtasks || (currentItem && !currentItem.parentId);
 
   return (
     <Modal
