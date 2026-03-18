@@ -38,6 +38,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "todos")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Todo {
 
     @Id
