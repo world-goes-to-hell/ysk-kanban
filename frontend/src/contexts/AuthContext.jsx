@@ -5,16 +5,17 @@ import { useLoading } from '../hooks/useLoading';
 
 const AuthContext = createContext();
 
-const SESSION_TIMEOUT_MS = 60 * 60 * 1000;   // 1시간
-const WARNING_BEFORE_MS  = 5 * 60 * 1000;    // 만료 5분 전 경고
-const WARNING_AT_MS      = SESSION_TIMEOUT_MS - WARNING_BEFORE_MS; // 55분
-const COUNTDOWN_SEC      = 60;
+const SESSION_DEFAULT_MS  = 60 * 60 * 1000;        // 1시간
+const SESSION_REMEMBER_MS = 30 * 24 * 60 * 60 * 1000; // 30일
+const WARNING_BEFORE_MS   = 5 * 60 * 1000;          // 만료 5분 전 경고
+const COUNTDOWN_SEC       = 60;
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionWarning, setSessionWarning] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SEC);
+  const rememberMeRef = useRef(false);
 
   const showToast = useToast();
   const { showLoading, hideLoading } = useLoading();
@@ -42,6 +43,8 @@ export function AuthProvider({ children }) {
 
   const startSessionTimer = useCallback(() => {
     clearTimers();
+    if (rememberMeRef.current) return; // 로그인 유지 시 세션 경고 비활성화
+    const warningAt = SESSION_DEFAULT_MS - WARNING_BEFORE_MS;
     warningTimerRef.current = setTimeout(() => {
       setSessionWarning(true);
       setCountdown(COUNTDOWN_SEC);
@@ -56,7 +59,7 @@ export function AuthProvider({ children }) {
           return prev - 1;
         });
       }, 1000);
-    }, WARNING_AT_MS);
+    }, warningAt);
   }, [clearTimers, doLogout, showToast]);
 
   const handleExtend = useCallback(async () => {
@@ -98,13 +101,14 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('session-expired', handleSessionExpired);
   }, [clearTimers, showToast]);
 
-  const login = useCallback(async (username, password) => {
+  const login = useCallback(async (username, password, rememberMe = false) => {
     showLoading();
     try {
-      const user = await authAPI.login(username, password);
-      setCurrentUser(user);
+      const data = await authAPI.login(username, password, rememberMe);
+      rememberMeRef.current = data.rememberMe || false;
+      setCurrentUser(data.user);
       startSessionTimer();
-      return user;
+      return data.user;
     } finally {
       hideLoading();
     }

@@ -6,6 +6,7 @@ export default function LoginForm() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -18,7 +19,7 @@ export default function LoginForm() {
     }
 
     try {
-      await login(username.trim(), password.trim());
+      await login(username.trim(), password.trim(), rememberMe);
     } catch (err) {
       setError('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
     }
@@ -52,6 +53,14 @@ export default function LoginForm() {
           required
         />
       </div>
+      <label className={styles.rememberMe}>
+        <input
+          type="checkbox"
+          checked={rememberMe}
+          onChange={e => setRememberMe(e.target.checked)}
+        />
+        로그인 유지
+      </label>
       <button className="btn btn-primary btn-full" type="submit">로그인</button>
       {error && <p className={styles.authError}>{error}</p>}
     </form>

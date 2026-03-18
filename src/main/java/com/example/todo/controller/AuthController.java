@@ -52,11 +52,15 @@ public class AuthController {
         }
     }
 
+    private static final int SESSION_DEFAULT = 60 * 60;          // 1시간
+    private static final int SESSION_REMEMBER = 30 * 24 * 60 * 60; // 30일
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
+    public ResponseEntity<?> login(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         try {
-            String username = body.get("username");
-            String password = body.get("password");
+            String username = (String) body.get("username");
+            String password = (String) body.get("password");
+            boolean rememberMe = Boolean.TRUE.equals(body.get("rememberMe"));
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password)
@@ -66,10 +70,16 @@ public class AuthController {
 
             HttpSession session = request.getSession(true);
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            session.setMaxInactiveInterval(rememberMe ? SESSION_REMEMBER : SESSION_DEFAULT);
 
             User user = userService.findByUsername(username);
-            log.info("User logged in: {}", username);
-            return ResponseEntity.ok(user);
+            log.info("User logged in: {} (rememberMe: {})", username, rememberMe);
+
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("user", user);
+            response.put("rememberMe", rememberMe);
+            response.put("sessionTimeout", session.getMaxInactiveInterval());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password"));
