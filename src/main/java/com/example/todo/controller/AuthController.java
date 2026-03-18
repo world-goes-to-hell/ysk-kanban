@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.todo.entity.User;
 import com.example.todo.service.UserService;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +58,9 @@ public class AuthController {
     private static final int SESSION_REMEMBER = 30 * 24 * 60 * 60; // 30일
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+    public ResponseEntity<?> login(@RequestBody Map<String, Object> body,
+                                   HttpServletRequest request,
+                                   HttpServletResponse response) {
         try {
             String username = (String) body.get("username");
             String password = (String) body.get("password");
@@ -72,14 +76,22 @@ public class AuthController {
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
             session.setMaxInactiveInterval(rememberMe ? SESSION_REMEMBER : SESSION_DEFAULT);
 
+            if (rememberMe) {
+                Cookie sessionCookie = new Cookie("JSESSIONID", session.getId());
+                sessionCookie.setPath("/");
+                sessionCookie.setHttpOnly(true);
+                sessionCookie.setMaxAge(SESSION_REMEMBER);
+                response.addCookie(sessionCookie);
+            }
+
             User user = userService.findByUsername(username);
             log.info("User logged in: {} (rememberMe: {})", username, rememberMe);
 
-            Map<String, Object> response = new java.util.HashMap<>();
-            response.put("user", user);
-            response.put("rememberMe", rememberMe);
-            response.put("sessionTimeout", session.getMaxInactiveInterval());
-            return ResponseEntity.ok(response);
+            Map<String, Object> responseBody = new java.util.HashMap<>();
+            responseBody.put("user", user);
+            responseBody.put("rememberMe", rememberMe);
+            responseBody.put("sessionTimeout", session.getMaxInactiveInterval());
+            return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password"));

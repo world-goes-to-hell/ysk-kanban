@@ -77,9 +77,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     authAPI.me()
-      .then(user => {
+      .then(async (user) => {
         if (user) {
           setCurrentUser(user);
+          try {
+            const refreshData = await authAPI.refresh();
+            if (refreshData.timeout >= SESSION_REMEMBER_MS / 1000) {
+              rememberMeRef.current = true;
+            }
+          } catch (_) {}
           startSessionTimer();
         }
       })
