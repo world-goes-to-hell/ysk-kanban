@@ -1,6 +1,7 @@
 package com.example.todo.controller;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,6 +223,13 @@ public class TodoController {
         }
 
         List<Long> assigneeIds = parseAssigneeIds(body);
+
+        String assigneeName = (String) body.get("assigneeName");
+        if (assigneeName != null && !assigneeName.isBlank()) {
+            User botUser = userService.findOrCreateBot(assigneeName);
+            assigneeIds = assigneeIds != null ? new ArrayList<>(assigneeIds) : new ArrayList<>();
+            assigneeIds.add(botUser.getId());
+        }
 
         User currentUser = getCurrentUser();
         Todo created = todoService.createSubtask(parentId, summary, description, priority, currentUser, dueDate, assigneeIds);

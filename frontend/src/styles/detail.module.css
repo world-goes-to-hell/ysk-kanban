@@ -914,6 +914,16 @@
   color: var(--text-secondary);
 }
 
+.subtaskCardAssigneeBot {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #7c3aed20;
+  color: #7c3aed;
+  border: 1px solid #7c3aed40;
+}
+
 .subtaskCardActions {
   display: flex;
   align-items: center;

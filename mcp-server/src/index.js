@@ -68,6 +68,7 @@ server.tool(
     summary: z.string().describe('하위 일감 제목'),
     description: z.string().optional().describe('하위 일감 설명'),
     priority: z.enum(['HIGHEST', 'HIGH', 'MEDIUM', 'LOW', 'LOWEST']).optional().describe('우선순위'),
+    assigneeName: z.string().optional().describe('담당 에이전트 이름'),
   },
   async ({ parentId, ...fields }) => {
     const data = await apiFetch(`/api/todos/${parentId}/subtasks`, {

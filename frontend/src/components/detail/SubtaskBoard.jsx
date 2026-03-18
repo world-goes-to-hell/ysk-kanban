@@ -126,8 +126,11 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
                   {task.assignees?.length > 0 && (
                     <div className={styles.subtaskCardAssignees}>
                       {task.assignees.map(a => (
-                        <span key={a.id} className={styles.subtaskCardAssignee}>
-                          {a.displayName || a.username}
+                        <span
+                          key={a.id}
+                          className={a.bot ? styles.subtaskCardAssigneeBot : styles.subtaskCardAssignee}
+                        >
+                          {a.bot ? '🤖 ' : ''}{a.displayName || a.username}
                         </span>
                       ))}
                     </div>

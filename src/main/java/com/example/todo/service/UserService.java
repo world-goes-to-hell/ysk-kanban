@@ -1,6 +1,7 @@
 package com.example.todo.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,21 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         log.info("Password changed for user: {}", username);
+    }
+
+    public User findOrCreateBot(String displayName) {
+        String username = "bot_" + displayName.toLowerCase().replaceAll("[^a-z0-9_-]", "_");
+        return userRepository.findByUsername(username)
+                .orElseGet(() -> {
+                    User bot = User.builder()
+                            .username(username)
+                            .displayName(displayName)
+                            .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                            .bot(true)
+                            .build();
+                    log.info("Creating bot user: {} ({})", displayName, username);
+                    return userRepository.save(bot);
+                });
     }
 
     @Transactional(readOnly = true)

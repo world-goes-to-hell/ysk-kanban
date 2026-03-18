@@ -39,6 +39,9 @@ public class User {
     @Column(nullable = false)
     private String displayName;
 
+    @Builder.Default
+    private boolean bot = false;
+
     private LocalDateTime createdAt;
 
     @PrePersist
