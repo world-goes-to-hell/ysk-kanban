@@ -24,6 +24,7 @@ public interface TodoRepositoryCustom {
             Long createdById,
             Long projectId,
             Todo.Status status,
+            String dateField,
             int page,
             int size
     );

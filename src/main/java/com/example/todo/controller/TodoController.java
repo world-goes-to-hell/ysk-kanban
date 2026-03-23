@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +55,15 @@ public class TodoController {
     private final WebhookService webhookService;
     private final ProjectMemberRepository projectMemberRepository;
 
+    @GetMapping("/stats/priority")
+    public ResponseEntity<Map<Priority, Long>> getStatsByPriority() {
+        List<Todo> todos = todoService.getAllTodos();
+        Map<Priority, Long> counts = todos.stream()
+                .filter(t -> t.getPriority() != null)
+                .collect(Collectors.groupingBy(Todo::getPriority, Collectors.counting()));
+        return ResponseEntity.ok(counts);
+    }
+
     @GetMapping("/report")
     public ResponseEntity<?> getReport(
             @RequestParam(required = false) String startDate,
@@ -62,12 +72,13 @@ public class TodoController {
             @RequestParam(required = false) Long createdById,
             @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String dateField,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         java.time.LocalDateTime start = startDate != null ? LocalDate.parse(startDate).atStartOfDay() : null;
         java.time.LocalDateTime end = endDate != null ? LocalDate.parse(endDate).atTime(23, 59, 59) : null;
         Todo.Status st = status != null && !status.isEmpty() ? Todo.Status.valueOf(status) : null;
-        Map<String, Object> result = todoService.findByFiltersWithPage(start, end, assigneeId, createdById, projectId, st, page, size);
+        Map<String, Object> result = todoService.findByFiltersWithPage(start, end, assigneeId, createdById, projectId, st, dateField, page, size);
         return ResponseEntity.ok(result);
     }
 

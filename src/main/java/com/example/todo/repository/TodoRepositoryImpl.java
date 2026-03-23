@@ -80,9 +80,11 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
             Long createdById,
             Long projectId,
             Todo.Status status,
+            String dateField,
             int page,
             int size
     ) {
+        String dateCol = "updatedAt".equals(dateField) ? "t.updatedAt" : "t.createdAt";
         StringBuilder baseJpql = new StringBuilder();
         StringBuilder countJpql = new StringBuilder();
         List<String> conditions = new ArrayList<>();
@@ -98,8 +100,8 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
 
         conditions.add("t.parent IS NULL");
 
-        if (startDate != null) conditions.add("t.createdAt >= :startDate");
-        if (endDate != null) conditions.add("t.createdAt <= :endDate");
+        if (startDate != null) conditions.add(dateCol + " >= :startDate");
+        if (endDate != null) conditions.add(dateCol + " <= :endDate");
         if (createdById != null) conditions.add("t.createdBy.id = :createdById");
         if (projectId != null) {
             List<Long> projectIds = collectProjectIds(projectId);

@@ -83,8 +83,8 @@ public class TodoService {
     @Transactional(readOnly = true)
     public Map<String, Object> findByFiltersWithPage(LocalDateTime startDate, LocalDateTime endDate,
                                                       Long assigneeId, Long createdById, Long projectId,
-                                                      Todo.Status status, int page, int size) {
-        return todoRepository.findByFiltersWithPage(startDate, endDate, assigneeId, createdById, projectId, status, page, size);
+                                                      Todo.Status status, String dateField, int page, int size) {
+        return todoRepository.findByFiltersWithPage(startDate, endDate, assigneeId, createdById, projectId, status, dateField, page, size);
     }
 
     @Transactional(readOnly = true)

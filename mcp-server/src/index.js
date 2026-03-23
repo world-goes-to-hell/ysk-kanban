@@ -288,6 +288,63 @@ server.tool(
 );
 
 server.tool(
+  'get_work_history',
+  '특정 기간의 작업이력을 상태별(할일/진행중/완료)로 조회',
+  {
+    startDate: z.string().describe('시작일 (YYYY-MM-DD)'),
+    endDate: z.string().optional().describe('종료일 (YYYY-MM-DD, 기본: startDate와 동일)'),
+  },
+  async ({ startDate, endDate }) => {
+    const end = endDate || startDate;
+    const statuses = ['TODO', 'IN_PROGRESS', 'DONE'];
+    const labels = { TODO: '할일', IN_PROGRESS: '진행중', DONE: '완료' };
+    const lines = [];
+
+    for (const status of statuses) {
+      const data = await apiFetch(
+        `/api/todos/report?startDate=${startDate}&endDate=${end}&status=${status}&dateField=updatedAt&size=100`
+      );
+      const todos = data.content || [];
+      lines.push(`[${labels[status]}] (${todos.length}건)`);
+      if (todos.length === 0) {
+        lines.push('  - 없음');
+      } else {
+        for (const t of todos) {
+          const assignees = (t.assignees || []).map(a => a.displayName || a.username).join(', ');
+          const assigneeStr = assignees ? ` (@${assignees})` : '';
+          lines.push(`  - #${t.id} ${t.summary}${assigneeStr}`);
+          if (t.description) {
+            const desc = t.description.length > 200 ? t.description.substring(0, 200) + '...' : t.description;
+            lines.push(`    내용: ${desc}`);
+          }
+          // 하위 일감이 있으면 표시
+          if (t.subtaskTotal != null && t.subtaskTotal > 0) {
+            lines.push(`    하위일감: ${t.subtaskDone || 0}/${t.subtaskTotal} 완료`);
+          }
+          // 최신 댓글 조회
+          try {
+            const comments = await apiFetch(`/api/todos/${t.id}/comments`);
+            if (comments && comments.length > 0) {
+              const latest = comments[comments.length - 1];
+              const content = latest.content?.length > 100 ? latest.content.substring(0, 100) + '...' : latest.content;
+              lines.push(`    최근댓글: ${content}`);
+            }
+          } catch (_) {}
+        }
+      }
+      lines.push('');
+    }
+
+    return {
+      content: [{
+        type: 'text',
+        text: `작업이력 (${startDate} ~ ${end})\n\n${lines.join('\n')}`,
+      }],
+    };
+  }
+);
+
+server.tool(
   'generate_daily_report',
   '금일 업무보고 텍스트 생성',
   {
