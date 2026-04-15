@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,8 +29,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(csrfHandler)
+                        // 로그인/회원가입은 토큰 없이 진입 가능해야 함 (첫 요청)
+                        .ignoringRequestMatchers("/api/auth/**")
+                        // H2 콘솔(form-based)은 자체 인증 없음, dev profile에서만 활성
+                        .ignoringRequestMatchers("/h2-console/**")
+                        // Bearer 토큰(API Key) 요청은 stateless라 CSRF 무의미
+                        .ignoringRequestMatchers(req -> {
+                            String auth = req.getHeader("Authorization");
+                            return auth != null && auth.startsWith("Bearer ");
+                        })
+                )
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )

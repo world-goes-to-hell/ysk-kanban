@@ -57,9 +57,13 @@ public class CommentService {
         return saved;
     }
 
-    public Comment updateComment(Long commentId, String content, User currentUser) {
+    public Comment updateComment(Long todoId, Long commentId, String content, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+
+        if (comment.getTodo() == null || !comment.getTodo().getId().equals(todoId)) {
+            throw new IllegalArgumentException("Comment does not belong to the specified todo");
+        }
 
         if (!comment.getAuthor().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("You can only edit your own comments");
@@ -70,9 +74,13 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public void deleteComment(Long commentId, User currentUser) {
+    public void deleteComment(Long todoId, Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+
+        if (comment.getTodo() == null || !comment.getTodo().getId().equals(todoId)) {
+            throw new IllegalArgumentException("Comment does not belong to the specified todo");
+        }
 
         boolean isOwner = comment.getAuthor().getId().equals(currentUser.getId());
         boolean isMaster = isProjectMaster(comment.getTodo(), currentUser);

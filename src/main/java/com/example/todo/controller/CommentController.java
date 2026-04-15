@@ -99,7 +99,7 @@ public class CommentController {
             @RequestBody Map<String, String> body) {
         String content = body.get("content");
         User currentUser = getCurrentUser();
-        Comment updated = commentService.updateComment(commentId, content, currentUser);
+        Comment updated = commentService.updateComment(todoId, commentId, content, currentUser);
         sseEmitterRegistry.broadcast("comment_changed", commentEvent("updated", todoId));
         return ResponseEntity.ok(updated);
     }
@@ -109,7 +109,7 @@ public class CommentController {
             @PathVariable Long todoId,
             @PathVariable Long commentId) {
         User currentUser = getCurrentUser();
-        commentService.deleteComment(commentId, currentUser);
+        commentService.deleteComment(todoId, commentId, currentUser);
         Todo todo = todoService.getTodo(todoId);
         activityLogService.log(todo, currentUser, ActivityType.COMMENT_DELETED, "댓글 삭제", null, null);
         if (todo.getProject() != null) {

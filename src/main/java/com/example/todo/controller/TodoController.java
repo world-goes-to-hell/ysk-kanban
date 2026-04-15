@@ -75,6 +75,12 @@ public class TodoController {
             @RequestParam(defaultValue = "createdAt") String dateField,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        User currentUser = getCurrentUser();
+        boolean isAdmin = "admin".equals(currentUser.getUsername());
+        if (projectId != null && !isAdmin
+                && !projectMemberRepository.existsByProjectIdAndUserId(projectId, currentUser.getId())) {
+            return ResponseEntity.status(403).build();
+        }
         java.time.LocalDateTime start = startDate != null ? LocalDate.parse(startDate).atStartOfDay() : null;
         java.time.LocalDateTime end = endDate != null ? LocalDate.parse(endDate).atTime(23, 59, 59) : null;
         Todo.Status st = status != null && !status.isEmpty() ? Todo.Status.valueOf(status) : null;

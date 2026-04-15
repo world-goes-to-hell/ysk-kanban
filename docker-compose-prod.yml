@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: kanban
       POSTGRES_USER: kanban
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-kanban}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD env var must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -32,7 +32,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:postgresql://postgres:5432/kanban
       - DB_USERNAME=kanban
-      - DB_PASSWORD=${DB_PASSWORD:-kanban}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD env var must be set}
     depends_on:
       postgres:
         condition: service_healthy

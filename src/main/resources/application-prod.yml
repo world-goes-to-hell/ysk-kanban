@@ -3,7 +3,7 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/kanban}
     driver-class-name: org.postgresql.Driver
     username: ${DB_USERNAME:kanban}
-    password: ${DB_PASSWORD:kanban}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 30
       minimum-idle: 10

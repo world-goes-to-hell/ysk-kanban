@@ -47,3 +47,11 @@ src/main/resources/static/index.html
 
 ### MCP Server ###
 mcp-server/node_modules/
+
+### Secrets / Sensitive ###
+.env
+.env.local
+.env.*.local
+cookies.txt
+*.sql
+!data-only.example.sql

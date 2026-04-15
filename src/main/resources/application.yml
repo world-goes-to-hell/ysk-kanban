@@ -5,6 +5,8 @@ server:
       timeout: 1h
 
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: jdbc:h2:file:./data/tododb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
     driver-class-name: org.h2.Driver
@@ -18,10 +20,7 @@ spring:
       max-lifetime: 600000
   h2:
     console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
+      enabled: false
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -45,4 +44,4 @@ anthropic:
 
 logging:
   level:
-    com.example.todo: DEBUG
+    com.example.todo: INFO

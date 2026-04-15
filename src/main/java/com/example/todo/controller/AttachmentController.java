@@ -52,6 +52,9 @@ public class AttachmentController {
             @PathVariable Long todoId,
             @PathVariable Long attachmentId) {
         Attachment attachment = attachmentService.getAttachment(attachmentId);
+        if (attachment.getTodo() == null || !attachment.getTodo().getId().equals(todoId)) {
+            return ResponseEntity.status(403).build();
+        }
         Resource resource = attachmentService.downloadFile(attachmentId);
 
         String contentType = attachment.getContentType() != null
@@ -71,6 +74,10 @@ public class AttachmentController {
     public ResponseEntity<Void> deleteAttachment(
             @PathVariable Long todoId,
             @PathVariable Long attachmentId) {
+        Attachment attachment = attachmentService.getAttachment(attachmentId);
+        if (attachment.getTodo() == null || !attachment.getTodo().getId().equals(todoId)) {
+            return ResponseEntity.status(403).build();
+        }
         attachmentService.deleteAttachment(attachmentId);
         return ResponseEntity.noContent().build();
     }

@@ -1,8 +1,19 @@
+function getCsrfToken() {
+  const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 export async function apiFetch(url, options = {}) {
   const isFormData = options.body instanceof FormData;
   const headers = isFormData
     ? { ...(options.headers || {}) }
     : { 'Content-Type': 'application/json', ...(options.headers || {}) };
+
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    const token = getCsrfToken();
+    if (token) headers['X-XSRF-TOKEN'] = token;
+  }
 
   const response = await fetch(url, {
     ...options,
