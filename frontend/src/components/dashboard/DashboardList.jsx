@@ -1,4 +1,5 @@
 import { getPriorityClass, getPriorityLabel, formatDueDate } from '../../utils/formatters';
+import CopyableId from '../common/CopyableId';
 import styles from '../../styles/dashboard.module.css';
 
 export default function DashboardList({ items, emptyText, onItemClick }) {
@@ -16,7 +17,7 @@ export default function DashboardList({ items, emptyText, onItemClick }) {
             className={styles.listItem}
             onClick={() => onItemClick?.(item.id, item.project?.id)}
           >
-            <span className={styles.listKey}>#{item.id}</span>
+            <CopyableId id={item.id} className={styles.listKey} />
             <span className={styles.listSummary}>{item.summary}</span>
             {dueInfo && (
               <span className={`${styles.listDue} ${styles[`listDue${dueInfo.status.charAt(0).toUpperCase() + dueInfo.status.slice(1)}`] || ''}`}>

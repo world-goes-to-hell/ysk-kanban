@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPriorityClass, getPriorityLabel, formatStatus, formatDueDate, formatTime } from '../../utils/formatters';
 import commentAPI from '../../api/comments';
 import attachmentAPI from '../../api/attachments';
+import CopyableId from '../common/CopyableId';
 import styles from '../../styles/board.module.css';
 
 const STATUS_CLASS_MAP = {
@@ -62,7 +63,7 @@ export default function CardPreview({ item, anchorRect, onMouseEnter, onMouseLea
     >
       {/* 헤더: 제목 + 상태 */}
       <div className={styles.previewHeader}>
-        <span className={styles.previewId}>#{item.id}</span>
+        <CopyableId id={item.id} className={styles.previewId} />
         <h4 className={styles.previewTitle}>{item.summary}</h4>
         <span className={`${styles.cardStatus} ${STATUS_CLASS_MAP[item.status] || ''}`}>
           {formatStatus(item.status)}

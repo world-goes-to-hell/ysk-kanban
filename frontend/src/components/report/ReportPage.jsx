@@ -3,6 +3,7 @@ import { useProjects } from '../../contexts/ProjectContext';
 import { apiFetch } from '../../api/client';
 import todoAPI from '../../api/todos';
 import { formatStatus, getPriorityLabel } from '../../utils/formatters';
+import CopyableId from '../common/CopyableId';
 import styles from '../../styles/report.module.css';
 
 function formatDate(dateStr) {
@@ -367,7 +368,7 @@ export default function ReportPage() {
                   <tbody>
                     {results.map(t => (
                       <tr key={t.id}>
-                        <td className={styles.cellId}>#{t.id}</td>
+                        <td className={styles.cellId}><CopyableId id={t.id} className={styles.cellId} /></td>
                         <td className={styles.cellTitle}>{t.summary}</td>
                         <td><span className={`${styles.statusBadge} ${styles[`status_${t.status}`]}`}>{formatStatus(t.status)}</span></td>
                         <td>{getPriorityLabel(t.priority)}</td>
