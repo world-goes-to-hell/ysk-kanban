@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { getPriorityClass, getPriorityLabel, truncate, formatStatus, formatDueDate, getBotColor } from '../../utils/formatters';
 import CardPreview from './CardPreview';
+import CopyableId from '../common/CopyableId';
 import styles from '../../styles/board.module.css';
 
 const STATUS_CLASS_MAP = {
@@ -14,6 +15,7 @@ const HOVER_DELAY = 300;
 export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick, provided, isDragging, unreadCount, compact, canDelete }) {
   const priorityClass = getPriorityClass(item.priority);
   const priorityLabel = getPriorityLabel(item.priority);
+  const agentLive = item.status === 'IN_PROGRESS' && item.assignees?.some(a => a?.bot);
   const [preview, setPreview] = useState(null);
   const hoverTimer = useRef(null);
   const isOverPopover = useRef(false);
@@ -66,7 +68,8 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <span className={styles.cardCompactKey}>#{item.id}</span>
+          <CopyableId id={item.id} className={styles.cardCompactKey} />
+          {agentLive && <span className="agentLiveDot" title="에이전트 작업 중" />}
           <span className={styles.cardCompactSummary}>{item.summary}</span>
           {item.subtaskTotal > 0 && (
             <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>
@@ -125,7 +128,10 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
       onClick={onClick}
     >
       <div className={styles.cardTop}>
-        <span className={styles.cardKey}>#{item.id}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CopyableId id={item.id} className={styles.cardKey} />
+          {agentLive && <span className="agentLiveBadge" title="에이전트 작업 중"><span className="agentLiveDot" />작업중</span>}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {item.subtaskTotal > 0 && (
             <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import todoAPI from '../../api/todos';
 import { getPriorityClass, getPriorityLabel, formatStatus, getBotColor } from '../../utils/formatters';
+import CopyableId from '../common/CopyableId';
 import styles from '../../styles/detail.module.css';
 
 const COLUMNS = [
@@ -9,7 +10,7 @@ const COLUMNS = [
   { key: 'DONE', label: '완료' },
 ];
 
-export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
+export default function SubtaskBoard({ parentId, subtasks, onRefresh, onOpenSubtask }) {
   const [adding, setAdding] = useState(false);
   const [newSummary, setNewSummary] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -115,9 +116,24 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
                   className={styles.subtaskCard}
                   draggable
                   onDragStart={(e) => handleDragStart(e, task.id)}
+                  onClick={() => onOpenSubtask?.(task.id)}
+                  role={onOpenSubtask ? 'button' : undefined}
+                  tabIndex={onOpenSubtask ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (onOpenSubtask && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      onOpenSubtask(task.id);
+                    }
+                  }}
+                  style={onOpenSubtask ? { cursor: 'pointer' } : undefined}
                 >
                   <div className={styles.subtaskCardTop}>
-                    <span className={styles.subtaskCardKey}>#{task.id}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CopyableId id={task.id} className={styles.subtaskCardKey} />
+                      {task.status === 'IN_PROGRESS' && task.assignees?.some(a => a?.bot) && (
+                        <span className="agentLiveDot" title="에이전트 작업 중" />
+                      )}
+                    </div>
                     <span className={`${styles.subtaskCardPriority} ${getPriorityClass(task.priority)}`}>
                       {getPriorityLabel(task.priority)}
                     </span>
@@ -146,11 +162,11 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
                       })}
                     </div>
                   )}
-                  <div className={styles.subtaskCardActions}>
+                  <div className={styles.subtaskCardActions} onClick={(e) => e.stopPropagation()}>
                     {col.key !== 'TODO' && (
                       <button
                         className={styles.subtaskMoveBtn}
-                        onClick={() => handleStatusChange(task.id, col.key === 'DONE' ? 'IN_PROGRESS' : 'TODO')}
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, col.key === 'DONE' ? 'IN_PROGRESS' : 'TODO'); }}
                       >
                         ←
                       </button>
@@ -159,7 +175,7 @@ export default function SubtaskBoard({ parentId, subtasks, onRefresh }) {
                     {col.key !== 'DONE' && (
                       <button
                         className={styles.subtaskMoveBtn}
-                        onClick={() => handleStatusChange(task.id, col.key === 'TODO' ? 'IN_PROGRESS' : 'DONE')}
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(task.id, col.key === 'TODO' ? 'IN_PROGRESS' : 'DONE'); }}
                       >
                         →
                       </button>

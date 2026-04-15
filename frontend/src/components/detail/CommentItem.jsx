@@ -10,6 +10,7 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete, is
 
   const author = comment.author?.displayName || comment.author?.username || '알 수 없음';
   const initial = author.charAt(0).toUpperCase();
+  const isBot = !!comment.author?.bot;
   const attachments = comment.attachments || [];
   const isOwner = currentUser?.username === comment.author?.username;
 
@@ -58,10 +59,36 @@ export default function CommentItem({ comment, currentUser, onEdit, onDelete, is
 
   return (
     <div className={styles.commentItem}>
-      <div className={styles.commentAvatar}>{initial}</div>
-      <div className={styles.commentBubble}>
+      <div
+        className={styles.commentAvatar}
+        style={isBot ? { background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' } : undefined}
+      >
+        {isBot ? '🤖' : initial}
+      </div>
+      <div
+        className={styles.commentBubble}
+        style={isBot ? {
+          background: '#f0fdf4',
+          borderLeft: '3px solid #10b981',
+        } : undefined}
+      >
         <div className={styles.commentHeader}>
-          <span className={styles.commentAuthor}>{author}</span>
+          <span className={styles.commentAuthor}>
+            {author}
+            {isBot && (
+              <span style={{
+                marginLeft: '6px',
+                padding: '1px 6px',
+                background: '#10b981',
+                color: '#fff',
+                borderRadius: '999px',
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                verticalAlign: 'middle',
+              }}>BOT</span>
+            )}
+          </span>
           <span className={styles.commentTime}>{formatTime(comment.createdAt)}</span>
         </div>
         {isEditing ? (

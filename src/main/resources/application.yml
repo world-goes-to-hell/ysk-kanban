@@ -39,6 +39,10 @@ spring:
 file:
   upload-dir: uploads
 
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+  model: ${ANTHROPIC_MODEL:claude-sonnet-4-5}
+
 logging:
   level:
     com.example.todo: DEBUG
