@@ -9,7 +9,6 @@ import AttachmentGrid from './AttachmentGrid';
 import CommentSection from './CommentSection';
 import ActivityTimeline from './ActivityTimeline';
 import SubtaskBoard from './SubtaskBoard';
-import AgentChatPanel from './AgentChatPanel';
 import detailStyles from '../../styles/detail.module.css';
 
 export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
@@ -151,14 +150,6 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
             isMaster={myRoles[currentItem?.project?.id] === 'MASTER'}
           />
           <ActivityTimeline todoId={currentTodoId} />
-          <AgentChatPanel
-            todoId={currentTodoId}
-            defaultAgentName={
-              currentItem?.assignees?.find(a => a?.bot)?.displayName
-              || currentItem?.assignees?.find(a => a?.bot)?.username
-              || 'agent'
-            }
-          />
         </div>
         {hasSubtasks && (
           <SubtaskBoard
