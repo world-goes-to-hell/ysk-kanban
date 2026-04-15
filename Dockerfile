@@ -14,6 +14,7 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle/ gradle/
 COPY src/ src/
+COPY .claude/ .claude/
 COPY --from=frontend /app/src/main/resources/static/ src/main/resources/static/
 RUN gradle bootJar -x test --no-daemon
 
@@ -25,6 +26,7 @@ RUN apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtim
 RUN mkdir -p /app/data /app/uploads
 
 COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=build /app/.claude/ /app/.claude/
 
 VOLUME ["/app/data", "/app/uploads"]
 EXPOSE 8080

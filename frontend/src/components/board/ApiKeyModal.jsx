@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Modal from '../common/Modal';
 import apiKeyAPI from '../../api/apiKeys';
+import setupAPI from '../../api/setup';
 import { useToast } from '../../hooks/useToast';
 import styles from '../../styles/apiKey.module.css';
 
@@ -15,7 +16,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('ko-KR');
 }
 
-function generateBashScript(apiKey) {
+function generateBashScript(apiKey, skillMd) {
   var lines = [];
   lines.push('#!/bin/bash');
   lines.push('# ============================================================');
@@ -133,23 +134,27 @@ function generateBashScript(apiKey) {
   lines.push("# ── Skill 파일 생성 ──");
   lines.push('mkdir -p "$BASE_DIR/skills/track"');
   lines.push("cat > \"$BASE_DIR/skills/track/SKILL.md\" << 'SKILL_EOF'");
-  lines.push('---');
-  lines.push('description: 작업 이력을 MCP(jira-test)로 자동 추적. 일감 등록, 상태 변경, 댓글 기록을 일관성 있게 수행.');
-  lines.push('---');
-  lines.push('');
-  lines.push('# 작업 추적 스킬 (jira-test MCP)');
-  lines.push('');
-  lines.push('## 사용법');
-  lines.push('`/track <command> [args]`');
-  lines.push('');
-  lines.push('### 작업 시작');
-  lines.push('`/track start <일감 제목>`');
-  lines.push('### 작업 완료');
-  lines.push('`/track done <일감 ID> [작업 내역]`');
-  lines.push('### 일감 목록');
-  lines.push('`/track list [status]`');
-  lines.push('### 업무보고');
-  lines.push('`/track report [날짜]`');
+  if (skillMd && skillMd.length > 0) {
+    skillMd.split('\n').forEach(function (l) { lines.push(l); });
+  } else {
+    lines.push('---');
+    lines.push('description: 작업 이력을 MCP(jira-test)로 자동 추적. 일감 등록, 상태 변경, 댓글 기록을 일관성 있게 수행.');
+    lines.push('---');
+    lines.push('');
+    lines.push('# 작업 추적 스킬 (jira-test MCP)');
+    lines.push('');
+    lines.push('## 사용법');
+    lines.push('`/track <command> [args]`');
+    lines.push('');
+    lines.push('### 작업 시작');
+    lines.push('`/track start <일감 제목>`');
+    lines.push('### 작업 완료');
+    lines.push('`/track done <일감 ID> [작업 내역]`');
+    lines.push('### 일감 목록');
+    lines.push('`/track list [status]`');
+    lines.push('### 업무보고');
+    lines.push('`/track report [날짜]`');
+  }
   lines.push('SKILL_EOF');
   lines.push('echo "  ✅ skills/track/SKILL.md"');
   lines.push('');
@@ -219,7 +224,7 @@ function generateBashScript(apiKey) {
   return lines.join('\n');
 }
 
-function generatePowershellScript(apiKey) {
+function generatePowershellScript(apiKey, skillMd) {
   var lines = [];
   lines.push('# ============================================================');
   lines.push('# 일감 추적 시스템 설치 스크립트 (Windows PowerShell)');
@@ -314,15 +319,19 @@ function generatePowershellScript(apiKey) {
   lines.push('');
   lines.push("# ── Skill 파일 생성 ──");
   lines.push("$SkillContent = @'");
-  lines.push('---');
-  lines.push('description: 작업 이력을 MCP(jira-test)로 자동 추적.');
-  lines.push('---');
-  lines.push('# 작업 추적 스킬 (jira-test MCP)');
-  lines.push('## 사용법');
-  lines.push('/track start <제목> - 일감 시작');
-  lines.push('/track done <ID> <한줄요약> - 작업 완료');
-  lines.push('/track list [status] - 일감 목록');
-  lines.push('/track report [날짜] - 업무보고');
+  if (skillMd && skillMd.length > 0) {
+    skillMd.split('\n').forEach(function (l) { lines.push(l); });
+  } else {
+    lines.push('---');
+    lines.push('description: 작업 이력을 MCP(jira-test)로 자동 추적.');
+    lines.push('---');
+    lines.push('# 작업 추적 스킬 (jira-test MCP)');
+    lines.push('## 사용법');
+    lines.push('/track start <제목> - 일감 시작');
+    lines.push('/track done <ID> <한줄요약> - 작업 완료');
+    lines.push('/track list [status] - 일감 목록');
+    lines.push('/track report [날짜] - 업무보고');
+  }
   lines.push("'@");
   lines.push('New-Item -ItemType Directory -Force -Path (Join-Path $BaseDir "skills/track") | Out-Null');
   lines.push('Set-Content -Path (Join-Path $BaseDir "skills/track/SKILL.md") -Value $SkillContent -Encoding UTF8');
@@ -381,10 +390,18 @@ function generatePowershellScript(apiKey) {
   return lines.join('\r\n');
 }
 
-export function handleScriptDownload(apiKey, type) {
+export async function handleScriptDownload(apiKey, type) {
+  var skillMd = null;
+  try {
+    var data = await setupAPI.getTrackSkill();
+    skillMd = data && data.content ? data.content : null;
+  } catch (e) {
+    // 서버에서 최신 SKILL.md를 못 가져오면 embedded fallback 사용
+    skillMd = null;
+  }
   var script = type === 'bash'
-    ? generateBashScript(apiKey)
-    : generatePowershellScript(apiKey);
+    ? generateBashScript(apiKey, skillMd)
+    : generatePowershellScript(apiKey, skillMd);
   var filename = type === 'bash' ? 'setup-task-tracking.sh' : 'setup-task-tracking.ps1';
   var bom = type === 'powershell' ? '\uFEFF' : '';
   var blob = new Blob([bom + script], { type: 'text/plain;charset=utf-8' });
