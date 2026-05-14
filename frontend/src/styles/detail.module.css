@@ -261,6 +261,7 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
+  min-width: 0;
 }
 
 .metaCardWide {
@@ -326,6 +327,39 @@
 .metaValue {
   font-size: 0.835rem;
   font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.assigneeList {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.personNameValue {
+  display: flex;
+}
+
+.personNameChip,
+.botAssigneeChip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.personNameChip {
+  background: var(--bg-column);
+  border: 1px solid var(--border-light);
   color: var(--text-primary);
 }
 

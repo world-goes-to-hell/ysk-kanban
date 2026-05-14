@@ -19,6 +19,7 @@ export default function DetailInfo({ item, projects }) {
     ? projects?.find(p => String(p.id) === String(item.projectId))
     : null;
   const dueInfo = item.status !== 'DONE' ? formatDueDate(item.dueDate) : null;
+  const createdByName = item.createdBy?.displayName || item.createdBy?.username || '';
 
   const calcDuration = () => {
     if (!item.createdAt) return null;
@@ -99,28 +100,31 @@ export default function DetailInfo({ item, projects }) {
         {item.assignees?.length > 0 && (
           <div className={styles.metaCard}>
             <div className={styles.metaLabel}>담당자</div>
-            <div className={styles.metaValue} style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            <div className={`${styles.metaValue} ${styles.assigneeList}`}>
               {item.assignees.map(a => {
+                const assigneeName = a.displayName || a.username;
                 if (a.bot) {
-                  const botColor = getBotColor(a.displayName || a.username);
+                  const botColor = getBotColor(assigneeName);
                   return (
                     <span
                       key={a.id}
+                      className={styles.botAssigneeChip}
+                      title={assigneeName}
                       style={{
-                        padding: '1px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
                         background: botColor.bg,
                         color: botColor.color,
                         border: `1px solid ${botColor.border}`,
                       }}
                     >
-                      🤖 {a.displayName || a.username}
+                      🤖 {assigneeName}
                     </span>
                   );
                 }
-                return <span key={a.id}>{a.displayName || a.username}</span>;
+                return (
+                  <span key={a.id} className={styles.personNameChip} title={assigneeName}>
+                    {assigneeName}
+                  </span>
+                );
               })}
             </div>
           </div>
@@ -128,7 +132,9 @@ export default function DetailInfo({ item, projects }) {
         {item.createdBy && (
           <div className={styles.metaCard}>
             <div className={styles.metaLabel}>작성자</div>
-            <div className={styles.metaValue}>{item.createdBy.displayName || item.createdBy.username}</div>
+            <div className={`${styles.metaValue} ${styles.personNameValue}`} title={createdByName}>
+              <span className={styles.personNameChip}>{createdByName}</span>
+            </div>
           </div>
         )}
         {item.createdAt && (

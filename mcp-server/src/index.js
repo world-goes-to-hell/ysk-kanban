@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-const API_BASE = process.env.JIRA_TEST_API_URL || 'http://localhost:8080';
+const API_BASE = process.env.JIRA_TEST_API_URL || 'https://kanban-5297.origin.mmv.kr';
 const API_KEY = process.env.JIRA_TEST_API_KEY;
 
 if (!API_KEY) {

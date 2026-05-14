@@ -331,7 +331,7 @@ $McpJson = @"
       "command": "node",
       "args": ["./mcp-server/src/index.js"],
       "env": {
-        "JIRA_TEST_API_URL": "https://kanban.junu.me",
+        "JIRA_TEST_API_URL": "https://kanban-5297.origin.mmv.kr",
         "JIRA_TEST_API_KEY": "$ApiKey"
       }
     }

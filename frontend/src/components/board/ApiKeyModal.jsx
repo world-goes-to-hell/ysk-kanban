@@ -5,6 +5,8 @@ import setupAPI from '../../api/setup';
 import { useToast } from '../../hooks/useToast';
 import styles from '../../styles/apiKey.module.css';
 
+const MCP_API_URL = 'https://kanban-5297.origin.mmv.kr';
+
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -203,7 +205,7 @@ function generateBashScript(apiKey, skillMd) {
   lines.push('      "command": "npx",');
   lines.push('      "args": ["-y", "@dksktjdrhks2/kanban-mcp"],');
   lines.push('      "env": {');
-  lines.push('        "JIRA_TEST_API_URL": "https://kanban.junu.me",');
+  lines.push('        "JIRA_TEST_API_URL": "' + MCP_API_URL + '",');
   lines.push('        "JIRA_TEST_API_KEY": "$API_KEY"');
   lines.push('      }');
   lines.push('    }');
@@ -368,7 +370,7 @@ function generatePowershellScript(apiKey, skillMd) {
   lines.push('      "command": "npx",');
   lines.push('      "args": ["-y", "@dksktjdrhks2/kanban-mcp"],');
   lines.push('      "env": {');
-  lines.push('        "JIRA_TEST_API_URL": "https://kanban.junu.me",');
+  lines.push('        "JIRA_TEST_API_URL": "' + MCP_API_URL + '",');
   lines.push('        "JIRA_TEST_API_KEY": "$ApiKey"');
   lines.push('      }');
   lines.push('    }');
