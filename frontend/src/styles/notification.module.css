@@ -92,6 +92,61 @@
   background: var(--brand-light);
 }
 
+.osNotifRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg-canvas, var(--bg-column));
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.78rem;
+}
+
+.osNotifLabel {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.osNotifEnableBtn,
+.osNotifToggle {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.osNotifEnableBtn:hover,
+.osNotifToggle:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.osNotifToggleOn {
+  color: #fff;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.osNotifToggleOn:hover {
+  color: #fff;
+  background: var(--brand);
+  opacity: 0.92;
+}
+
+.osNotifDenied {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .panelBody {
   overflow-y: auto;
   flex: 1;

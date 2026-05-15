@@ -4,5 +4,6 @@ public enum NotificationType {
     ASSIGNED,
     COMMENT_ADDED,
     STATUS_CHANGED,
-    MENTIONED
+    MENTIONED,
+    DISCUSSION_STARTED
 }

@@ -351,9 +351,9 @@ function ApiTab({ projectId }) {
 }
 
 const SEMANTIC_LABEL = {
-  TODO: '미시작으로 처리',
-  IN_PROGRESS: '진행 중으로 처리',
-  DONE: '완료로 처리',
+  TODO: '미시작 그룹',
+  IN_PROGRESS: '진행 중 그룹',
+  DONE: '완료 그룹',
 };
 
 const SEMANTIC_DEFAULT_COLOR = {
@@ -515,9 +515,9 @@ function StatusTab({ projectId, onUpdated }) {
             setColor(SEMANTIC_DEFAULT_COLOR[nextSemantic] || SEMANTIC_DEFAULT_COLOR.IN_PROGRESS);
           }}
         >
-          <option value="TODO">미시작으로 처리</option>
-          <option value="IN_PROGRESS">진행 중으로 처리</option>
-          <option value="DONE">완료로 처리</option>
+          <option value="TODO">미시작 그룹</option>
+          <option value="IN_PROGRESS">진행 중 그룹</option>
+          <option value="DONE">완료 그룹</option>
         </select>
         <input
           className={settingsStyles.statusColorInput}

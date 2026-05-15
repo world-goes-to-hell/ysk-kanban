@@ -80,6 +80,25 @@ public class NotificationService {
         }
     }
 
+    public void notifyDiscussionStarted(Todo todo, User actor) {
+        String prefix = projectPrefix(todo);
+        java.util.Set<Long> notified = new java.util.HashSet<>();
+        if (todo.getAssignees() != null) {
+            for (User assignee : todo.getAssignees()) {
+                if (assignee.getId().equals(actor.getId())) continue;
+                String message = prefix + actor.getDisplayName() + "님이 [" + todo.getSummary() + "] 토론을 시작했습니다 — 클릭하여 참여";
+                createAndPush(assignee.getId(), NotificationType.DISCUSSION_STARTED, message, todo.getId());
+                notified.add(assignee.getId());
+            }
+        }
+        if (todo.getCreatedBy() != null
+                && !todo.getCreatedBy().getId().equals(actor.getId())
+                && !notified.contains(todo.getCreatedBy().getId())) {
+            String message = prefix + actor.getDisplayName() + "님이 [" + todo.getSummary() + "] 토론을 시작했습니다 — 클릭하여 참여";
+            createAndPush(todo.getCreatedBy().getId(), NotificationType.DISCUSSION_STARTED, message, todo.getId());
+        }
+    }
+
     public void notifyMentioned(Todo todo, List<User> mentionedUsers, User commenter) {
         String prefix = projectPrefix(todo);
         for (User user : mentionedUsers) {

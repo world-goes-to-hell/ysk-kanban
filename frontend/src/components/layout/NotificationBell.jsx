@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { formatTime } from '../../utils/formatters';
+import {
+  isSupported as isBrowserNotifSupported,
+  getPermission as getBrowserNotifPermission,
+  requestPermission as requestBrowserNotifPermission,
+  isEnabled as isBrowserNotifEnabled,
+  setEnabled as setBrowserNotifEnabled,
+} from '../../utils/browserNotification';
 import styles from '../../styles/notification.module.css';
 
 const TYPE_LABELS = {
@@ -11,6 +18,8 @@ const TYPE_LABELS = {
 
 export default function NotificationBell({ notifications, unreadCount, onMarkAsRead, onMarkAllAsRead }) {
   const [open, setOpen] = useState(false);
+  const [permission, setPermission] = useState(getBrowserNotifPermission());
+  const [osEnabled, setOsEnabled] = useState(isBrowserNotifEnabled());
   const ref = useRef(null);
 
   useEffect(() => {
@@ -23,6 +32,18 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAsR
 
   const handleItemClick = (n) => {
     if (!n.isRead) onMarkAsRead(n.id);
+  };
+
+  const handleEnableOsNotif = async () => {
+    const result = await requestBrowserNotifPermission();
+    setPermission(result);
+    setOsEnabled(result === 'granted');
+  };
+
+  const handleToggleOsNotif = () => {
+    const next = !osEnabled;
+    setBrowserNotifEnabled(next);
+    setOsEnabled(next);
   };
 
   return (
@@ -39,6 +60,24 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAsR
               <button className={styles.panelReadAll} onClick={onMarkAllAsRead}>모두 읽음</button>
             )}
           </div>
+          {isBrowserNotifSupported() && (
+            <div className={styles.osNotifRow}>
+              <span className={styles.osNotifLabel}>OS 알림</span>
+              {permission === 'granted' ? (
+                <button
+                  className={`${styles.osNotifToggle} ${osEnabled ? styles.osNotifToggleOn : ''}`}
+                  onClick={handleToggleOsNotif}
+                  title={osEnabled ? '끄기' : '켜기'}
+                >
+                  {osEnabled ? '켜짐' : '꺼짐'}
+                </button>
+              ) : permission === 'denied' ? (
+                <span className={styles.osNotifDenied} title="브라우저 설정에서 알림 권한을 허용해주세요">차단됨</span>
+              ) : (
+                <button className={styles.osNotifEnableBtn} onClick={handleEnableOsNotif}>허용</button>
+              )}
+            </div>
+          )}
           <div className={styles.panelBody}>
             {notifications.length === 0 ? (
               <div className={styles.panelEmpty}>알림이 없습니다.</div>

@@ -33,6 +33,11 @@
   max-width: 1200px;
 }
 
+.megaWide {
+  max-width: min(1800px, 96vw);
+  transition: max-width var(--duration-base) var(--ease-out);
+}
+
 .header {
   display: flex;
   align-items: center;

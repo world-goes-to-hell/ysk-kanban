@@ -9,12 +9,14 @@ import AttachmentGrid from './AttachmentGrid';
 import CommentSection from './CommentSection';
 import ActivityTimeline from './ActivityTimeline';
 import SubtaskBoard from './SubtaskBoard';
+import DiscussionPanel from './DiscussionPanel';
 import detailStyles from '../../styles/detail.module.css';
 
 export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
   const { projects, myRoles } = useProjects();
   const [trail, setTrail] = useState([]);
   const [currentTodoId, setCurrentTodoId] = useState(todoId);
+  const [hasActiveDiscussion, setHasActiveDiscussion] = useState(false);
 
   // 부모가 새 todoId를 주입하면 현재 위치 초기화 (다른 일감으로 점프)
   useEffect(() => {
@@ -96,7 +98,8 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
           : `일감 #${currentTodoId} 상세`
       }
       wide
-      extraWide={hasSubtasks}
+      extraWide={hasSubtasks && !hasActiveDiscussion}
+      megaWide={hasActiveDiscussion}
       onClose={onClose}
       headerRight={
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -148,6 +151,11 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
             onDelete={deleteComment}
             projectId={currentItem?.project?.id}
             isMaster={myRoles[currentItem?.project?.id] === 'MASTER'}
+          />
+          <DiscussionPanel
+            todoId={currentTodoId}
+            isMaster={myRoles[currentItem?.project?.id] === 'MASTER'}
+            onActiveChange={setHasActiveDiscussion}
           />
           <ActivityTimeline todoId={currentTodoId} />
         </div>

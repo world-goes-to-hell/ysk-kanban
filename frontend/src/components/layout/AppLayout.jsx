@@ -13,17 +13,17 @@ export default function AppLayout() {
   sseNotificationRef.current = handleSseNotification;
 
   useEffect(() => {
-    const handleCommentChanged = (data) => {
-      window.dispatchEvent(new CustomEvent('comment_changed', { detail: data }));
+    const dispatchWindowEvent = (name) => (data) => {
+      window.dispatchEvent(new CustomEvent(name, { detail: data }));
     };
-    const handleTodoChanged = (data) => {
-      window.dispatchEvent(new CustomEvent('todo_changed', { detail: data }));
-    };
-    const disconnect = createSseConnection(
-      handleTodoChanged,
-      (data) => sseNotificationRef.current(data),
-      handleCommentChanged
-    );
+    const disconnect = createSseConnection({
+      onTodoChanged: dispatchWindowEvent('todo_changed'),
+      onNotification: (data) => sseNotificationRef.current(data),
+      onCommentChanged: dispatchWindowEvent('comment_changed'),
+      onChatMessage: dispatchWindowEvent('chat_message'),
+      onDiscussionStarted: dispatchWindowEvent('discussion_started'),
+      onDiscussionEnded: dispatchWindowEvent('discussion_ended'),
+    });
     return disconnect;
   }, []);
 
