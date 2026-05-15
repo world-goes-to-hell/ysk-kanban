@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { STATUS_TRANSITIONS } from '../../utils/constants';
 import styles from '../../styles/board.module.css';
 
-export default function TransitionDropdown({ currentStatus, anchorRect, onSelect, onClose }) {
+export default function TransitionDropdown({ currentStatus, statuses, anchorRect, onSelect, onClose }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -29,7 +29,11 @@ export default function TransitionDropdown({ currentStatus, anchorRect, onSelect
     });
   }, [anchorRect]);
 
-  const transitions = STATUS_TRANSITIONS[currentStatus] || [];
+  const transitions = statuses?.length
+    ? statuses
+        .filter(status => status.statusKey !== currentStatus)
+        .map(status => ({ status: status.statusKey, label: status.name }))
+    : STATUS_TRANSITIONS[currentStatus] || [];
 
   return (
     <div className={styles.transitionDropdown} ref={ref}>

@@ -19,6 +19,7 @@ import com.example.todo.repository.CommentRepository;
 import com.example.todo.repository.ProjectFavoriteRepository;
 import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
+import com.example.todo.repository.ProjectStatusRepository;
 import com.example.todo.repository.TodoRepository;
 import com.example.todo.repository.UserRepository;
 
@@ -41,6 +42,7 @@ public class ProjectService {
     private final CommentReadRepository commentReadRepository;
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+    private final ProjectStatusRepository projectStatusRepository;
 
     @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
@@ -259,6 +261,7 @@ public class ProjectService {
         }
         todoRepository.deleteAll(todos);
 
+        projectStatusRepository.deleteByProject_Id(id);
         favoriteRepository.deleteByProjectId(id);
         memberRepository.deleteByProjectId(id);
         projectRepository.deleteById(id);

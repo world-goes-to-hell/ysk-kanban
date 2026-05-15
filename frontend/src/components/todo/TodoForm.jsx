@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProjects } from '../../contexts/ProjectContext';
 import projectAPI from '../../api/projects';
 import FileDropZone from './FileDropZone';
 import FilePreviewList from './FilePreviewList';
 import ExistingAttachmentList from './ExistingAttachmentList';
 import AssigneeGrid from './AssigneeGrid';
+import MarkdownToolbar from '../common/MarkdownToolbar';
+import mdStyles from '../../styles/markdownToolbar.module.css';
 
 export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPendingFiles, deleteQueue, setDeleteQueue, formRef }) {
   const { projects } = useProjects();
   const [summary, setSummary] = useState(item?.summary || '');
   const [description, setDescription] = useState(item?.description || '');
+  const descriptionRef = useRef(null);
   const [priority, setPriority] = useState(item?.priority || 'MEDIUM');
   const [selectedProject, setSelectedProject] = useState(
     item?.projectId ? String(item.projectId) : (projectId || '')
@@ -86,14 +89,22 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="todo-form-description">설명</label>
-        <textarea
-          className="form-input form-textarea"
-          id="todo-form-description"
-          placeholder="설명을 입력하세요..."
-          rows="3"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-        />
+        <div className={mdStyles.editorWrap}>
+          <MarkdownToolbar
+            textareaRef={descriptionRef}
+            value={description}
+            onChange={setDescription}
+          />
+          <textarea
+            ref={descriptionRef}
+            className={`form-input form-textarea ${mdStyles.editorTextarea}`}
+            id="todo-form-description"
+            placeholder="설명을 입력하세요... (마크다운 지원)"
+            rows="5"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+          />
+        </div>
       </div>
       <div className="form-row">
         <div className="form-group form-group--half">

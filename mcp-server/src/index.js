@@ -37,19 +37,40 @@ const server = new McpServer({
 // ─── Tools ───
 
 server.tool(
+  'list_statuses',
+  '프로젝트에서 사용할 수 있는 상태 목록 조회',
+  {
+    projectId: z.number().optional().describe('프로젝트 ID (API Key에 바인딩된 경우 생략 가능)'),
+  },
+  async ({ projectId }) => {
+    const path = projectId ? `/api/statuses?projectId=${projectId}` : '/api/statuses';
+    const data = await apiFetch(path);
+    const summary = data.map(s =>
+      `${s.position}. ${s.name} (${s.statusKey}, ${s.semanticStatus}, ${s.color || 'no-color'}${s.systemStatus ? ', 기본' : ''})`
+    ).join('\n');
+    return {
+      content: [{
+        type: 'text',
+        text: summary || '등록된 상태가 없습니다.',
+      }],
+    };
+  }
+);
+
+server.tool(
   'list_todos',
   '이 프로젝트의 일감 목록 조회 (상태 필터 가능)',
   {
-    status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional().describe('상태 필터 (생략 시 전체)'),
+    status: z.string().optional().describe('상태 필터. 기본 상태(TODO/IN_PROGRESS/DONE) 또는 list_statuses의 statusKey'),
   },
   async ({ status }) => {
     // projectId는 API Key에 바인딩되어 서버가 자동 결정
     let path = '/api/todos';
-    if (status) path += `?status=${status}`;
+    if (status) path += `?status=${encodeURIComponent(status)}`;
     const data = await apiFetch(path);
     const summary = data.map(t => {
       const subtaskInfo = t.subtaskTotal > 0 ? ` [${t.subtaskDone}/${t.subtaskTotal}]` : '';
-      return `#${t.id} [${t.status}] ${t.priority || ''} ${t.summary}${subtaskInfo}`;
+      return `#${t.id} [${t.statusKey || t.status}] ${t.priority || ''} ${t.summary}${subtaskInfo}`;
     }).join('\n');
     return {
       content: [{
@@ -93,7 +114,7 @@ server.tool(
   async ({ parentId }) => {
     const data = await apiFetch(`/api/todos/${parentId}/subtasks`);
     const summary = data.map(t =>
-      `  #${t.id} [${t.status}] ${t.priority || ''} ${t.summary}`
+      `  #${t.id} [${t.statusKey || t.status}] ${t.priority || ''} ${t.summary}`
     ).join('\n');
     return {
       content: [{
@@ -128,17 +149,24 @@ server.tool(
     summary: z.string().describe('일감 제목'),
     description: z.string().optional().describe('일감 설명'),
     priority: z.enum(['HIGHEST', 'HIGH', 'MEDIUM', 'LOW', 'LOWEST']).optional().describe('우선순위'),
+    status: z.string().optional().describe('초기 상태 key. list_statuses의 statusKey 사용'),
   },
-  async (args) => {
+  async ({ status, ...args }) => {
     // projectId는 서버에서 API Key 기반으로 자동 주입
     const data = await apiFetch('/api/todos', {
       method: 'POST',
       body: JSON.stringify(args),
     });
+    if (status && status !== 'TODO') {
+      await apiFetch(`/api/todos/${data.id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+    }
     return {
       content: [{
         type: 'text',
-        text: `일감 #${data.id} 생성됨: ${data.summary}`,
+        text: `일감 #${data.id} 생성됨${status ? ` → ${status}` : ''}: ${data.summary}`,
       }],
     };
   }
@@ -195,10 +223,10 @@ server.tool(
 
 server.tool(
   'change_todo_status',
-  '일감 상태 변경 (TODO, IN_PROGRESS, DONE)',
+  '일감 상태 변경 (기본 상태 또는 커스텀 statusKey)',
   {
     todoId: z.number().describe('일감 ID'),
-    status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).describe('변경할 상태'),
+    status: z.string().describe('변경할 상태. list_statuses의 statusKey 사용'),
   },
   async ({ todoId, status }) => {
     await apiFetch(`/api/todos/${todoId}/status`, {

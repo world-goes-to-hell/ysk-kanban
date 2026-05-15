@@ -56,6 +56,10 @@ public class Todo {
     @Builder.Default
     private Status status = Status.TODO;
 
+    @Column(name = "status_key", length = 80)
+    @Builder.Default
+    private String statusKey = Status.TODO.name();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -125,13 +129,28 @@ public class Todo {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        ensureStatusKey();
         validateParentDepth();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        ensureStatusKey();
         validateParentDepth();
+    }
+
+    public String getStatusKey() {
+        if (statusKey != null && !statusKey.isBlank()) {
+            return statusKey;
+        }
+        return status != null ? status.name() : Status.TODO.name();
+    }
+
+    private void ensureStatusKey() {
+        if (statusKey == null || statusKey.isBlank()) {
+            statusKey = status != null ? status.name() : Status.TODO.name();
+        }
     }
 
     private void validateParentDepth() {

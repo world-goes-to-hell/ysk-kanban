@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.todo.entity.Priority;
 import com.example.todo.entity.Project;
+import com.example.todo.entity.ProjectStatus;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
 import com.example.todo.repository.ProjectMemberRepository;
@@ -30,6 +31,7 @@ public class TodoService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectStatusService projectStatusService;
 
     @Transactional(readOnly = true)
     public List<Todo> getAllTodos() {
@@ -117,7 +119,7 @@ public class TodoService {
         Todo todo = builder.build();
 
         if (projectId != null) {
-            Integer maxSortOrder = todoRepository.findMaxSortOrderByProjectIdAndStatus(projectId, todo.getStatus());
+            Integer maxSortOrder = todoRepository.findMaxSortOrderByProjectIdAndStatusKey(projectId, todo.getStatusKey());
             todo.setSortOrder(maxSortOrder + 1);
         }
 
@@ -141,6 +143,9 @@ public class TodoService {
             Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
             todo.setProject(project);
+            if (!projectStatusService.existsActiveStatus(projectId, todo.getStatusKey())) {
+                todo.setStatusKey(todo.getStatus().name());
+            }
         }
 
         if (assigneeIds != null) {
@@ -151,12 +156,15 @@ public class TodoService {
         return todoRepository.save(todo);
     }
 
-    public Todo changeStatus(Long id, Todo.Status status) {
+    public Todo changeStatus(Long id, String statusKey) {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Todo not found: " + id));
-        log.info("Changing todo #{} status: {} -> {}", id, todo.getStatus(), status);
-        todo.setStatus(status);
-        if (status == Todo.Status.DONE) {
+        Long projectId = todo.getProject() != null ? todo.getProject().getId() : null;
+        ProjectStatus projectStatus = projectStatusService.resolveStatus(projectId, statusKey);
+        log.info("Changing todo #{} status: {} -> {}", id, todo.getStatusKey(), projectStatus.getStatusKey());
+        todo.setStatusKey(projectStatus.getStatusKey());
+        todo.setStatus(projectStatus.getSemanticStatus());
+        if (projectStatus.getSemanticStatus() == Todo.Status.DONE) {
             todo.setCompletedAt(java.time.LocalDateTime.now());
         } else {
             todo.setCompletedAt(null);
@@ -164,11 +172,15 @@ public class TodoService {
         Todo saved = todoRepository.save(todo);
 
         // 하위 일감이 DONE이 되면 형제 전부 DONE인지 확인 → 상위도 자동 DONE
-        if (status == Todo.Status.DONE && saved.getParent() != null) {
+        if (projectStatus.getSemanticStatus() == Todo.Status.DONE && saved.getParent() != null) {
             autoCompleteParent(saved.getParent().getId());
         }
 
         return saved;
+    }
+
+    public Todo changeStatus(Long id, Todo.Status status) {
+        return changeStatus(id, status.name());
     }
 
     private void autoCompleteParent(Long parentId) {
@@ -180,6 +192,7 @@ public class TodoService {
             if (parent.getStatus() != Todo.Status.DONE) {
                 log.info("Auto-completing parent todo #{} (all subtasks done)", parentId);
                 parent.setStatus(Todo.Status.DONE);
+                parent.setStatusKey(Todo.Status.DONE.name());
                 parent.setCompletedAt(java.time.LocalDateTime.now());
                 todoRepository.save(parent);
             }
@@ -213,7 +226,7 @@ public class TodoService {
 
         Long projectId = parent.getProject() != null ? parent.getProject().getId() : null;
         if (projectId != null) {
-            Integer maxSortOrder = todoRepository.findMaxSortOrderByProjectIdAndStatus(projectId, subtask.getStatus());
+            Integer maxSortOrder = todoRepository.findMaxSortOrderByProjectIdAndStatusKey(projectId, subtask.getStatusKey());
             subtask.setSortOrder(maxSortOrder + 1);
         }
 

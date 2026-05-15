@@ -113,9 +113,10 @@ public class TodoController {
             todos = todoService.getAllTodos();
         }
         if (status != null && !status.isEmpty()) {
-            Todo.Status filterStatus = Todo.Status.valueOf(status);
+            String statusFilter = status.trim().toUpperCase();
             todos = todos.stream()
-                    .filter(t -> t.getStatus() == filterStatus)
+                    .filter(t -> statusFilter.equals(t.getStatusKey())
+                            || (t.getStatus() != null && statusFilter.equals(t.getStatus().name())))
                     .toList();
         }
         return ResponseEntity.ok(todos);
@@ -277,16 +278,20 @@ public class TodoController {
     public ResponseEntity<Todo> changeStatus(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
-        Todo.Status status = Todo.Status.valueOf(body.get("status"));
+        String status = body.get("status");
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("상태를 입력하세요.");
+        }
         Todo before = todoService.getTodo(id);
-        String oldStatus = before.getStatus().name();
+        String oldStatus = before.getStatusKey();
         Todo updated = todoService.changeStatus(id, status);
+        String newStatus = updated.getStatusKey();
         Long statusProjectId = updated.getProject() != null ? updated.getProject().getId() : null;
         sseEmitterRegistry.broadcast("todo_changed", todoEvent("updated", statusProjectId));
-        notificationService.notifyStatusChanged(updated, oldStatus, status.name(), getCurrentUser());
-        activityLogService.log(updated, getCurrentUser(), ActivityType.STATUS_CHANGED, "상태 변경", oldStatus, status.name());
+        notificationService.notifyStatusChanged(updated, oldStatus, newStatus, getCurrentUser());
+        activityLogService.log(updated, getCurrentUser(), ActivityType.STATUS_CHANGED, "상태 변경", oldStatus, newStatus);
         if (statusProjectId != null) {
-            webhookService.fireEvent(WebhookEvent.TODO_STATUS_CHANGED, statusProjectId, Map.of("todoId", updated.getId(), "summary", updated.getSummary(), "oldStatus", oldStatus, "newStatus", status.name(), "actor", getCurrentUser().getUsername()));
+            webhookService.fireEvent(WebhookEvent.TODO_STATUS_CHANGED, statusProjectId, Map.of("todoId", updated.getId(), "summary", updated.getSummary(), "oldStatus", oldStatus, "newStatus", newStatus, "actor", getCurrentUser().getUsername()));
         }
         return ResponseEntity.ok(updated);
     }

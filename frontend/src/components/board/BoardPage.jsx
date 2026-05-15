@@ -6,7 +6,7 @@ import { useProjects } from '../../contexts/ProjectContext';
 import { useTodos } from '../../hooks/useTodos';
 import { useUnreadComments } from '../../hooks/useUnreadComments';
 import { useTodoSync } from '../../hooks/useTodoSync';
-import { STATUSES } from '../../utils/constants';
+import statusAPI from '../../api/statuses';
 import KanbanColumn from './KanbanColumn';
 import TransitionDropdown from './TransitionDropdown';
 import FilterBar from './FilterBar';
@@ -15,6 +15,12 @@ import DetailModal from '../detail/DetailModal';
 import ConfirmDialog from '../common/ConfirmDialog';
 import ProjectSettingsModal from './ProjectSettingsModal';
 import styles from '../../styles/board.module.css';
+
+const DEFAULT_STATUS_COLUMNS = [
+  { statusKey: 'TODO', name: '할 일', semanticStatus: 'TODO', position: 0, systemStatus: true, color: '#2563EB' },
+  { statusKey: 'IN_PROGRESS', name: '진행 중', semanticStatus: 'IN_PROGRESS', position: 1, systemStatus: true, color: '#D97706' },
+  { statusKey: 'DONE', name: '완료', semanticStatus: 'DONE', position: 2, systemStatus: true, color: '#059669' },
+];
 
 export default function BoardPage() {
   const { projectId } = useParams();
@@ -29,19 +35,48 @@ export default function BoardPage() {
   const [transition, setTransition] = useState(null); // { item, anchorRect }
   const [compact, setCompact] = useState(false);
   const [filters, setFilters] = useState({ keyword: '', priority: '', assigneeId: '' });
-  const [sortByStatus, setSortByStatus] = useState({
-    TODO: 'default',
-    IN_PROGRESS: 'default',
-    DONE: 'default',
-  });
+  const [statuses, setStatuses] = useState([]);
+  const [sortByStatus, setSortByStatus] = useState({});
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const project = projects.find(p => String(p.id) === String(projectId));
   const title = project ? (project.name || project.projectKey) : '일감';
+  const columns = useMemo(() => statuses.length > 0 ? statuses : DEFAULT_STATUS_COLUMNS, [statuses]);
+  const statusKeys = useMemo(() => columns.map(status => status.statusKey), [columns]);
+
+  const loadStatuses = useCallback(async () => {
+    if (!projectId) {
+      setStatuses(DEFAULT_STATUS_COLUMNS);
+      return;
+    }
+    try {
+      const data = await statusAPI.list(projectId);
+      setStatuses(Array.isArray(data) && data.length > 0 ? data : DEFAULT_STATUS_COLUMNS);
+    } catch (_) {
+      setStatuses(DEFAULT_STATUS_COLUMNS);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     loadTodos(projectId);
   }, [projectId, loadTodos]);
+
+  useEffect(() => {
+    loadStatuses();
+  }, [loadStatuses]);
+
+  useEffect(() => {
+    setSortByStatus(prev => {
+      const next = {};
+      statusKeys.forEach(key => {
+        next[key] = prev[key] || 'default';
+      });
+      const prevKeys = Object.keys(prev);
+      const changed = prevKeys.length !== statusKeys.length
+        || statusKeys.some(key => prev[key] !== next[key]);
+      return changed ? next : prev;
+    });
+  }, [statusKeys]);
 
   useEffect(() => {
     if (todos.length > 0) {
@@ -64,6 +99,11 @@ export default function BoardPage() {
   const reload = useCallback(() => {
     loadTodos(projectId);
   }, [projectId, loadTodos]);
+
+  const reloadBoard = useCallback(() => {
+    loadStatuses();
+    loadTodos(projectId);
+  }, [projectId, loadTodos, loadStatuses]);
 
   // 다른 사용자의 변경사항 실시간 수신
   useTodoSync(projectId, reload);
@@ -112,15 +152,22 @@ export default function BoardPage() {
     }
   }, []);
 
+  const getTodoStatusKey = useCallback((todo) => todo.statusKey || todo.status || statusKeys[0], [statusKeys]);
+
   const todosByStatus = {};
-  STATUSES.forEach(s => { todosByStatus[s] = []; });
+  statusKeys.forEach(s => { todosByStatus[s] = []; });
   filteredTodos.forEach(t => {
-    if (todosByStatus[t.status]) {
+    const key = getTodoStatusKey(t);
+    if (todosByStatus[key]) {
+      todosByStatus[key].push(t);
+    } else if (todosByStatus[t.status]) {
       todosByStatus[t.status].push(t);
+    } else if (statusKeys.length > 0) {
+      todosByStatus[statusKeys[0]].push(t);
     }
   });
-  STATUSES.forEach(s => {
-    todosByStatus[s] = sortItems(todosByStatus[s], sortByStatus[s]);
+  statusKeys.forEach(s => {
+    todosByStatus[s] = sortItems(todosByStatus[s], sortByStatus[s] || 'default');
   });
 
   const handleDragEnd = async (result) => {
@@ -139,7 +186,7 @@ export default function BoardPage() {
       const orderedIds = columnItems.map(t => t.id);
       // 낙관적 UI: todos 상태 즉시 갱신
       setTodos(prev => {
-        const others = prev.filter(t => t.status !== newStatus);
+        const others = prev.filter(t => getTodoStatusKey(t) !== newStatus);
         const reordered = columnItems.map((t, i) => ({ ...t, sortOrder: i }));
         return [...others, ...reordered];
       });
@@ -211,30 +258,35 @@ export default function BoardPage() {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className={styles.board}>
-          {STATUSES.map(status => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              items={todosByStatus[status]}
-              unreadCounts={unreadCounts}
-              compact={compact}
-              sortKey={sortByStatus[status]}
-              onSortChange={(val) => setSortByStatus(prev => ({ ...prev, [status]: val }))}
-              onTransition={handleTransition}
-              onEdit={(item) => setTodoModal({ mode: 'edit', item })}
-              onDelete={handleDelete}
-              onCardClick={(item) => setDetailTodoId(item.id)}
-              onAddTodo={() => setTodoModal({ mode: 'create', item: null, initialStatus: status })}
-              currentUser={currentUser}
-              isMaster={myRoles[Number(projectId)] === 'MASTER'}
-            />
-          ))}
+          {columns.map(column => {
+            const status = column.statusKey;
+            return (
+              <KanbanColumn
+                key={status}
+                status={status}
+                column={column}
+                items={todosByStatus[status]}
+                unreadCounts={unreadCounts}
+                compact={compact}
+                sortKey={sortByStatus[status] || 'default'}
+                onSortChange={(val) => setSortByStatus(prev => ({ ...prev, [status]: val }))}
+                onTransition={handleTransition}
+                onEdit={(item) => setTodoModal({ mode: 'edit', item })}
+                onDelete={handleDelete}
+                onCardClick={(item) => setDetailTodoId(item.id)}
+                onAddTodo={() => setTodoModal({ mode: 'create', item: null, initialStatus: status })}
+                currentUser={currentUser}
+                isMaster={myRoles[Number(projectId)] === 'MASTER'}
+              />
+            );
+          })}
         </div>
       </DragDropContext>
 
       {transition && (
         <TransitionDropdown
-          currentStatus={transition.item.status}
+          currentStatus={transition.item.statusKey || transition.item.status}
+          statuses={columns}
           anchorRect={transition.anchorRect}
           onSelect={handleTransitionSelect}
           onClose={() => setTransition(null)}
@@ -273,7 +325,7 @@ export default function BoardPage() {
         <ProjectSettingsModal
           project={project}
           onClose={() => setShowSettingsModal(false)}
-          onUpdated={reload}
+          onUpdated={reloadBoard}
         />
       )}
     </>

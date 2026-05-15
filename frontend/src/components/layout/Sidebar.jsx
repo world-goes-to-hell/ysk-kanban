@@ -22,6 +22,13 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
   const isCalendar = location.pathname === '/calendar';
   const activeProjectId = location.pathname.match(/^\/projects\/(\d+)/)?.[1];
 
+  const projectCount = useMemo(() => {
+    const countNodes = (nodes) => nodes.reduce((total, node) => (
+      total + 1 + countNodes(node.children || [])
+    ), 0);
+    return countNodes(projectTree);
+  }, [projectTree]);
+
   // Sort project tree: favorites first, then filter by search
   const filteredTree = useMemo(() => {
     const sorted = [...projectTree].sort((a, b) => {
@@ -112,7 +119,10 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
           </button>
         </nav>
         <div className={styles.sidebarHeader}>
-          <h2 className={styles.sidebarTitle}>프로젝트</h2>
+          <div>
+            <h2 className={styles.sidebarTitle}>프로젝트</h2>
+            <p className={styles.sidebarSubtitle}>{projectCount}개 프로젝트</p>
+          </div>
           <button
             className={styles.sidebarAddBtn}
             title="프로젝트 추가"
@@ -122,6 +132,7 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
           </button>
         </div>
         <div className={styles.sidebarSearchWrap}>
+          <span className={styles.sidebarSearchIcon}>⌕</span>
           <input
             className={styles.sidebarSearch}
             type="text"
@@ -131,51 +142,35 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
           />
         </div>
         <nav className={styles.sidebarNav}>
-          {filteredTree.map(p => (
-            <SidebarProjectItem
-              key={p.id}
-              project={p}
-              activeProjectId={activeProjectId}
-              onProjectClick={handleProjectClick}
-              onEditProject={handleEditProject}
-              onDeleteProject={handleDeleteProject}
-              onCreateChild={handleCreateChild}
-              onManageMembers={setMembersProject}
-            />
-          ))}
+          {filteredTree.length > 0 ? (
+            filteredTree.map(p => (
+              <SidebarProjectItem
+                key={p.id}
+                project={p}
+                activeProjectId={activeProjectId}
+                onProjectClick={handleProjectClick}
+                onEditProject={handleEditProject}
+                onDeleteProject={handleDeleteProject}
+                onCreateChild={handleCreateChild}
+                onManageMembers={setMembersProject}
+              />
+            ))
+          ) : (
+            <div className={styles.sidebarEmpty}>
+              {searchQuery.trim() ? '검색 결과가 없습니다.' : '프로젝트가 없습니다.'}
+            </div>
+          )}
         </nav>
       </aside>
 
       {contextMenu && (
         <div
-          style={{
-            position: 'fixed',
-            top: contextMenu.y,
-            left: contextMenu.x,
-            background: 'var(--color-bg-card, #23262f)',
-            border: '1px solid var(--color-border, #35383f)',
-            borderRadius: '6px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-            zIndex: 9999,
-            minWidth: '160px',
-            padding: '4px 0',
-          }}
+          className={styles.sidebarContextMenu}
+          style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={e => e.stopPropagation()}
         >
           <button
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '8px 14px',
-              background: 'none',
-              border: 'none',
-              color: 'var(--color-text, #e0e0e0)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '13px',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-bg-hover, #2a2d36)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            className={styles.sidebarContextMenuItem}
             onClick={() => {
               setProjectModal({ mode: 'create', project: null, parentId: contextMenu.project.id });
               setContextMenu(null);

@@ -19,6 +19,7 @@ public class SchemaFixRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
         dropEnumCheckConstraints("NOTIFICATIONS", "TYPE");
+        backfillTodoStatusKeys();
     }
 
     private void dropEnumCheckConstraints(String tableName, String columnName) {
@@ -39,6 +40,19 @@ public class SchemaFixRunner implements CommandLineRunner {
             }
         } catch (Exception e) {
             log.debug("Schema fix skipped (not H2 or table not found): {}", e.getMessage());
+        }
+    }
+
+    private void backfillTodoStatusKeys() {
+        try {
+            int updated = jdbcTemplate.update(
+                    "UPDATE todos SET status_key = status WHERE status_key IS NULL OR status_key = ''"
+            );
+            if (updated > 0) {
+                log.info("Backfilled status_key for {} todos", updated);
+            }
+        } catch (Exception e) {
+            log.debug("Todo status_key backfill skipped: {}", e.getMessage());
         }
     }
 }

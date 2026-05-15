@@ -16,12 +16,12 @@
 }
 
 .board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 18px;
   padding: 20px 28px 40px;
   align-items: start;
   min-height: 0;
+  overflow-x: auto;
 }
 
 /* ── Column ──────────────────────────────────────── */
@@ -31,6 +31,8 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   overflow: hidden;
+  flex: 1 0 300px;
+  min-width: 300px;
   min-height: 200px;
 }
 
@@ -895,8 +897,14 @@
 
 @media (max-width: 900px) {
   .board {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    overflow-x: visible;
     padding: 16px 14px 32px;
+  }
+
+  .column {
+    width: 100%;
+    min-width: 0;
   }
 
   .boardToolbar {

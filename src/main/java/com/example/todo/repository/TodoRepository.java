@@ -37,6 +37,11 @@ public interface TodoRepository extends JpaRepository<Todo, Long>, TodoRepositor
     @Query("SELECT COALESCE(MAX(t.sortOrder), 0) FROM Todo t WHERE t.project.id = :projectId AND t.status = :status")
     Integer findMaxSortOrderByProjectIdAndStatus(@Param("projectId") Long projectId, @Param("status") Todo.Status status);
 
+    @Query("SELECT COALESCE(MAX(t.sortOrder), 0) FROM Todo t WHERE t.project.id = :projectId AND t.statusKey = :statusKey")
+    Integer findMaxSortOrderByProjectIdAndStatusKey(@Param("projectId") Long projectId, @Param("statusKey") String statusKey);
+
+    long countByProjectIdAndStatusKey(Long projectId, String statusKey);
+
     long countByStatus(Todo.Status status);
 
     List<Todo> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);

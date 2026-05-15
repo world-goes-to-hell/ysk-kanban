@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Modal from '../common/Modal';
 import projectAPI from '../../api/projects';
 import apiKeyAPI from '../../api/apiKeys';
+import statusAPI from '../../api/statuses';
 import { webhookAPI } from '../../api/webhooks';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -348,6 +350,289 @@ function ApiTab({ projectId }) {
   );
 }
 
+const SEMANTIC_LABEL = {
+  TODO: '미시작으로 처리',
+  IN_PROGRESS: '진행 중으로 처리',
+  DONE: '완료로 처리',
+};
+
+const SEMANTIC_DEFAULT_COLOR = {
+  TODO: '#2563EB',
+  IN_PROGRESS: '#D97706',
+  DONE: '#059669',
+};
+
+function StatusTab({ projectId, onUpdated }) {
+  const showToast = useToast();
+  const [statuses, setStatuses] = useState([]);
+  const [name, setName] = useState('');
+  const [semanticStatus, setSemanticStatus] = useState('IN_PROGRESS');
+  const [color, setColor] = useState(SEMANTIC_DEFAULT_COLOR.IN_PROGRESS);
+  const [editingKey, setEditingKey] = useState(null);
+  const [editingName, setEditingName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const loadStatuses = useCallback(async () => {
+    try {
+      const data = await statusAPI.list(projectId);
+      setStatuses(Array.isArray(data) ? data : []);
+    } catch {
+      showToast('상태 목록 조회 실패', 'error');
+    }
+  }, [projectId, showToast]);
+
+  useEffect(() => {
+    loadStatuses();
+  }, [loadStatuses]);
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      showToast('상태 이름을 입력하세요', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      await statusAPI.create(projectId, {
+        name: name.trim(),
+        semanticStatus,
+        color,
+      });
+      setName('');
+      setSemanticStatus('IN_PROGRESS');
+      setColor(SEMANTIC_DEFAULT_COLOR.IN_PROGRESS);
+      await loadStatuses();
+      onUpdated?.();
+      showToast('상태가 추가되었습니다.', 'success');
+    } catch (err) {
+      showToast(err.message || '상태 추가 실패', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.index === destination.index) return;
+
+    const next = [...statuses];
+    const [moved] = next.splice(source.index, 1);
+    next.splice(destination.index, 0, moved);
+    setStatuses(next);
+    try {
+      const saved = await statusAPI.reorder(projectId, next.map(status => status.statusKey));
+      setStatuses(saved);
+      onUpdated?.();
+    } catch (err) {
+      showToast(err.message || '순서 변경 실패', 'error');
+      loadStatuses();
+    }
+  };
+
+  const handleEditStart = (status) => {
+    setEditingKey(status.statusKey);
+    setEditingName(status.name);
+  };
+
+  const handleEditSave = async (statusKey) => {
+    if (!editingName.trim()) {
+      showToast('상태 이름을 입력하세요', 'error');
+      return;
+    }
+    try {
+      await statusAPI.update(projectId, statusKey, { name: editingName.trim() });
+      setEditingKey(null);
+      setEditingName('');
+      await loadStatuses();
+      onUpdated?.();
+      showToast('상태 이름이 변경되었습니다.', 'success');
+    } catch (err) {
+      showToast(err.message || '상태 수정 실패', 'error');
+    }
+  };
+
+  const colorTimersRef = useRef(new Map());
+
+  useEffect(() => {
+    const timers = colorTimersRef.current;
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
+
+  const handleColorChange = (status, nextColor) => {
+    setStatuses(prev => prev.map(item =>
+      item.statusKey === status.statusKey ? { ...item, color: nextColor } : item
+    ));
+
+    const existing = colorTimersRef.current.get(status.statusKey);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(async () => {
+      colorTimersRef.current.delete(status.statusKey);
+      try {
+        await statusAPI.update(projectId, status.statusKey, { color: nextColor });
+        onUpdated?.();
+        showToast('상태 색상이 변경되었습니다.', 'success');
+      } catch (err) {
+        showToast(err.message || '색상 변경 실패', 'error');
+        loadStatuses();
+      }
+    }, 400);
+
+    colorTimersRef.current.set(status.statusKey, timer);
+  };
+
+  const handleDelete = async (statusKey) => {
+    try {
+      await statusAPI.remove(projectId, statusKey);
+      await loadStatuses();
+      onUpdated?.();
+      showToast('상태가 삭제되었습니다.', 'success');
+    } catch (err) {
+      showToast(err.message || '상태 삭제 실패', 'error');
+    }
+  };
+
+  return (
+    <div className={settingsStyles.settingSection}>
+      <h4 className={settingsStyles.settingTitle}>상태 관리</h4>
+      <div className={settingsStyles.statusCreateRow}>
+        <input
+          className={settingsStyles.statusInput}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleCreate()}
+          placeholder="새 상태 이름"
+        />
+        <select
+          className={settingsStyles.statusSelect}
+          value={semanticStatus}
+          onChange={e => {
+            const nextSemantic = e.target.value;
+            setSemanticStatus(nextSemantic);
+            setColor(SEMANTIC_DEFAULT_COLOR[nextSemantic] || SEMANTIC_DEFAULT_COLOR.IN_PROGRESS);
+          }}
+        >
+          <option value="TODO">미시작으로 처리</option>
+          <option value="IN_PROGRESS">진행 중으로 처리</option>
+          <option value="DONE">완료로 처리</option>
+        </select>
+        <input
+          className={settingsStyles.statusColorInput}
+          type="color"
+          value={color}
+          onChange={e => setColor(e.target.value.toUpperCase())}
+          aria-label="새 상태 색상"
+          title="상태 색상"
+        />
+        <button className="btn btn-primary btn-sm" onClick={handleCreate} disabled={loading}>
+          추가
+        </button>
+      </div>
+
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="status-list">
+          {(dropProvided) => (
+            <div
+              className={settingsStyles.statusList}
+              ref={dropProvided.innerRef}
+              {...dropProvided.droppableProps}
+            >
+              {statuses.map((status, index) => (
+                <Draggable
+                  key={status.statusKey}
+                  draggableId={String(status.statusKey)}
+                  index={index}
+                >
+                  {(dragProvided, dragSnapshot) => (
+                    <div
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      className={`${settingsStyles.statusItem} ${dragSnapshot.isDragging ? settingsStyles.statusItemDragging : ''}`}
+                    >
+                      <span
+                        {...dragProvided.dragHandleProps}
+                        className={settingsStyles.statusDragHandle}
+                        title="드래그하여 순서 변경"
+                        aria-label="순서 변경 핸들"
+                      >
+                        <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+                          <circle cx="2" cy="3" r="1.2" fill="currentColor" />
+                          <circle cx="8" cy="3" r="1.2" fill="currentColor" />
+                          <circle cx="2" cy="8" r="1.2" fill="currentColor" />
+                          <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+                          <circle cx="2" cy="13" r="1.2" fill="currentColor" />
+                          <circle cx="8" cy="13" r="1.2" fill="currentColor" />
+                        </svg>
+                      </span>
+                      <div
+                        className={`${settingsStyles.statusDot} ${settingsStyles[`statusDot${status.semanticStatus}`] || ''}`}
+                        style={status.color ? { background: status.color } : undefined}
+                      />
+                      <div className={settingsStyles.statusMain}>
+                        {editingKey === status.statusKey ? (
+                          <input
+                            className={settingsStyles.statusEditInput}
+                            value={editingName}
+                            onChange={e => setEditingName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleEditSave(status.statusKey)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className={settingsStyles.statusName}>{status.name}</span>
+                        )}
+                        <div className={settingsStyles.statusMeta}>
+                          <span>{SEMANTIC_LABEL[status.semanticStatus] || status.semanticStatus}</span>
+                          <span>{status.systemStatus ? '기본' : status.statusKey}</span>
+                        </div>
+                      </div>
+                      <div className={settingsStyles.statusActions}>
+                        <input
+                          className={settingsStyles.statusColorInput}
+                          type="color"
+                          value={status.color || SEMANTIC_DEFAULT_COLOR[status.semanticStatus] || SEMANTIC_DEFAULT_COLOR.IN_PROGRESS}
+                          onChange={e => handleColorChange(status, e.target.value.toUpperCase())}
+                          aria-label={`${status.name} 색상`}
+                          title="색상 변경"
+                        />
+                        <div className={settingsStyles.statusActionsTail}>
+                          {status.systemStatus ? (
+                            <span
+                              className={settingsStyles.statusSystemBadge}
+                              title="기본 상태는 편집/삭제할 수 없습니다 (색상/순서만 변경 가능)"
+                            >
+                              기본 · 삭제 불가
+                            </span>
+                          ) : (
+                            editingKey === status.statusKey ? (
+                              <>
+                                <button className={settingsStyles.statusTextBtn} onClick={() => handleEditSave(status.statusKey)}>저장</button>
+                                <button className={settingsStyles.statusTextBtn} onClick={() => setEditingKey(null)}>취소</button>
+                              </>
+                            ) : (
+                              <>
+                                <button className={settingsStyles.statusTextBtn} onClick={() => handleEditStart(status)}>편집</button>
+                                <button className={`${settingsStyles.statusTextBtn} ${settingsStyles.statusDangerBtn}`} onClick={() => handleDelete(status.statusKey)}>삭제</button>
+                              </>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {dropProvided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
+  );
+}
+
 const WEBHOOK_EVENTS = [
   { value: 'TODO_CREATED', label: '일감 생성' },
   { value: 'TODO_UPDATED', label: '일감 수정' },
@@ -517,6 +802,12 @@ export default function ProjectSettingsModal({ project, onClose, onUpdated }) {
           프로젝트 설정
         </button>
         <button
+          className={`${settingsStyles.tabBtn} ${activeTab === 'statuses' ? settingsStyles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('statuses')}
+        >
+          상태
+        </button>
+        <button
           className={`${settingsStyles.tabBtn} ${activeTab === 'api' ? settingsStyles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('api')}
         >
@@ -532,6 +823,9 @@ export default function ProjectSettingsModal({ project, onClose, onUpdated }) {
 
       {activeTab === 'project' && (
         <ProjectTab project={project} onUpdated={onUpdated} />
+      )}
+      {activeTab === 'statuses' && (
+        <StatusTab projectId={project?.id} onUpdated={onUpdated} />
       )}
       {activeTab === 'api' && (
         <ApiTab projectId={project?.id} />

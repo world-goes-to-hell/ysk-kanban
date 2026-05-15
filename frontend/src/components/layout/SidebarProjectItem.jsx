@@ -26,38 +26,44 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
       onProjectClick(project.id);
     }
   };
+  const projectName = project.name || project.projectKey || '';
 
   return (
-    <div>
+    <div className={styles.sidebarProjectNode}>
       <div
         role="button"
         tabIndex={accessible ? 0 : -1}
-        className={`${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''} ${!accessible ? styles.sidebarItemDisabled : ''}`}
+        className={`${styles.sidebarItem} ${styles.sidebarProjectItem} ${isActive ? styles.sidebarItemActive : ''} ${!accessible ? styles.sidebarItemDisabled : ''}`}
         onClick={handleClick}
         onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
         onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); if (accessible) onCreateChild?.(e, project); }}
-        style={{ paddingLeft: `${8 + depth * 14}px` }}
-        title={!accessible ? '접근 권한이 없습니다' : ''}
+        style={{ '--project-depth': depth }}
+        title={!accessible ? '접근 권한이 없습니다' : projectName}
       >
         {hasChildren ? (
-          <span className={styles.sidebarToggle2} onClick={handleToggle}>
+          <button
+            type="button"
+            className={styles.sidebarToggle2}
+            onClick={handleToggle}
+            aria-label={expanded ? '하위 프로젝트 접기' : '하위 프로젝트 펼치기'}
+          >
             {expanded ? '▾' : '▸'}
-          </span>
+          </button>
         ) : (
           <span className={styles.sidebarTogglePlaceholder} />
         )}
-        {isFavorite && depth === 0 && <span className={styles.favStar}>&#9733;</span>}
-        <span className={styles.sidebarItemLabel} title={project.name || project.projectKey || ''}>{project.name || project.projectKey || ''}</span>
-        {accessible && <span className={styles.sidebarItemActions}>
-          {depth === 0 && (
-            <button
-              className={`${styles.sidebarItemBtn} ${isFavorite ? styles.sidebarFavActive : ''}`}
-              title={isFavorite ? '즐겨찾기 해제' : '즐겨찾기'}
-              onClick={handleFavoriteClick}
-            >
-              {isFavorite ? '\u2605' : '\u2606'}
-            </button>
-          )}
+        <span className={styles.sidebarItemLabel}>{projectName}</span>
+        {accessible && depth === 0 && (
+          <button
+            className={`${styles.sidebarFavoriteToggle} ${isFavorite ? styles.sidebarFavoriteToggleActive : ''}`}
+            title={isFavorite ? '즐겨찾기 해제' : '즐겨찾기'}
+            aria-pressed={isFavorite}
+            onClick={handleFavoriteClick}
+          >
+            {isFavorite ? '\u2605' : '\u2606'}
+          </button>
+        )}
+        {accessible && <span className={styles.sidebarItemActions} aria-label={`${projectName} 작업`}>
           {isMaster && (
             <>
               <button
@@ -80,7 +86,7 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
         </span>}
       </div>
       {hasChildren && expanded && (
-        <div>
+        <div className={styles.sidebarProjectChildren}>
           {project.children.map(child => (
             <SidebarProjectItem
               key={child.id}

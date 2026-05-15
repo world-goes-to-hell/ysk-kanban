@@ -12,10 +12,21 @@ const STATUS_CLASS_MAP = {
 
 const HOVER_DELAY = 300;
 
-export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick, provided, isDragging, unreadCount, compact, canDelete }) {
+function hexToRgba(hex, alpha) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex || '')) return null;
+  const value = hex.slice(1);
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick, provided, isDragging, unreadCount, compact, canDelete, statusLabel, statusSemantic, statusColor }) {
   const priorityClass = getPriorityClass(item.priority);
   const priorityLabel = getPriorityLabel(item.priority);
-  const agentLive = item.status === 'IN_PROGRESS' && item.assignees?.some(a => a?.bot);
+  const semanticStatus = statusSemantic || item.status;
+  const statusColorBg = hexToRgba(statusColor, 0.12);
+  const agentLive = semanticStatus === 'IN_PROGRESS' && item.assignees?.some(a => a?.bot);
   const [preview, setPreview] = useState(null);
   const hoverTimer = useRef(null);
   const isOverPopover = useRef(false);
@@ -112,7 +123,7 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
 
   const descPreview = truncate(item.description);
   const authorName = item.createdBy?.displayName || item.createdBy?.username || '';
-  const dueInfo = item.status !== 'DONE' ? formatDueDate(item.dueDate) : null;
+  const dueInfo = semanticStatus !== 'DONE' ? formatDueDate(item.dueDate) : null;
 
   const handleActionClick = (e, handler) => {
     e.stopPropagation();
@@ -181,8 +192,11 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
             {authorName}
           </span>
         )}
-        <span className={`${styles.cardStatus} ${STATUS_CLASS_MAP[item.status] || ''}`}>
-          {formatStatus(item.status)}
+        <span
+          className={`${styles.cardStatus} ${STATUS_CLASS_MAP[semanticStatus] || ''}`}
+          style={statusColor ? { color: statusColor, borderColor: statusColor, background: statusColorBg } : undefined}
+        >
+          {statusLabel || formatStatus(semanticStatus)}
         </span>
       </div>
       <div className={styles.cardActions}>

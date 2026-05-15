@@ -125,3 +125,283 @@
 .toggleSwitch input:checked + .toggleTrack::after {
   transform: translateX(18px);
 }
+
+/* ── Status Settings ─────────────────────────────── */
+
+.statusCreateRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px 42px auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.statusInput,
+.statusSelect,
+.statusEditInput {
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.statusInput:focus,
+.statusSelect:focus,
+.statusEditInput:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+.statusList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusItem {
+  display: grid;
+  grid-template-columns: 18px 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: box-shadow var(--duration-fast), background var(--duration-fast);
+}
+
+.statusItemDragging {
+  background: var(--bg-elevated, var(--bg-card));
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.statusDragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 28px;
+  color: var(--text-muted);
+  cursor: grab;
+  user-select: none;
+  transition: color var(--duration-fast);
+}
+
+.statusDragHandle:hover {
+  color: var(--text-secondary);
+}
+
+.statusDragHandle:active {
+  cursor: grabbing;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wip-color);
+}
+
+.statusDotTODO {
+  background: var(--todo-color);
+}
+
+.statusDotIN_PROGRESS {
+  background: var(--wip-color);
+}
+
+.statusDotDONE {
+  background: var(--done-color);
+}
+
+.statusColorPicker,
+.statusRowColorPicker {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+
+.statusColorPicker:hover,
+.statusRowColorPicker:hover {
+  background: var(--bg-column);
+  border-color: var(--brand);
+}
+
+.statusColorPicker input,
+.statusRowColorPicker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.statusColorSwatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-medium);
+  flex-shrink: 0;
+}
+
+.statusMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.statusName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.statusActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.statusColorInput {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-color var(--duration-fast);
+}
+
+.statusColorInput:hover {
+  border-color: var(--brand);
+}
+
+.statusColorInput::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.statusColorInput::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.statusColorInput::-moz-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.statusIconBtn,
+.statusTextBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.statusIconBtn:hover:not(:disabled),
+.statusTextBtn:hover {
+  color: var(--brand);
+  background: var(--brand-light);
+  border-color: var(--brand);
+}
+
+.statusIconBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.statusDangerBtn {
+  color: var(--danger);
+}
+
+.statusDangerBtn:hover {
+  color: var(--danger);
+  background: var(--danger-light);
+  border-color: var(--danger);
+}
+
+.statusActionsTail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.statusSystemBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .statusCreateRow {
+    grid-template-columns: 1fr;
+  }
+
+  .statusItem {
+    grid-template-columns: 18px 10px minmax(0, 1fr);
+  }
+
+  .statusActions {
+    grid-column: 3;
+    justify-content: flex-start;
+  }
+}

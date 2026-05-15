@@ -53,7 +53,7 @@ export function useTodos() {
     showLoading();
     try {
       await todoAPI.changeStatus(id, status);
-      showToast(`상태가 "${STATUS_LABEL[status]}"(으)로 변경되었습니다.`, 'success');
+      showToast(`상태가 "${STATUS_LABEL[status] || status}"(으)로 변경되었습니다.`, 'success');
     } catch (err) {
       showToast(`상태 변경에 실패했습니다: ${err.message}`, 'error');
       throw err;

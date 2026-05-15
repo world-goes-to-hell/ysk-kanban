@@ -27,6 +27,7 @@ public class SseEmitterRegistry {
 
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Map<Long, List<String>> userEmitters = new ConcurrentHashMap<>();
+    private final Map<String, Long> emitterUsers = new ConcurrentHashMap<>();
     private ScheduledExecutorService heartbeatExecutor;
 
     @PostConstruct
@@ -49,8 +50,7 @@ public class SseEmitterRegistry {
             try {
                 emitter.send(SseEmitter.event().comment("heartbeat"));
             } catch (Exception e) {
-                emitters.remove(id);
-                log.debug("Heartbeat 실패로 SSE 연결 제거: {} (활성: {})", id, emitters.size());
+                removeEmitter(id, "heartbeat 실패", e);
             }
         });
     }
@@ -61,20 +61,11 @@ public class SseEmitterRegistry {
 
         emitters.put(id, emitter);
         if (userId != null) {
+            emitterUsers.put(id, userId);
             userEmitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(id);
         }
 
-        Runnable cleanup = () -> {
-            emitters.remove(id);
-            if (userId != null) {
-                List<String> ids = userEmitters.get(userId);
-                if (ids != null) {
-                    ids.remove(id);
-                    if (ids.isEmpty()) userEmitters.remove(userId);
-                }
-            }
-            log.debug("SSE 연결 종료: {} (활성: {})", id, emitters.size());
-        };
+        Runnable cleanup = () -> removeEmitter(id, "연결 종료", null);
 
         emitter.onCompletion(cleanup);
         emitter.onTimeout(cleanup);
@@ -83,7 +74,7 @@ public class SseEmitterRegistry {
         try {
             emitter.send(SseEmitter.event().name("connected").data("ok"));
         } catch (IOException e) {
-            cleanup.run();
+            removeEmitter(id, "초기 연결 이벤트 전송 실패", e);
         }
 
         log.debug("SSE 연결 등록: {} userId={} (활성: {})", id, userId, emitters.size());
@@ -97,8 +88,7 @@ public class SseEmitterRegistry {
                         .name(eventName)
                         .data(data, MediaType.APPLICATION_JSON));
             } catch (Exception e) {
-                emitters.remove(id);
-                log.debug("SSE 전송 실패로 연결 제거: {}", id);
+                removeEmitter(id, "이벤트 전송 실패", e);
             }
         });
     }
@@ -108,16 +98,66 @@ public class SseEmitterRegistry {
         if (ids == null) return;
         for (String id : ids) {
             SseEmitter emitter = emitters.get(id);
-            if (emitter == null) continue;
+            if (emitter == null) {
+                removeEmitter(id, "누락된 사용자 연결 정리", null);
+                continue;
+            }
             try {
                 emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data, MediaType.APPLICATION_JSON));
             } catch (Exception e) {
-                emitters.remove(id);
-                ids.remove(id);
-                log.debug("SSE 전송 실패로 연결 제거: {}", id);
+                removeEmitter(id, "사용자 이벤트 전송 실패", e);
             }
         }
+    }
+
+    private void removeEmitter(String id, String reason, Exception cause) {
+        SseEmitter emitter = emitters.remove(id);
+        Long userId = emitterUsers.remove(id);
+        if (userId != null) {
+            List<String> ids = userEmitters.get(userId);
+            if (ids != null) {
+                ids.remove(id);
+                if (ids.isEmpty()) userEmitters.remove(userId);
+            }
+        }
+
+        if (emitter != null) {
+            try {
+                emitter.complete();
+            } catch (Exception ignored) {
+                // The response may already be closed by the client.
+            }
+        }
+
+        if (cause != null && !isClientDisconnect(cause)) {
+            log.warn("{}로 SSE 연결 제거: {} ({})", reason, id, cause.toString());
+            return;
+        }
+        log.debug("{}로 SSE 연결 제거: {} (활성: {})", reason, id, emitters.size());
+    }
+
+    private boolean isClientDisconnect(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String className = current.getClass().getName();
+            String message = current.getMessage();
+            if (className.contains("ClientAbortException")
+                    || className.contains("AsyncRequestNotUsableException")) {
+                return true;
+            }
+            if (message != null) {
+                String lower = message.toLowerCase();
+                if (lower.contains("broken pipe")
+                        || lower.contains("connection reset")
+                        || lower.contains("connection aborted")
+                        || lower.contains("clientabort")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
