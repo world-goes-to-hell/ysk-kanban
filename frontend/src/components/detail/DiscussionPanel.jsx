@@ -42,10 +42,13 @@ export default function DiscussionPanel({ todoId, isMaster, onActiveChange }) {
 
   const handleResizeMouseDown = (e) => {
     e.preventDefault();
-    const gridRect = gridRef.current?.getBoundingClientRect();
-    if (!gridRect) return;
+    if (!gridRef.current) return;
+    const iframe = jitsiContainerRef.current?.querySelector('iframe');
+    if (iframe) iframe.style.pointerEvents = 'none';
     const onMove = (ev) => {
-      const pct = ((ev.clientX - gridRect.left) / gridRect.width) * 100;
+      const rect = gridRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0) return;
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
       const clamped = Math.max(25, Math.min(80, pct));
       setLeftPct(clamped);
     };
@@ -54,6 +57,7 @@ export default function DiscussionPanel({ todoId, isMaster, onActiveChange }) {
       document.removeEventListener('mouseup', onUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      if (iframe) iframe.style.pointerEvents = '';
     };
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';

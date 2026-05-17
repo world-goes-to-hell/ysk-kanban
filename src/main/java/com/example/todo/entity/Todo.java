@@ -111,6 +111,9 @@ public class Todo {
     @Transient
     private Integer subtaskDone;
 
+    @Transient
+    private Boolean hasActiveDiscussion;
+
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default

@@ -13,6 +13,7 @@ import com.example.todo.entity.Project;
 import com.example.todo.entity.ProjectStatus;
 import com.example.todo.entity.Todo;
 import com.example.todo.entity.User;
+import com.example.todo.repository.DiscussionRepository;
 import com.example.todo.repository.ProjectMemberRepository;
 import com.example.todo.repository.ProjectRepository;
 import com.example.todo.repository.TodoRepository;
@@ -32,11 +33,13 @@ public class TodoService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ProjectStatusService projectStatusService;
+    private final DiscussionRepository discussionRepository;
 
     @Transactional(readOnly = true)
     public List<Todo> getAllTodos() {
         List<Todo> todos = todoRepository.findByParentIsNullOrderBySortOrderAscCreatedAtDesc();
         fillSubtaskCounts(todos);
+        fillActiveDiscussions(todos);
         return todos;
     }
 
@@ -44,6 +47,7 @@ public class TodoService {
     public List<Todo> getTodosByProject(Long projectId) {
         List<Todo> todos = todoRepository.findByProjectIdAndParentIsNullOrderBySortOrderAscCreatedAtDesc(projectId);
         fillSubtaskCounts(todos);
+        fillActiveDiscussions(todos);
         return todos;
     }
 
@@ -58,6 +62,7 @@ public class TodoService {
         }
         List<Todo> todos = todoRepository.findByProjectIdInAndParentIsNullOrderBySortOrderAscCreatedAtDesc(accessibleIds);
         fillSubtaskCounts(todos);
+        fillActiveDiscussions(todos);
         return todos;
     }
 
@@ -237,6 +242,15 @@ public class TodoService {
     @Transactional(readOnly = true)
     public List<Todo> getSubtasks(Long parentId) {
         return todoRepository.findByParent_IdOrderBySortOrderAscCreatedAtDesc(parentId);
+    }
+
+    private void fillActiveDiscussions(List<Todo> todos) {
+        if (todos.isEmpty()) return;
+        List<Long> ids = todos.stream().map(Todo::getId).toList();
+        java.util.Set<Long> active = new java.util.HashSet<>(discussionRepository.findActiveTodoIdsIn(ids));
+        for (Todo todo : todos) {
+            todo.setHasActiveDiscussion(active.contains(todo.getId()));
+        }
     }
 
     private void fillSubtaskCounts(List<Todo> todos) {

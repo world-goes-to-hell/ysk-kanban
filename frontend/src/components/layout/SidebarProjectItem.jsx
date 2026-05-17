@@ -29,15 +29,14 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
   const projectName = project.name || project.projectKey || '';
 
   return (
-    <div className={styles.sidebarProjectNode}>
+    <div className={styles.sidebarProjectNode} style={{ '--project-depth': depth }}>
       <div
         role="button"
         tabIndex={accessible ? 0 : -1}
-        className={`${styles.sidebarItem} ${styles.sidebarProjectItem} ${isActive ? styles.sidebarItemActive : ''} ${!accessible ? styles.sidebarItemDisabled : ''}`}
+        className={`${styles.sidebarItem} ${styles.sidebarProjectItem} ${depth === 0 ? styles.sidebarProjectItemTop : styles.sidebarProjectItemChild} ${isActive ? styles.sidebarItemActive : ''} ${!accessible ? styles.sidebarItemDisabled : ''}`}
         onClick={handleClick}
         onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
         onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); if (accessible) onCreateChild?.(e, project); }}
-        style={{ '--project-depth': depth }}
         title={!accessible ? '접근 권한이 없습니다' : projectName}
       >
         {hasChildren ? (
@@ -49,10 +48,17 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
           >
             {expanded ? '▾' : '▸'}
           </button>
+        ) : depth === 0 ? (
+          <span className={styles.sidebarTopMarker} aria-hidden="true" />
         ) : (
           <span className={styles.sidebarTogglePlaceholder} />
         )}
         <span className={styles.sidebarItemLabel}>{projectName}</span>
+        {depth === 0 && hasChildren && (
+          <span className={styles.sidebarProjectCount} title={`하위 프로젝트 ${project.children.length}개`}>
+            {project.children.length}
+          </span>
+        )}
         {accessible && depth === 0 && (
           <button
             className={`${styles.sidebarFavoriteToggle} ${isFavorite ? styles.sidebarFavoriteToggleActive : ''}`}
@@ -63,27 +69,6 @@ export default function SidebarProjectItem({ project, activeProjectId, depth = 0
             {isFavorite ? '\u2605' : '\u2606'}
           </button>
         )}
-        {accessible && <span className={styles.sidebarItemActions} aria-label={`${projectName} 작업`}>
-          {isMaster && (
-            <>
-              <button
-                className={styles.sidebarItemBtn}
-                title="멤버 관리"
-                onClick={(e) => { e.stopPropagation(); onManageMembers?.(project); }}
-              >&#128101;</button>
-              <button
-                className={styles.sidebarItemBtn}
-                title="편집"
-                onClick={(e) => { e.stopPropagation(); onEditProject(e, project); }}
-              >&#9998;</button>
-              <button
-                className={styles.sidebarItemBtn}
-                title="삭제"
-                onClick={(e) => { e.stopPropagation(); onDeleteProject(e, project); }}
-              >&times;</button>
-            </>
-          )}
-        </span>}
       </div>
       {hasChildren && expanded && (
         <div className={styles.sidebarProjectChildren}>

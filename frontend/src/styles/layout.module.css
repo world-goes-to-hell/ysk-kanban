@@ -12,9 +12,17 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-light);
-  box-shadow: var(--shadow-xs);
+  background: var(--header-bg, rgba(255, 255, 255, 0.78));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--header-border, rgba(229, 234, 242, 0.7));
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+/* Dark variant for header */
+[data-theme="dark"] .header {
+  --header-bg: rgba(20, 23, 33, 0.78);
+  --header-border: rgba(255, 255, 255, 0.06);
 }
 
 .headerInner {
@@ -105,47 +113,240 @@
   min-height: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────── */
+/* ── Sidebar (mockup-inspired glass dark) ─────────── */
 
 .sidebar {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
-  background: var(--sidebar-bg);
+  background: var(--sidebar-bg-gradient);
   color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  overflow-x: hidden;
+  border-right: 1px solid rgba(255,255,255,0.04);
   transition: transform 0.3s var(--ease-out);
+  position: relative;
+  padding: 22px 16px 16px;
+  gap: 0;
+}
+
+/* Radial blob 데코 (인디고 좌상 + 스카이 우하) */
+.sidebar::before,
+.sidebar::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sidebar::before {
+  width: 220px;
+  height: 220px;
+  right: -80px;
+  top: -40px;
+  background: radial-gradient(circle, #4f46e5 0%, transparent 65%);
+}
+
+.sidebar::after {
+  width: 180px;
+  height: 180px;
+  left: -60px;
+  bottom: 80px;
+  background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
+}
+
+/* Brand 영역 */
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 1;
+  padding: 0 4px;
+}
+
+.sidebarBrandBadge {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: var(--gradient-icon);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35);
+  flex-shrink: 0;
+}
+
+.sidebarBrandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebarBrandText h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarBrandText p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
 }
 
 .sidebarTopNav {
-  padding: 14px 12px 12px;
+  position: relative;
+  z-index: 1;
+  padding: 0 0 14px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 14px;
 }
 
-.sidebarHeader {
+/* Modern menu item (icon box + 2-line text + badge) */
+.sidebarMenuItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 14px 8px;
+  gap: 12px;
+  padding: 11px 12px;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: rgba(255,255,255,0.82);
+  cursor: pointer;
+  transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast), color var(--duration-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.sidebarMenuItem:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+  transform: translateX(2px);
+  color: #fff;
+}
+
+.sidebarMenuItemActive {
+  background: linear-gradient(135deg, rgba(79,70,229,0.42), rgba(14,165,233,0.28));
+  border-color: rgba(255,255,255,0.10);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.sidebarMenuItemActive:hover {
+  background: linear-gradient(135deg, rgba(79,70,229,0.5), rgba(14,165,233,0.34));
+  transform: translateX(2px);
+}
+
+.sidebarMenuLeft {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebarMenuIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.sidebarMenuItemActive .sidebarMenuIcon {
+  background: rgba(255,255,255,0.14);
+}
+
+.sidebarMenuText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sidebarMenuText strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarMenuText span {
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarMenuItemActive .sidebarMenuText span {
+  color: rgba(255,255,255,0.7);
+}
+
+.sidebarBadge {
+  min-width: 26px;
+  height: 24px;
+  border-radius: 999px;
+  padding: 0 9px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: #e0e7ff;
+  font-weight: 700;
+}
+
+.sidebarMenuItemActive .sidebarBadge {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+.sidebarHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 8px;
 }
 
 .sidebarTitle {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--sidebar-text);
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.5);
 }
 
 .sidebarSubtitle {
-  margin-top: 2px;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.46);
+  margin-top: 3px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .sidebarAddBtn {
@@ -154,26 +355,75 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--sidebar-text-bright);
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
   cursor: pointer;
   transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 
 .sidebarAddBtn:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.22);
+  background: rgba(79,70,229,0.3);
+  border-color: rgba(79,70,229,0.5);
+  color: #fff;
+}
+
+/* Sidebar footer 액션 카드 */
+.sidebarFooterCard {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 4px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+}
+
+.sidebarFooterCard strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sidebarFooterCard p {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.5;
+}
+
+.sidebarFooterBtn {
+  width: 100%;
+  border: 0;
+  border-radius: 11px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #111827;
+  background: linear-gradient(135deg, #ffffff, #c7d2fe);
+  cursor: pointer;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.sidebarFooterBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
 }
 
 .sidebarNav {
-  padding: 6px 8px 18px;
+  position: relative;
+  z-index: 1;
+  padding: 0 0 10px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-height: 0;
 }
 
@@ -182,17 +432,17 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-  min-height: 34px;
-  padding: 7px 10px;
+  min-height: 32px;
+  padding: 6px 10px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 400;
   color: var(--sidebar-text);
   background: transparent;
-  border: none;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background var(--duration-fast), color var(--duration-fast), box-shadow var(--duration-fast);
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -202,19 +452,22 @@
 
 .sidebarItem:hover {
   background: rgba(255,255,255,0.06);
-  color: var(--sidebar-text-bright);
+  border-color: rgba(255,255,255,0.06);
+  color: #fff;
+  transform: translateX(1px);
 }
 
 .sidebarItemActive {
-  background: rgba(59, 130, 246, 0.16);
-  color: var(--sidebar-text-bright);
+  background: linear-gradient(135deg, rgba(79,70,229,0.38), rgba(14,165,233,0.22));
+  color: #fff;
   font-weight: 600;
-  box-shadow: inset 3px 0 0 #60a5fa;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .sidebarItemActive:hover {
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--sidebar-text-bright);
+  background: linear-gradient(135deg, rgba(79,70,229,0.46), rgba(14,165,233,0.28));
+  color: #fff;
 }
 
 .sidebarItemDisabled {
@@ -293,6 +546,7 @@
   display: flex;
   flex-direction: column;
   overflow-x: auto;
+  background: transparent;
 }
 
 /* Mobile sidebar toggle */
@@ -354,13 +608,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   font-size: 0.74rem;
-  color: rgba(203, 213, 225, 0.9);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255,255,255,0.08);
+  border: 0;
+  border-radius: 8px;
   cursor: pointer;
   flex-shrink: 0;
   opacity: 1;
@@ -375,27 +629,169 @@
 
 .sidebarTogglePlaceholder {
   display: inline-block;
-  width: 20px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
+}
+
+.sidebarTopMarker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  font-size: 0;
+  position: relative;
+}
+
+.sidebarTopMarker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #60a5fa;
+  opacity: 0.95;
+}
+
+.sidebarItemActive .sidebarTopMarker {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sidebarItemActive .sidebarTopMarker::before {
+  background: #fff;
+}
+
+/* 최상위 프로젝트 = 메뉴 카드 톤 */
+.sidebarProjectItemTop {
+  min-height: 38px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 11px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin-top: 3px;
+  gap: 9px;
+}
+
+.sidebarProjectNode:first-child > .sidebarProjectItemTop {
+  margin-top: 0;
+}
+
+.sidebarProjectItemTop .sidebarItemLabel {
+  color: rgba(255, 255, 255, 0.94);
+  font-weight: 600;
+}
+
+.sidebarProjectItemTop.sidebarItemActive .sidebarItemLabel {
+  color: #fff;
+}
+
+/* 자식 프로젝트 = 컴팩트 행 */
+.sidebarProjectItemChild {
+  min-height: 28px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-radius: 9px;
+  font-size: 0.81rem;
+  font-weight: 500;
+  gap: 8px;
+}
+
+.sidebarProjectItemChild .sidebarItemLabel {
+  color: rgba(220, 230, 245, 0.85);
+}
+
+/* 자식 영역의 토글/플레이스홀더는 작게 */
+.sidebarProjectItemChild .sidebarToggle2,
+.sidebarProjectItemChild .sidebarTopMarker,
+.sidebarProjectItemChild .sidebarTogglePlaceholder {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  font-size: 0.7rem;
+}
+
+.sidebarProjectItemChild .sidebarTopMarker::before {
+  width: 4px;
+  height: 4px;
+}
+
+/* 자식 카운트 badge (최상위 프로젝트에만 노출) */
+.sidebarProjectCount {
+  min-width: 24px;
+  height: 22px;
+  border-radius: 999px;
+  padding: 0 8px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #e0e7ff;
+  flex-shrink: 0;
+  transition: opacity var(--duration-fast);
+}
+
+.sidebarProjectItemTop.sidebarItemActive .sidebarProjectCount {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
+.sidebarProjectItem:hover .sidebarProjectCount {
+  opacity: 0;
+}
+
+/* ── Tree guide line (자식 그룹 좌측 가이드) ──── */
+.sidebarProjectNode {
+  position: relative;
+}
+
+.sidebarProjectChildren {
+  position: relative;
+  margin-top: 1px;
+}
+
+.sidebarProjectChildren::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  /* 부모 padding-left + 토글 박스 가운데(13px) */
+  left: calc(10px + var(--project-depth, 0) * 14px + 13px);
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  transition: background var(--duration-fast);
+}
+
+.sidebarProjectNode:hover > .sidebarProjectChildren::before {
+  background: rgba(96, 165, 250, 0.35);
 }
 
 /* ── Sidebar Search ─────────────────────────────── */
 
 .sidebarSearchWrap {
   position: relative;
-  padding: 0 12px 12px;
+  z-index: 1;
+  padding: 0 0 12px;
 }
 
 .sidebarSearch {
   width: 100%;
-  height: 32px;
-  padding: 6px 10px 6px 28px;
+  height: 36px;
+  padding: 6px 10px 6px 32px;
   font-family: inherit;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--sidebar-text-bright);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px;
   outline: none;
   transition: background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
@@ -405,17 +801,17 @@
 }
 
 .sidebarSearch:focus {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(147, 197, 253, 0.38);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(147, 197, 253, 0.4);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 
 .sidebarSearchIcon {
   position: absolute;
-  left: 22px;
-  top: 7px;
+  left: 11px;
+  top: 9px;
   color: rgba(255,255,255,0.42);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   pointer-events: none;
 }
 
@@ -428,32 +824,19 @@
 }
 
 .sidebarProjectItem {
-  padding-left: calc(10px + var(--project-depth, 0) * 16px);
+  padding-left: calc(10px + var(--project-depth, 0) * 14px);
   padding-right: 8px;
+  gap: 10px;
 }
 
 .sidebarProjectItem::before {
-  content: '';
-  width: 2px;
-  align-self: stretch;
-  margin: 5px 0;
-  border-radius: 2px;
-  background: transparent;
-  flex-shrink: 0;
-}
-
-.sidebarProjectItem:hover::before {
-  background: rgba(255,255,255,0.18);
-}
-
-.sidebarProjectItem.sidebarItemActive::before {
-  background: #60a5fa;
+  content: none;
 }
 
 .sidebarItemActive .sidebarToggle2 {
-  color: #bfdbfe;
-  background: rgba(96, 165, 250, 0.16);
-  border-color: rgba(96, 165, 250, 0.32);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .sidebarFavoriteToggle {
@@ -507,31 +890,68 @@
 .sidebarContextMenu {
   position: fixed;
   z-index: 9999;
-  min-width: 168px;
-  padding: 5px;
-  background: var(--sidebar-active);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 6px;
-  box-shadow: 0 16px 36px rgba(0,0,0,0.28);
+  min-width: 208px;
+  padding: 6px;
+  background: rgba(17, 24, 39, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(14px);
+  animation: contextMenuIn 0.14s var(--ease-out, ease-out);
+}
+
+@keyframes contextMenuIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .sidebarContextMenuItem {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 12px;
   font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--sidebar-text-bright);
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   text-align: left;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .sidebarContextMenuItem:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebarContextMenuIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.sidebarContextMenuItemDanger {
+  color: #fca5a5;
+}
+
+.sidebarContextMenuItemDanger:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+}
+
+.sidebarContextMenuDivider {
+  height: 1px;
+  margin: 4px 6px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ── Favorites Section ──────────────────────────── */
