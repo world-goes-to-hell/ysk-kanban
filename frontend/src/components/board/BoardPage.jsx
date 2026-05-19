@@ -96,6 +96,26 @@ export default function BoardPage() {
     return () => window.removeEventListener('comment_changed', handler);
   }, [todos, loadUnreadCounts]);
 
+  // 토론 시작/종료 시 해당 카드의 hasActiveDiscussion 토글
+  useEffect(() => {
+    const onStarted = (e) => {
+      const todoId = Number(e.detail?.todoId);
+      if (!todoId) return;
+      setTodos(prev => prev.map(t => Number(t.id) === todoId ? { ...t, hasActiveDiscussion: true } : t));
+    };
+    const onEnded = (e) => {
+      const todoId = Number(e.detail?.todoId);
+      if (!todoId) return;
+      setTodos(prev => prev.map(t => Number(t.id) === todoId ? { ...t, hasActiveDiscussion: false } : t));
+    };
+    window.addEventListener('discussion_started', onStarted);
+    window.addEventListener('discussion_ended', onEnded);
+    return () => {
+      window.removeEventListener('discussion_started', onStarted);
+      window.removeEventListener('discussion_ended', onEnded);
+    };
+  }, [setTodos]);
+
   const reload = useCallback(() => {
     loadTodos(projectId);
   }, [projectId, loadTodos]);

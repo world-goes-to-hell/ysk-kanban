@@ -22,12 +22,30 @@
   --bg-overlay:     rgba(9, 12, 24, 0.5);
 
   /* Sidebar */
-  --sidebar-bg:     #1e293b;
-  --sidebar-hover:  #334155;
-  --sidebar-active: #0f172a;
-  --sidebar-text:   #cbd5e1;
-  --sidebar-text-bright: #f1f5f9;
-  --sidebar-width:  300px;
+  --sidebar-bg:     #111827;
+  --sidebar-bg-gradient: linear-gradient(180deg, #111827 0%, #182338 100%);
+  --sidebar-hover:  rgba(255,255,255,0.08);
+  --sidebar-active: rgba(79,70,229,0.42);
+  --sidebar-text:   rgba(255,255,255,0.82);
+  --sidebar-text-bright: #ffffff;
+  --sidebar-text-muted: rgba(255,255,255,0.55);
+  --sidebar-width:  280px;
+
+  /* Modern UI Tokens (mockup-inspired) */
+  --bg-page-gradient: linear-gradient(180deg, #eef3ff 0%, #f8fbff 50%, #f4f7fb 100%);
+  --accent-indigo:  #4f46e5;
+  --accent-sky:     #0ea5e9;
+  --accent-purple:  #8b5cf6;
+  --accent-indigo-soft: #eef2ff;
+  --gradient-primary: linear-gradient(135deg, #4f46e5, #0ea5e9);
+  --gradient-icon:  linear-gradient(135deg, #6d5efc, #35b6f6);
+  --gradient-bar:   linear-gradient(180deg, #8b5cf6 0%, #4f46e5 50%, #0ea5e9 100%);
+  --shadow-soft:    0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow-primary: 0 16px 30px rgba(79, 70, 229, 0.25);
+  --radius-2xl:     20px;
+  --radius-3xl:     24px;
+  --glass-bg:       rgba(255, 255, 255, 0.86);
+  --glass-border:   rgba(255, 255, 255, 0.6);
 
   /* Border */
   --border-light:   #e2e4e9;
@@ -99,7 +117,8 @@ html {
 
 body {
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-page);
+  background: var(--bg-page-gradient);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -483,6 +502,14 @@ body {
   --shadow-sm:      0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
   --shadow-md:      0 4px 12px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
   --shadow-lg:      0 10px 30px rgba(0,0,0,.5), 0 4px 10px rgba(0,0,0,.3);
+
+  /* Modern UI Tokens — dark variant */
+  --bg-page-gradient: linear-gradient(180deg, #0b0e16 0%, #131727 50%, #0b0e16 100%);
+  --glass-bg:         rgba(26, 29, 39, 0.72);
+  --glass-border:     rgba(255, 255, 255, 0.08);
+  --shadow-soft:      0 18px 40px rgba(0, 0, 0, 0.5);
+  --shadow-primary:   0 16px 30px rgba(79, 70, 229, 0.4);
+  --accent-indigo-soft: rgba(99, 102, 241, 0.18);
 }
 
 /* Dark theme form elements */

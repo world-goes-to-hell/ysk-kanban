@@ -82,6 +82,11 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
           <CopyableId id={item.id} className={styles.cardCompactKey} />
           {agentLive && <span className="agentLiveDot" title="에이전트 작업 중" />}
           <span className={styles.cardCompactSummary}>{item.summary}</span>
+          {item.hasActiveDiscussion && (
+            <span className={styles.discussionLiveBadge} title="진행 중인 토론">
+              <span className={styles.discussionLiveDot} />🎙️ LIVE
+            </span>
+          )}
           {item.subtaskTotal > 0 && (
             <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>
           )}
@@ -144,6 +149,11 @@ export default function TodoCard({ item, onTransition, onEdit, onDelete, onClick
           {agentLive && <span className="agentLiveBadge" title="에이전트 작업 중"><span className="agentLiveDot" />작업중</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {item.hasActiveDiscussion && (
+            <span className={styles.discussionLiveBadge} title="진행 중인 토론">
+              <span className={styles.discussionLiveDot} />🎙️ LIVE
+            </span>
+          )}
           {item.subtaskTotal > 0 && (
             <span className={styles.subtaskBadge}>{item.subtaskDone}/{item.subtaskTotal}</span>
           )}

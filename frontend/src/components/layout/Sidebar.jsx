@@ -9,7 +9,7 @@ import SidebarProjectItem from './SidebarProjectItem';
 import styles from '../../styles/layout.module.css';
 
 export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
-  const { projectTree, favoriteIds, deleteProject, loadProjects } = useProjects();
+  const { projectTree, favoriteIds, deleteProject, loadProjects, myRoles } = useProjects();
   const { currentUser } = useAuth();
   const [membersProject, setMembersProject] = useState(null);
   const navigate = useNavigate();
@@ -25,13 +25,6 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
   const isAdminMembers = location.pathname === '/admin/members';
   const isAdmin = currentUser?.username === 'admin';
   const activeProjectId = location.pathname.match(/^\/projects\/(\d+)/)?.[1];
-
-  const projectCount = useMemo(() => {
-    const countNodes = (nodes) => nodes.reduce((total, node) => (
-      total + 1 + countNodes(node.children || [])
-    ), 0);
-    return countNodes(projectTree);
-  }, [projectTree]);
 
   // Sort project tree: favorites first, then filter by search
   const filteredTree = useMemo(() => {
@@ -99,51 +92,70 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
   return (
     <>
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+        <div className={styles.sidebarBrand}>
+          <div className={styles.sidebarBrandBadge}>✓</div>
+          <div className={styles.sidebarBrandText}>
+            <h1>YSK Kanban</h1>
+            <p>일감 관리 플랫폼</p>
+          </div>
+        </div>
+
         <nav className={styles.sidebarTopNav}>
           <button
-            className={`${styles.sidebarItem} ${isDashboard ? styles.sidebarItemActive : ''}`}
+            type="button"
+            className={`${styles.sidebarMenuItem} ${isDashboard ? styles.sidebarMenuItemActive : ''}`}
             onClick={handleDashboardClick}
           >
-            <span className={styles.sidebarItemIcon}>&#128202;</span>
-            <span className={styles.sidebarItemLabel}>대시보드</span>
+            <div className={styles.sidebarMenuLeft}>
+              <div className={styles.sidebarMenuIcon}>📊</div>
+              <div className={styles.sidebarMenuText}>
+                <strong>대시보드</strong>
+                <span>요약 지표와 현황</span>
+              </div>
+            </div>
           </button>
           <button
-            className={`${styles.sidebarItem} ${isReport ? styles.sidebarItemActive : ''}`}
+            type="button"
+            className={`${styles.sidebarMenuItem} ${isReport ? styles.sidebarMenuItemActive : ''}`}
             onClick={() => { navigate('/report'); onCloseSidebar?.(); }}
           >
-            <span className={styles.sidebarItemIcon}>&#128196;</span>
-            <span className={styles.sidebarItemLabel}>작업내역</span>
+            <div className={styles.sidebarMenuLeft}>
+              <div className={styles.sidebarMenuIcon}>📋</div>
+              <div className={styles.sidebarMenuText}>
+                <strong>작업내역</strong>
+                <span>완료 이력 리포트</span>
+              </div>
+            </div>
           </button>
           <button
-            className={`${styles.sidebarItem} ${isCalendar ? styles.sidebarItemActive : ''}`}
+            type="button"
+            className={`${styles.sidebarMenuItem} ${isCalendar ? styles.sidebarMenuItemActive : ''}`}
             onClick={() => { navigate('/calendar'); onCloseSidebar?.(); }}
           >
-            <span className={styles.sidebarItemIcon}>&#128197;</span>
-            <span className={styles.sidebarItemLabel}>캘린더</span>
+            <div className={styles.sidebarMenuLeft}>
+              <div className={styles.sidebarMenuIcon}>📅</div>
+              <div className={styles.sidebarMenuText}>
+                <strong>캘린더</strong>
+                <span>마감 일정 확인</span>
+              </div>
+            </div>
           </button>
           {isAdmin && (
             <button
-              className={`${styles.sidebarItem} ${isAdminMembers ? styles.sidebarItemActive : ''}`}
+              type="button"
+              className={`${styles.sidebarMenuItem} ${isAdminMembers ? styles.sidebarMenuItemActive : ''}`}
               onClick={() => { navigate('/admin/members'); onCloseSidebar?.(); }}
             >
-              <span className={styles.sidebarItemIcon}>&#128101;</span>
-              <span className={styles.sidebarItemLabel}>회원관리</span>
+              <div className={styles.sidebarMenuLeft}>
+                <div className={styles.sidebarMenuIcon}>&#128101;</div>
+                <div className={styles.sidebarMenuText}>
+                  <strong>회원관리</strong>
+                  <span>admin 전용 관리</span>
+                </div>
+              </div>
             </button>
           )}
         </nav>
-        <div className={styles.sidebarHeader}>
-          <div>
-            <h2 className={styles.sidebarTitle}>프로젝트</h2>
-            <p className={styles.sidebarSubtitle}>{projectCount}개 프로젝트</p>
-          </div>
-          <button
-            className={styles.sidebarAddBtn}
-            title="프로젝트 추가"
-            onClick={() => setProjectModal({ mode: 'create', project: null })}
-          >
-            +
-          </button>
-        </div>
         <div className={styles.sidebarSearchWrap}>
           <span className={styles.sidebarSearchIcon}>⌕</span>
           <input
@@ -174,25 +186,71 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
             </div>
           )}
         </nav>
+
+        <div className={styles.sidebarFooterCard}>
+          <strong>빠른 액션</strong>
+          <p>새 프로젝트를 만들거나 일감을 빠르게 등록해보세요.</p>
+          <button
+            type="button"
+            className={styles.sidebarFooterBtn}
+            onClick={() => setProjectModal({ mode: 'create', project: null })}
+          >+ 새 프로젝트</button>
+        </div>
       </aside>
 
-      {contextMenu && (
-        <div
-          className={styles.sidebarContextMenu}
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-          onClick={e => e.stopPropagation()}
-        >
-          <button
-            className={styles.sidebarContextMenuItem}
-            onClick={() => {
-              setProjectModal({ mode: 'create', project: null, parentId: contextMenu.project.id });
-              setContextMenu(null);
-            }}
+      {contextMenu && (() => {
+        const targetProject = contextMenu.project;
+        const targetIsMaster = myRoles?.[targetProject.id] === 'MASTER';
+        return (
+          <div
+            className={styles.sidebarContextMenu}
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={e => e.stopPropagation()}
           >
-            + 하위 프로젝트 생성
-          </button>
-        </div>
-      )}
+            <button
+              className={styles.sidebarContextMenuItem}
+              onClick={() => {
+                setProjectModal({ mode: 'create', project: null, parentId: targetProject.id });
+                setContextMenu(null);
+              }}
+            >
+              <span className={styles.sidebarContextMenuIcon}>+</span> 하위 프로젝트 생성
+            </button>
+            {targetIsMaster && (
+              <>
+                <div className={styles.sidebarContextMenuDivider} />
+                <button
+                  className={styles.sidebarContextMenuItem}
+                  onClick={() => {
+                    setMembersProject(targetProject);
+                    setContextMenu(null);
+                  }}
+                >
+                  <span className={styles.sidebarContextMenuIcon}>&#128101;</span> 멤버 관리
+                </button>
+                <button
+                  className={styles.sidebarContextMenuItem}
+                  onClick={() => {
+                    setProjectModal({ mode: 'edit', project: targetProject });
+                    setContextMenu(null);
+                  }}
+                >
+                  <span className={styles.sidebarContextMenuIcon}>&#9998;</span> 프로젝트 편집
+                </button>
+                <button
+                  className={`${styles.sidebarContextMenuItem} ${styles.sidebarContextMenuItemDanger}`}
+                  onClick={() => {
+                    setConfirmDelete(targetProject);
+                    setContextMenu(null);
+                  }}
+                >
+                  <span className={styles.sidebarContextMenuIcon}>&times;</span> 프로젝트 삭제
+                </button>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {projectModal && (
         <ProjectModal
