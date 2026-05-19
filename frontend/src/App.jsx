@@ -13,12 +13,19 @@ import SummaryPage from './components/summary/SummaryPage';
 import ReportPage from './components/report/ReportPage';
 import CalendarPage from './components/calendar/CalendarPage';
 import MyPage from './components/mypage/MyPage';
+import MemberManagementPage from './components/admin/MemberManagementPage';
 
 function RequireAuth() {
   const { currentUser, loading } = useAuth();
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
   return <Outlet />;
+}
+
+function RequireAdmin({ children }) {
+  const { currentUser } = useAuth();
+  if (currentUser?.username !== 'admin') return <Navigate to="/" replace />;
+  return children;
 }
 
 export default function App() {
@@ -37,6 +44,7 @@ export default function App() {
                   <Route index element={<DashboardPage />} />
                   <Route path="/report" element={<ReportPage />} />
                   <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/admin/members" element={<RequireAdmin><MemberManagementPage /></RequireAdmin>} />
                   <Route path="/projects/:projectId" element={<BoardPage />} />
                 </Route>
               </Route>

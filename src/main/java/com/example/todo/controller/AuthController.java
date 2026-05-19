@@ -128,7 +128,14 @@ public class AuthController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<Map<String, Object>>> getUsers() {
+    public ResponseEntity<?> getUsers() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Not authenticated"));
+        }
+
         List<User> users = userService.findAll();
         List<Map<String, Object>> result = users.stream().map(u -> {
             Map<String, Object> m = new java.util.HashMap<>();

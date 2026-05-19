@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { useProjects } from '../../contexts/ProjectContext';
 import ProjectModal from '../project/ProjectModal';
 import ProjectMembersModal from '../project/ProjectMembersModal';
@@ -9,6 +10,7 @@ import styles from '../../styles/layout.module.css';
 
 export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
   const { projectTree, favoriteIds, deleteProject, loadProjects } = useProjects();
+  const { currentUser } = useAuth();
   const [membersProject, setMembersProject] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,6 +22,8 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
   const isDashboard = location.pathname === '/';
   const isReport = location.pathname === '/report';
   const isCalendar = location.pathname === '/calendar';
+  const isAdminMembers = location.pathname === '/admin/members';
+  const isAdmin = currentUser?.username === 'admin';
   const activeProjectId = location.pathname.match(/^\/projects\/(\d+)/)?.[1];
 
   const projectCount = useMemo(() => {
@@ -117,6 +121,15 @@ export default function Sidebar({ sidebarOpen, onCloseSidebar }) {
             <span className={styles.sidebarItemIcon}>&#128197;</span>
             <span className={styles.sidebarItemLabel}>캘린더</span>
           </button>
+          {isAdmin && (
+            <button
+              className={`${styles.sidebarItem} ${isAdminMembers ? styles.sidebarItemActive : ''}`}
+              onClick={() => { navigate('/admin/members'); onCloseSidebar?.(); }}
+            >
+              <span className={styles.sidebarItemIcon}>&#128101;</span>
+              <span className={styles.sidebarItemLabel}>회원관리</span>
+            </button>
+          )}
         </nav>
         <div className={styles.sidebarHeader}>
           <div>

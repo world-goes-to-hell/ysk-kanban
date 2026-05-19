@@ -1,6 +1,7 @@
 package com.example.todo.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,6 +51,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateDisplayName(Long userId, String newDisplayName) {
+        User user = findById(userId);
+        user.setDisplayName(newDisplayName);
+        log.info("Admin updated display name for user: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+
     public void changePassword(String username, String currentPassword, String newPassword) {
         User user = findByUsername(username);
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
@@ -58,6 +66,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         log.info("Password changed for user: {}", username);
+    }
+
+    public void resetPassword(Long userId, String newPassword) {
+        User user = findById(userId);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Admin reset password for user: {}", user.getUsername());
     }
 
     public User findOrCreateBot(String displayName) {
@@ -78,5 +93,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
     }
 }
