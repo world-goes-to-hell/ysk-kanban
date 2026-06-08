@@ -24,6 +24,44 @@
   color: var(--text-tertiary);
 }
 
+.controlBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.selectAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.selectAllBtn:hover:not(:disabled) {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.selectAllBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));

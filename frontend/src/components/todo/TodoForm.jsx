@@ -41,6 +41,18 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
     );
   };
 
+  const toggleAllAssignees = (ids, selectAll) => {
+    setSelectedAssignees(prev => {
+      if (selectAll) {
+        const merged = new Set(prev);
+        ids.forEach(id => merged.add(id));
+        return Array.from(merged);
+      }
+      const removeSet = new Set(ids);
+      return prev.filter(id => !removeSet.has(id));
+    });
+  };
+
   // Expose form data to parent via ref
   if (formRef) {
     formRef.current = {
@@ -154,6 +166,7 @@ export default function TodoForm({ item, projectId, isEdit, pendingFiles, setPen
             members={members}
             selectedIds={selectedAssignees}
             onToggle={toggleAssignee}
+            onToggleAll={toggleAllAssignees}
           />
         </div>
       )}
