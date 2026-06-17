@@ -17,6 +17,8 @@ public interface ProjectStatusRepository extends JpaRepository<ProjectStatus, Lo
 
     Optional<ProjectStatus> findByProject_IdAndStatusKeyAndActiveTrue(Long projectId, String statusKey);
 
+    Optional<ProjectStatus> findByProject_IdAndNameIgnoreCaseAndActiveTrue(Long projectId, String name);
+
     boolean existsByProject_IdAndStatusKey(Long projectId, String statusKey);
 
     @Query("SELECT COALESCE(MAX(ps.position), -1) FROM ProjectStatus ps WHERE ps.project.id = :projectId AND ps.active = true")

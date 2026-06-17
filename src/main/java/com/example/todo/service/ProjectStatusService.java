@@ -144,8 +144,14 @@ public class ProjectStatusService {
         }
         ensureDefaults(projectId);
         String finalStatusKey = normalizedKey;
+        String rawLabel = statusKey == null ? "" : statusKey.trim();
+        // 1) statusKey 정확 매칭 → 2) 실패 시 라벨(name)로 fallback 매칭
+        //    ("보류" 같은 직관적 입력을 CUSTOM_xxx 키 조회 없이 허용)
         return projectStatusRepository.findByProject_IdAndStatusKeyAndActiveTrue(projectId, finalStatusKey)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상태입니다: " + finalStatusKey));
+                .or(() -> rawLabel.isBlank()
+                        ? java.util.Optional.empty()
+                        : projectStatusRepository.findByProject_IdAndNameIgnoreCaseAndActiveTrue(projectId, rawLabel))
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상태입니다: " + statusKey));
     }
 
     public boolean existsActiveStatus(Long projectId, String statusKey) {
