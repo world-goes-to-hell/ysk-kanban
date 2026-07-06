@@ -48,8 +48,7 @@ public class DailyReportController {
     public ResponseEntity<Map<String, Object>> aiFormat(@RequestBody Map<String, String> body) {
         String workText = body.get("workText");
         String date = body.get("date");
-        User currentUser = getCurrentUser();
-        String report = aiReportFormatService.formatReport(workText, date, currentUser.getDisplayName());
+        String report = aiReportFormatService.formatReport(workText, date);
         return ResponseEntity.ok(Map.of("report", report));
     }
 

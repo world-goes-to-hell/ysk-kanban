@@ -48,7 +48,7 @@ public class AiReportFormatService {
             7. 향후계획은 중장기 항목으로, 없으면 생략 가능하다.
 
             [문서 전체 구조]
-            [YYYY-MM-DD] 일일 업무보고 / (작성자) (부서)
+            [YYYY-MM-DD] 일일 업무보고
 
             [금일 진행 사항]
             (프로젝트별로 그룹핑. 프로젝트명 아래에 업무 단위들을 나열)
@@ -71,6 +71,7 @@ public class AiReportFormatService {
             3. 사용자가 준 정보에 없는 내용을 지어내지 않는다.
             4. 여러 작업을 성격이 비슷하면 하나의 업무 단위로 묶고, 성격이 다르면 별도 업무 단위로 분리한다.
             5. 출력은 보고서 본문만 내보내고, 설명이나 부연 문장을 앞뒤에 붙이지 않는다.
+            6. 헤더에는 작성자·부서를 표기하지 않는다. 첫 줄은 "[YYYY-MM-DD] 일일 업무보고" 형태로만 출력한다.
             """;
 
     private final ObjectMapper objectMapper;
@@ -104,10 +105,9 @@ public class AiReportFormatService {
      *
      * @param workText 사용자가 편집한 업무 내용 (자유 형식)
      * @param date     보고 기준일 (YYYY-MM-DD, 비어있으면 placeholder 유지)
-     * @param writer   작성자 표시명 (비어있으면 placeholder 유지)
      * @return 표준 양식 평문 보고서
      */
-    public String formatReport(String workText, String date, String writer) {
+    public String formatReport(String workText, String date) {
         if (baseUrl == null || baseUrl.isBlank() || apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("사내 AI(OPENWEBUI) 설정이 되어있지 않습니다. 관리자에게 문의하세요.");
         }
@@ -115,7 +115,7 @@ public class AiReportFormatService {
             throw new IllegalArgumentException("업무 내용이 비어있습니다.");
         }
 
-        String userMessage = buildUserMessage(workText, date, writer);
+        String userMessage = buildUserMessage(workText, date);
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", model);
         payload.put("temperature", 0);
@@ -212,11 +212,9 @@ public class AiReportFormatService {
         return sb.toString();
     }
 
-    private String buildUserMessage(String workText, String date, String writer) {
+    private String buildUserMessage(String workText, String date) {
         StringBuilder sb = new StringBuilder();
         sb.append("보고 기준일: ").append(date == null || date.isBlank() ? "(미지정)" : date).append('\n');
-        sb.append("작성자: ").append(writer == null || writer.isBlank() ? "(미지정)" : writer).append('\n');
-        sb.append("부서: (미지정)").append('\n');
         sb.append("\n[오늘 한 업무 내용]\n");
         sb.append(workText);
         return sb.toString();
