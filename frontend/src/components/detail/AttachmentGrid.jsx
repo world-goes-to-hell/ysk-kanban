@@ -11,7 +11,11 @@ export default function AttachmentGrid({ attachments, getUrl, onDelete }) {
   return (
     <>
       <div className={styles.attachSection}>
-        <h3 className={styles.sectionTitle}>첨부 파일</h3>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionHeadIcon}>📎</span>
+          <span className={styles.sectionHeadTitle}>첨부 파일</span>
+          <span className={styles.sectionHeadCount}>{attachments.length}</span>
+        </div>
         <div className={styles.attachGrid}>
           {attachments.map(att => {
             const url = getUrl(att.id);

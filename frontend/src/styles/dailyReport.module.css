@@ -271,3 +271,55 @@
   background: #78350f;
   color: #fbbf24;
 }
+
+.metaBadgeAi {
+  composes: metaBadge;
+  background: #4c1d95;
+  color: #c4b5fd;
+}
+
+/* AI 양식 추출 입력 */
+.aiInputWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aiHint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.aiHint strong {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.aiTextarea {
+  width: 100%;
+  min-height: 320px;
+  max-height: 55vh;
+  resize: vertical;
+  padding: 16px;
+  font-family: 'Pretendard', 'Noto Sans KR', monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.aiTextarea:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.aiTextarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

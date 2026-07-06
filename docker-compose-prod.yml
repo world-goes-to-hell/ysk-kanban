@@ -33,6 +33,10 @@ services:
       - DB_URL=jdbc:postgresql://postgres:5432/kanban
       - DB_USERNAME=kanban
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD env var must be set}
+      # 업무보고 AI 양식 추출 (사내 OpenWebUI). 미설정 시 해당 기능만 비활성화됨.
+      - OPENWEBUI_BASE_URL=${OPENWEBUI_BASE_URL:-}
+      - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY:-}
+      - OPENWEBUI_MODEL=${OPENWEBUI_MODEL:-gpt-oss:120b}
     depends_on:
       postgres:
         condition: service_healthy

@@ -42,6 +42,11 @@ anthropic:
   api-key: ${ANTHROPIC_API_KEY:}
   model: ${ANTHROPIC_MODEL:claude-sonnet-4-5}
 
+openwebui:
+  base-url: ${OPENWEBUI_BASE_URL:}
+  api-key: ${OPENWEBUI_API_KEY:}
+  model: ${OPENWEBUI_MODEL:gpt-oss:120b}
+
 logging:
   level:
     com.example.todo: INFO

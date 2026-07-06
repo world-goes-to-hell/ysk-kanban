@@ -34,6 +34,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error", "잘못된 숫자 형식입니다."));
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException e) {
+        String msg = (e.getMessage() != null && !e.getMessage().isEmpty())
+                ? e.getMessage()
+                : "서비스를 일시적으로 사용할 수 없습니다.";
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", msg));
+    }
+
     private String toUserMessage(String message) {
         if (message == null) return "잘못된 요청입니다.";
         if (message.startsWith("Project key already exists")) {

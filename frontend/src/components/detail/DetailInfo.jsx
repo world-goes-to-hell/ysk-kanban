@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { getPriorityClass, getPriorityLabel, formatStatus, formatTime, formatDueDate, getBotColor } from '../../utils/formatters';
 import styles from '../../styles/detail.module.css';
 
@@ -10,8 +11,68 @@ const STATUS_STYLE_MAP = {
   DONE: styles.statusDone,
 };
 
+const RAIL_MAP = {
+  TODO: styles.railTodo,
+  IN_PROGRESS: styles.railInProgress,
+  DONE: styles.railDone,
+};
+
+const DUE_CLASS = {
+  overdue: styles.dueOverdue,
+  today: styles.dueSoon,
+  soon: styles.dueSoon,
+  safe: styles.dueSafe,
+};
+
+const AVATAR_COLORS = [
+  '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
+  '#0891b2', '#059669', '#d97706', '#6366f1',
+];
+
+function avatarColor(seed) {
+  const s = String(seed ?? '');
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const trimmed = name.trim();
+  return trimmed.length <= 2 ? trimmed : trimmed.slice(0, 2);
+}
+
+function Person({ user }) {
+  if (!user) return null;
+  const name = user.displayName || user.username || '';
+  if (user.bot) {
+    const c = getBotColor(name);
+    return (
+      <span className={styles.person} title={name}>
+        <span
+          className={styles.avatar}
+          style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}` }}
+        >
+          🤖
+        </span>
+        <span className={styles.personName}>{name}</span>
+      </span>
+    );
+  }
+  return (
+    <span className={styles.person} title={name}>
+      <span className={styles.avatar} style={{ background: avatarColor(user.id ?? name) }}>
+        {getInitials(name)}
+      </span>
+      <span className={styles.personName}>{name}</span>
+    </span>
+  );
+}
+
 export default function DetailInfo({ item, projects }) {
-  const [mdView, setMdView] = useState(false);
+  const [rawView, setRawView] = useState(false);
 
   if (!item) return null;
 
@@ -19,7 +80,6 @@ export default function DetailInfo({ item, projects }) {
     ? projects?.find(p => String(p.id) === String(item.projectId))
     : null;
   const dueInfo = item.status !== 'DONE' ? formatDueDate(item.dueDate) : null;
-  const createdByName = item.createdBy?.displayName || item.createdBy?.username || '';
 
   const calcDuration = () => {
     if (!item.createdAt) return null;
@@ -33,8 +93,14 @@ export default function DetailInfo({ item, projects }) {
 
   return (
     <div>
-      {/* Header: Title + Badges */}
-      <div className={styles.detailHeader}>
+      {/* Title Hero */}
+      <div className={`${styles.titleBlock} ${RAIL_MAP[item.status] || ''}`}>
+        <div className={styles.idRow}>
+          <span className={styles.idChip}>#{item.id}</span>
+          {project && (
+            <span className={styles.projectChip}>{project.name || project.projectKey}</span>
+          )}
+        </div>
         <h2 className={styles.detailTitle}>{item.summary}</h2>
         <div className={styles.detailBadges}>
           <span className={`${styles.statusBadge} ${STATUS_STYLE_MAP[item.status] || ''}`}>
@@ -52,96 +118,58 @@ export default function DetailInfo({ item, projects }) {
           <div className={styles.descriptionLabelRow}>
             <div className={styles.descriptionLabel}>설명</div>
             <button
-              className={`${styles.mdToggleBtn} ${mdView ? styles.mdToggleBtnActive : ''}`}
-              onClick={() => setMdView(prev => !prev)}
+              className={`${styles.mdToggleBtn} ${rawView ? '' : styles.mdToggleBtnActive}`}
+              onClick={() => setRawView(prev => !prev)}
             >
-              {mdView ? '원문 보기' : 'Markdown'}
+              {rawView ? 'Markdown' : '원문 보기'}
             </button>
           </div>
-          {mdView ? (
-            <div className={styles.mdContent}>
-              <Markdown remarkPlugins={[remarkGfm]}>{item.description}</Markdown>
-            </div>
-          ) : (
+          {rawView ? (
             <div className={styles.descriptionText}>{item.description}</div>
+          ) : (
+            <div className={styles.mdContent}>
+              <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{item.description}</Markdown>
+            </div>
           )}
         </div>
       )}
 
-      {/* Meta Grid */}
-      <div className={styles.metaGrid}>
-        {project && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>프로젝트</div>
-            <div className={styles.metaValue}>{project.name || project.projectKey}</div>
+      {/* Property List */}
+      <div className={styles.propList}>
+        {item.assignees?.length > 0 && (
+          <div className={styles.propRow}>
+            <span className={styles.propLabel}>담당자</span>
+            <div className={styles.propValue}>
+              {item.assignees.map(a => <Person key={a.id} user={a} />)}
+            </div>
+          </div>
+        )}
+        {item.createdBy && (
+          <div className={styles.propRow}>
+            <span className={styles.propLabel}>작성자</span>
+            <div className={styles.propValue}>
+              <Person user={item.createdBy} />
+            </div>
           </div>
         )}
         {item.dueDate && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>마감기한</div>
-            <div className={styles.metaValue}>
-              {item.dueDate}
+          <div className={styles.propRow}>
+            <span className={styles.propLabel}>마감기한</span>
+            <div className={styles.propValue}>
+              <span className={styles.propDate}>{item.dueDate}</span>
               {dueInfo && (
-                <span style={{
-                  marginLeft: '8px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  background: dueInfo.status === 'overdue' ? '#fee2e2' : dueInfo.status === 'safe' ? '#eff6ff' : '#fff7ed',
-                  color: dueInfo.status === 'overdue' ? '#dc2626' : dueInfo.status === 'safe' ? '#2563eb' : '#ea580c',
-                }}>
+                <span className={`${styles.dueBadge} ${DUE_CLASS[dueInfo.status] || ''}`}>
                   {dueInfo.text}
                 </span>
               )}
             </div>
           </div>
         )}
-        {item.assignees?.length > 0 && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>담당자</div>
-            <div className={`${styles.metaValue} ${styles.assigneeList}`}>
-              {item.assignees.map(a => {
-                const assigneeName = a.displayName || a.username;
-                if (a.bot) {
-                  const botColor = getBotColor(assigneeName);
-                  return (
-                    <span
-                      key={a.id}
-                      className={styles.botAssigneeChip}
-                      title={assigneeName}
-                      style={{
-                        background: botColor.bg,
-                        color: botColor.color,
-                        border: `1px solid ${botColor.border}`,
-                      }}
-                    >
-                      🤖 {assigneeName}
-                    </span>
-                  );
-                }
-                return (
-                  <span key={a.id} className={styles.personNameChip} title={assigneeName}>
-                    {assigneeName}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {item.createdBy && (
-          <div className={styles.metaCard}>
-            <div className={styles.metaLabel}>작성자</div>
-            <div className={`${styles.metaValue} ${styles.personNameValue}`} title={createdByName}>
-              <span className={styles.personNameChip}>{createdByName}</span>
-            </div>
-          </div>
-        )}
         {item.createdAt && (
-          <div className={styles.metaCardWide}>
-            <div className={styles.metaLabel}>작업 기간</div>
-            <div className={styles.durationRow}>
-              <span>{formatTime(item.createdAt)}</span>
+          <div className={styles.propRow}>
+            <span className={styles.propLabel}>작업 기간</span>
+            <div className={`${styles.propValue} ${styles.durationRow}`}>
+              <span className={styles.propDate}>{formatTime(item.createdAt)}</span>
               <span className={styles.durationArrow}>→</span>
               {item.completedAt ? (
                 <span className={styles.durationEndDone}>{formatTime(item.completedAt)}</span>

@@ -45,7 +45,11 @@ export default function CommentSection({ comments, onAdd, onEdit, onDelete, proj
 
   return (
     <div className={styles.commentSection}>
-      <h3 className={styles.sectionTitle}>댓글</h3>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionHeadIcon}>💬</span>
+        <span className={styles.sectionHeadTitle}>댓글</span>
+        {comments.length > 0 && <span className={styles.sectionHeadCount}>{comments.length}</span>}
+      </div>
       <div className={styles.commentList}>
         {comments.length === 0 ? (
           <p className={styles.commentEmpty}>댓글이 없습니다.</p>

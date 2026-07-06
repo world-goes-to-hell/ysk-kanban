@@ -102,35 +102,13 @@ export default function DetailModal({ todoId, todos, onClose, onMarkRead }) {
       megaWide={hasActiveDiscussion}
       onClose={onClose}
       headerRight={
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div className={detailStyles.headerActions}>
           {trail.length > 0 && (
-            <button
-              onClick={handleBack}
-              style={{
-                background: 'none',
-                border: '1px solid var(--border-medium)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '4px 12px',
-                fontSize: '0.78rem',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-              }}
-            >
+            <button className={detailStyles.headerBtn} onClick={handleBack}>
               ← 상위
             </button>
           )}
-          <button
-            onClick={handleSummary}
-            style={{
-              background: 'none',
-              border: '1px solid var(--border-medium)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '4px 12px',
-              fontSize: '0.78rem',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
-          >
+          <button className={detailStyles.headerBtn} onClick={handleSummary}>
             새창보기
           </button>
         </div>

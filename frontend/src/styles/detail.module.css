@@ -12,12 +12,93 @@
   margin-bottom: 20px;
 }
 
-.detailTitle {
-  font-size: 1.15rem;
+/* ── Header Actions (modal top-right) ────────────── */
+
+.headerActions {
+  display: flex;
+  gap: 6px;
+}
+
+.headerBtn {
+  background: none;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+
+.headerBtn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* ── Title Hero Block ────────────────────────────── */
+
+.titleBlock {
+  position: relative;
+  padding: 4px 0 16px 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.titleBlock::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 16px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--text-muted);
+}
+
+.railTodo::before { background: var(--todo-color); }
+.railInProgress::before { background: var(--wip-color); }
+.railDone::before { background: var(--done-color); }
+
+.idRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.idChip {
+  font-family: ui-monospace, SFMono-Regular, 'Consolas', monospace;
+  font-size: 0.72rem;
   font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-column);
+  padding: 1px 8px;
+  border-radius: 6px;
+}
+
+.projectChip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--brand-light);
+  padding: 1px 10px;
+  border-radius: 10px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailTitle {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
-  line-height: 1.4;
-  margin-bottom: 10px;
+  line-height: 1.35;
+  margin-bottom: 12px;
   word-break: break-word;
 }
 
@@ -287,11 +368,11 @@
 
 .durationEndDone {
   composes: durationEnd;
-  color: #059669;
+  color: var(--done-color);
 }
 
 .durationEndProgress {
-  color: #6b7280;
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -305,14 +386,16 @@
 
 .durationBadgeDone {
   composes: durationBadge;
-  background: #064e3b;
-  color: #34d399;
+  background: var(--done-bg);
+  color: var(--done-color);
+  border: 1px solid var(--done-border);
 }
 
 .durationBadgeProgress {
   composes: durationBadge;
-  background: #1e3a5f;
-  color: #60a5fa;
+  background: var(--todo-bg);
+  color: var(--todo-color);
+  border: 1px solid var(--todo-border);
 }
 
 .metaLabel {
@@ -361,6 +444,123 @@
   background: var(--bg-column);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
+}
+
+/* ── Property List ───────────────────────────────── */
+
+.propList {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+}
+
+.propRow {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.propRow:last-child {
+  border-bottom: none;
+}
+
+.propLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.propValue {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.propDate {
+  font-family: ui-monospace, SFMono-Regular, 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ── Avatar ──────────────────────────────────────── */
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.personName {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ── Due Badge (tokenized) ──────────────────────── */
+
+.dueBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.dueOverdue { background: var(--danger-light); color: var(--danger); }
+.dueSoon    { background: var(--wip-bg); color: var(--wip-color); }
+.dueSafe    { background: var(--todo-bg); color: var(--todo-color); }
+
+/* ── Section Head (icon + count) ─────────────────── */
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sectionHeadIcon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.sectionHeadTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sectionHeadCount {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-column);
+  padding: 1px 8px;
+  border-radius: 10px;
 }
 
 /* ── Attachment Grid ─────────────────────────────── */

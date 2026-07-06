@@ -252,6 +252,11 @@ export default function DailyReportModal({ onClose }) {
   const [showManual, setShowManual] = useState(false);
   const [progressEntries, setProgressEntries] = useState([]);
   const [upcomingEntries, setUpcomingEntries] = useState([]);
+  // AI 양식 추출: 'off' | 'input' | 'result'
+  const [aiMode, setAiMode] = useState('off');
+  const [aiInput, setAiInput] = useState('');
+  const [aiResult, setAiResult] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const showToast = useToast();
 
   const fetchReport = useCallback(async (targetDate) => {
@@ -271,6 +276,9 @@ export default function DailyReportModal({ onClose }) {
     fetchReport(date);
     setProgressEntries([]);
     setUpcomingEntries([]);
+    setAiMode('off');
+    setAiInput('');
+    setAiResult('');
   }, [date, fetchReport]);
 
   const handleAddManual = (section, entry) => {
@@ -287,15 +295,42 @@ export default function DailyReportModal({ onClose }) {
     ? mergeManualEntries(data.report, progressEntries, upcomingEntries)
     : '';
 
+  const copyTarget = aiMode === 'result' ? aiResult : finalReport;
+
   const handleCopy = async () => {
-    if (!finalReport) return;
+    if (!copyTarget) return;
     try {
-      await navigator.clipboard.writeText(finalReport);
+      await navigator.clipboard.writeText(copyTarget);
       setCopied(true);
       showToast('클립보드에 복사되었습니다.', 'success');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       showToast('복사에 실패했습니다.', 'error');
+    }
+  };
+
+  const handleEnterAiMode = () => {
+    setShowManual(false);
+    setAiInput(finalReport);
+    setAiResult('');
+    setAiMode('input');
+  };
+
+  const handleGenerateAi = async () => {
+    if (!aiInput.trim()) {
+      showToast('변환할 업무 내용을 입력하세요.', 'error');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const result = await reportsAPI.aiFormat(aiInput, date);
+      setAiResult(result?.report || '');
+      setAiMode('result');
+      setCopied(false);
+    } catch (err) {
+      showToast(`AI 양식 추출 실패: ${err.message}`, 'error');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -310,49 +345,81 @@ export default function DailyReportModal({ onClose }) {
 
   const manualCount = progressEntries.length + upcomingEntries.length;
 
+  let footerEl;
+  if (aiMode === 'input') {
+    footerEl = (
+      <>
+        <button className="btn btn-ghost" onClick={() => setAiMode('off')} disabled={aiLoading}>
+          취소
+        </button>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-primary" onClick={handleGenerateAi} disabled={aiLoading || !aiInput.trim()}>
+          {aiLoading ? '생성 중...' : 'AI 양식 생성'}
+        </button>
+      </>
+    );
+  } else if (aiMode === 'result') {
+    footerEl = (
+      <>
+        <button className="btn btn-ghost" onClick={() => setAiMode('input')}>
+          다시 편집
+        </button>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-ghost" onClick={onClose}>닫기</button>
+        <button className="btn btn-primary" onClick={handleCopy} disabled={!aiResult}>
+          복사
+        </button>
+      </>
+    );
+  } else {
+    footerEl = (
+      <>
+        <button className="btn btn-ghost" onClick={() => setShowManual(prev => !prev)}>
+          {showManual ? '수동 입력 닫기' : '업무 수동추가'}
+          {manualCount > 0 && ` (${manualCount})`}
+        </button>
+        <button className="btn btn-ghost" onClick={handleEnterAiMode} disabled={!finalReport}>
+          AI로 양식 추출
+        </button>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-ghost" onClick={onClose}>닫기</button>
+        <button className="btn btn-primary" onClick={handleCopy} disabled={!finalReport}>
+          복사
+        </button>
+      </>
+    );
+  }
+
   return (
     <Modal
       title="일일 업무보고"
       wide
       onClose={onClose}
       headerRight={datePickerEl}
-      footer={
-        <>
-          <button
-            className={`btn ${showManual ? 'btn-ghost' : 'btn-ghost'}`}
-            onClick={() => setShowManual(prev => !prev)}
-          >
-            {showManual ? '수동 입력 닫기' : '업무 수동추가'}
-            {manualCount > 0 && ` (${manualCount})`}
-          </button>
-          <div style={{ flex: 1 }} />
-          <button className="btn btn-ghost" onClick={onClose}>닫기</button>
-          <button className="btn btn-primary" onClick={handleCopy} disabled={!finalReport}>
-            복사
-          </button>
-        </>
-      }
+      footer={footerEl}
     >
       <div className={styles.reportContent}>
-        {loading && (
-          <div className={styles.loading}>보고서 생성 중...</div>
+        {aiMode === 'input' && (
+          <div className={styles.aiInputWrap}>
+            <p className={styles.aiHint}>
+              아래 업무 내용을 자유롭게 수정한 뒤 <strong>AI 양식 생성</strong>을 누르면
+              회사 표준 양식으로 변환됩니다. (진척률 등 없는 정보는 AI가 지어내지 않습니다)
+            </p>
+            <textarea
+              className={styles.aiTextarea}
+              value={aiInput}
+              onChange={e => setAiInput(e.target.value)}
+              placeholder="오늘 한 업무를 자유 형식으로 입력하세요."
+              disabled={aiLoading}
+            />
+          </div>
         )}
 
-        {!loading && data && (
+        {aiMode === 'result' && (
           <>
             <div className={styles.reportMeta}>
-              <span className={styles.metaBadgeDone}>완료 {data.completedCount}건</span>
-              <span className={styles.metaBadgeWip}>진행 {data.createdCount}건</span>
-              <span className={styles.metaBadgeComment}>댓글 {data.commentCount}건</span>
-              {manualCount > 0 && (
-                <span className={styles.metaBadgeManual}>수동 {manualCount}건</span>
-              )}
+              <span className={styles.metaBadgeAi}>AI 표준 양식</span>
             </div>
-
-            {showManual && (
-              <ManualEntry onAdd={handleAddManual} projects={projects} />
-            )}
-
             <div className={styles.reportTextWrap}>
               <button
                 className={copied ? styles.copiedBtn : styles.copyBtn}
@@ -361,17 +428,54 @@ export default function DailyReportModal({ onClose }) {
                 {copied ? '복사됨' : '복사'}
               </button>
               <div className={styles.reportText}>
-                {finalReport}
+                {aiResult}
               </div>
             </div>
           </>
         )}
 
-        {!loading && data && data.completedCount === 0
-          && data.createdCount === 0 && data.commentCount === 0 && manualCount === 0 && (
-          <div className={styles.emptyState}>
-            해당 날짜에 활동 내역이 없습니다.
-          </div>
+        {aiMode === 'off' && (
+          <>
+            {loading && (
+              <div className={styles.loading}>보고서 생성 중...</div>
+            )}
+
+            {!loading && data && (
+              <>
+                <div className={styles.reportMeta}>
+                  <span className={styles.metaBadgeDone}>완료 {data.completedCount}건</span>
+                  <span className={styles.metaBadgeWip}>진행 {data.createdCount}건</span>
+                  <span className={styles.metaBadgeComment}>댓글 {data.commentCount}건</span>
+                  {manualCount > 0 && (
+                    <span className={styles.metaBadgeManual}>수동 {manualCount}건</span>
+                  )}
+                </div>
+
+                {showManual && (
+                  <ManualEntry onAdd={handleAddManual} projects={projects} />
+                )}
+
+                <div className={styles.reportTextWrap}>
+                  <button
+                    className={copied ? styles.copiedBtn : styles.copyBtn}
+                    onClick={handleCopy}
+                  >
+                    {copied ? '복사됨' : '복사'}
+                  </button>
+                  <div className={styles.reportText}>
+                    {finalReport}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!loading && data && data.completedCount === 0
+              && data.createdCount === 0 && data.commentCount === 0 && manualCount === 0 && (
+              <div className={styles.emptyState}>
+                해당 날짜에 활동 내역이 없습니다.
+              </div>
+            )}
+          </>
         )}
       </div>
     </Modal>
