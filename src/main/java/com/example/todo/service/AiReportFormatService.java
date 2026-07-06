@@ -1,5 +1,8 @@
 package com.example.todo.service;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class AiReportFormatService {
 
-    private static final int TIMEOUT_MS = 60_000;
+    private static final int TIMEOUT_MS = 120_000;
 
     /** 회사 표준 업무보고 양식 규칙 — 시스템 프롬프트. */
     private static final String SYSTEM_PROMPT = """
@@ -116,6 +119,7 @@ public class AiReportFormatService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", model);
         payload.put("temperature", 0);
+        payload.put("stream", true); // nginx 게이트웨이 타임아웃(504) 회피
         payload.put("messages", List.of(
                 Map.of("role", "system", "content", SYSTEM_PROMPT),
                 Map.of("role", "user", "content", userMessage)));
@@ -123,15 +127,24 @@ public class AiReportFormatService {
         String content;
         try {
             String requestBody = objectMapper.writeValueAsString(payload);
-            String responseBody = http.post()
+            content = http.post()
                     .uri(baseUrl.replaceAll("/+$", "") + "/api/chat/completions")
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
+                    .header("Accept", "text/event-stream")
                     .body(requestBody)
-                    .retrieve()
-                    .body(String.class);
-            JsonNode root = objectMapper.readTree(responseBody);
-            content = root.path("choices").path(0).path("message").path("content").asText("");
+                    .exchange((req, res) -> {
+                        if (!res.getStatusCode().is2xxSuccessful()) {
+                            String errBody = new String(res.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                            throw new IllegalStateException(
+                                    "사내 AI 응답 오류(" + res.getStatusCode().value() + "): "
+                                            + errBody.substring(0, Math.min(errBody.length(), 300)));
+                        }
+                        return readStream(res.getBody());
+                    });
+        } catch (IllegalStateException e) {
+            log.error("OpenWebUI API 호출 실패", e);
+            throw e;
         } catch (Exception e) {
             log.error("OpenWebUI API 호출 실패", e);
             throw new IllegalStateException("사내 AI 호출에 실패했습니다: " + e.getMessage());
@@ -142,6 +155,61 @@ public class AiReportFormatService {
             throw new IllegalStateException("사내 AI가 빈 응답을 반환했습니다. 잠시 후 다시 시도하세요.");
         }
         return content;
+    }
+
+    /**
+     * OpenAI 호환 SSE 스트림을 읽어 delta.content를 누적한다.
+     * 각 라인은 {@code data: {json}} 형태이며 {@code data: [DONE]}에서 종료.
+     */
+    private String readStream(java.io.InputStream body) throws java.io.IOException {
+        StringBuilder sb = new StringBuilder();
+        StringBuilder raw = new StringBuilder();
+        boolean sawData = false;
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(body, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                raw.append(line).append('\n');
+                if (line.isEmpty() || !line.startsWith("data:")) {
+                    continue;
+                }
+                sawData = true;
+                String dataStr = line.substring(5).trim();
+                if (dataStr.isEmpty()) {
+                    continue;
+                }
+                if ("[DONE]".equals(dataStr)) {
+                    break;
+                }
+                try {
+                    JsonNode choice = objectMapper.readTree(dataStr).path("choices").path(0);
+                    JsonNode delta = choice.path("delta").path("content");
+                    if (delta.isTextual()) {
+                        sb.append(delta.asText());
+                    } else {
+                        JsonNode msg = choice.path("message").path("content");
+                        if (msg.isTextual()) {
+                            sb.append(msg.asText());
+                        }
+                    }
+                } catch (Exception ignore) {
+                    // 개별 조각 파싱 실패는 무시하고 계속 (스트림 견고성)
+                }
+            }
+        }
+        // 스트리밍이 아니라 일반 JSON을 받은 경우 폴백
+        if (sb.length() == 0 && !sawData) {
+            try {
+                JsonNode msg = objectMapper.readTree(raw.toString())
+                        .path("choices").path(0).path("message").path("content");
+                if (msg.isTextual()) {
+                    return msg.asText();
+                }
+            } catch (Exception ignore) {
+                // 폴백 실패 → 빈 문자열 반환 (상위에서 빈 응답 처리)
+            }
+        }
+        return sb.toString();
     }
 
     private String buildUserMessage(String workText, String date, String writer) {
