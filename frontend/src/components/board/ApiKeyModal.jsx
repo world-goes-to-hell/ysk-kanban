@@ -5,7 +5,7 @@ import setupAPI from '../../api/setup';
 import { useToast } from '../../hooks/useToast';
 import styles from '../../styles/apiKey.module.css';
 
-const MCP_API_URL = 'https://kanban-5297.origin.mmv.kr';
+const MCP_API_URL = 'https://kanban.yooit.kr';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
