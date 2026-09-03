@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { width, truncate, wrap } from '../src/text.js';
+import { width, truncate, truncateStart, wrap } from '../src/text.js';
 
 describe('width', () => {
   it('영문만 있을 때 폭과 글자 수가 같다', () => {
@@ -30,6 +30,34 @@ describe('truncate', () => {
   it('자를 필요가 없으면 원문 그대로 돌려준다', () => {
     expect(truncate('짧다', 10)).toBe('짧다');
     expect(truncate('hello', 5)).toBe('hello');
+  });
+});
+
+describe('truncateStart', () => {
+  it('폭을 넘으면 앞을 자르고 … 를 붙인다', () => {
+    // 한글 10자(폭 20)를 폭 10 으로 줄이면 … 한 칸을 빼고 뒤쪽 4자만 남는다
+    expect(truncateStart('가나다라마바사아자차', 10)).toBe('…사아자차');
+    expect(width(truncateStart('가나다라마바사아자차', 10))).toBeLessThanOrEqual(10);
+  });
+
+  it('자를 필요가 없으면 원문 그대로 돌려준다', () => {
+    expect(truncateStart('짧다', 10)).toBe('짧다');
+    expect(truncateStart('hello', 5)).toBe('hello');
+  });
+
+  it('경계에 걸친 한글 글자를 반으로 자르지 않는다', () => {
+    const out = truncateStart('가나다라마바사', 7);
+    expect(out).toBe('…마바사');
+    expect(width(out)).toBeLessThanOrEqual(7);
+  });
+
+  it('마지막 글자가 항상 보존된다', () => {
+    // 입력창은 방금 친 끝부분이 보여야 하므로 이것이 가장 중요하다
+    for (const maxWidth of [2, 3, 5, 8, 13, 21]) {
+      const out = truncateStart('가나다라마바사아자차', maxWidth);
+      expect(out.at(-1)).toBe('차');
+      expect(width(out)).toBeLessThanOrEqual(maxWidth);
+    }
   });
 });
 

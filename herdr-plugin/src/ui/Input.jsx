@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import { truncate } from '../text.js';
+import { truncate, truncateStart } from '../text.js';
 
 /** 테두리 좌우 2 칸에 paddingX 2 씩을 더한 값 */
 const FRAME = 6;
@@ -16,7 +16,7 @@ export function Input({ title, value, placeholder = '', width = 60 }) {
       <Text bold color="cyan">{truncate(title, inner)}</Text>
       <Text>
         {value
-          ? truncate(value, valueWidth)
+          ? truncateStart(value, valueWidth)
           : <Text color="gray">{truncate(placeholder, valueWidth)}</Text>}
         <Text color="cyan">_</Text>
       </Text>

@@ -6,18 +6,73 @@ import { resolveKey } from '../input/keys.js';
 import { parseMouse, enableMouse, disableMouse, createMouseHandler } from '../input/mouse.js';
 import { createMutations } from '../mutations.js';
 import { watchBoard } from '../api/sse.js';
+import { loadConfig, saveConfig } from '../config.js';
 import { Board } from './Board.jsx';
 import { Chrome } from './Chrome.jsx';
 import { Detail } from './Detail.jsx';
+import { Palette } from './Palette.jsx';
+import { Confirm } from './Confirm.jsx';
+import { Input } from './Input.jsx';
+import { Help } from './Help.jsx';
 import { useTerminalSize } from './useTerminalSize.js';
 
 const EMPTY_DETAIL = { card: null, subtasks: [], comments: [], loading: false };
 const FOOTER_ROWS = 1;
 const FAR = 9999; // 칸의 처음·끝으로 보낼 때 쓰는 충분히 큰 걸음. store 가 범위를 잘라 준다.
+const MODAL_TOP = 3;
+const MODAL_WIDTH = { status: 40, filter: 40, project: 44, search: 60, help: 44, confirm: 50 };
+
+const PRIORITIES = [
+  { id: 'ALL', label: '전체', value: null },
+  { id: 'HIGH', label: '높음', value: 'HIGH' },
+  { id: 'MEDIUM', label: '보통', value: 'MEDIUM' },
+  { id: 'LOW', label: '낮음', value: 'LOW' },
+];
 
 /** 본문이 시작하는 줄. layout 이 만든 칸 머리 위치에서 끌어낸다. */
 function bodyTopOf(layout) {
   return layout.regions.find(r => r.kind === 'column-header')?.y ?? 2;
+}
+
+/** 팔레트 세 가지가 무엇을 보여줄지 정한다. */
+function paletteOf(modal, state) {
+  if (modal.kind === 'status') {
+    return {
+      title: '어느 칸으로 옮길까요',
+      items: state.statuses.map(s => ({ id: s.statusKey, label: s.name, color: s.color })),
+    };
+  }
+  if (modal.kind === 'filter') return { title: '우선순위로 거르기', items: PRIORITIES };
+  return { title: '프로젝트 고르기', items: state.projects.map(p => ({ id: p.id, label: p.name })) };
+}
+
+function modalNode(modal, state) {
+  if (modal.kind === 'help') return <Help width={MODAL_WIDTH.help} />;
+
+  if (modal.kind === 'confirm') {
+    return (
+      <Confirm width={MODAL_WIDTH.confirm} message="완료 칸으로 옮길까요?"
+               detail={`끝나지 않은 하위 일감이 ${modal.pending}건 있습니다`} />
+    );
+  }
+
+  if (modal.kind === 'search') {
+    return (
+      <Input width={MODAL_WIDTH.search} title="제목으로 찾기" value={modal.value}
+             placeholder="글자를 입력하면 바로 걸러집니다" />
+    );
+  }
+
+  const { title, items } = paletteOf(modal, state);
+  return (
+    <Palette width={MODAL_WIDTH[modal.kind]} title={title}
+             items={items} selectedIndex={modal.index} />
+  );
+}
+
+/** 눈에 보이는 한 글자인지 본다. 조합키와 제어문자는 검색어에 넣지 않는다. */
+function isTypable(input, key) {
+  return input.length === 1 && input >= ' ' && !key.ctrl && !key.meta;
 }
 
 export function App({ store, client, apiUrl, apiKey }) {
@@ -32,23 +87,41 @@ export function App({ store, client, apiUrl, apiKey }) {
   const [mouseOn, setMouseOn] = useState(true);
   const [dragging, setDragging] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
+  const [modal, setModal] = useState(null);
 
   const mutations = useMemo(() => createMutations({ store, client }), [store, client]);
+
+  // 검색어와 우선순위 필터를 거친 목록. 좌표 계산과 그리기가 같은 목록을 봐야
+  // 화면에 안 보이는 카드가 클릭 판정에 남는 일이 없다.
+  const visibleCards = useMemo(() => Object.fromEntries(
+    state.statuses.map(s => [s.statusKey, store.visibleCards(s.statusKey)]),
+  ), [store, state.statuses, state.cardsByStatus, state.filter]);
 
   // pane 크기는 layout 계산과 Chrome 에 같은 값이 들어가야 한다.
   // 다른 값을 넣으면 그리는 곳과 마우스 판정이 어긋난다.
   const layout = computeLayout({
     columns, rows,
     statuses: state.statuses,
-    cardsByStatus: state.cardsByStatus,
+    cardsByStatus: visibleCards,
     scroll: state.scroll,
     collapsed: state.collapsed,
     columnOffset: state.columnOffset,
   });
 
-  // 마우스 처리기는 한 번만 만들고 계속 쓰므로, 최신 좌표표를 상자에 담아 건넨다.
+  // 마우스 처리기는 한 번만 만들고 계속 쓰므로, 바뀌는 값은 상자에 담아 건넨다.
   const layoutRef = useRef(null);
   layoutRef.current = layout;
+  const modalRef = useRef(null);
+
+  /**
+   * 팝업 상태는 상자에도 함께 담는다. useInput 콜백은 직전 렌더의 값을 보기 때문에,
+   * 키가 연달아 들어오면 이미 닫은 팝업이 아직 열린 것으로 보여 다음 키를 삼킨다.
+   * (Esc 로 도움말을 닫자마자 누른 '/' 가 사라지는 식이다.)
+   */
+  const setModalNow = useCallback((next) => {
+    modalRef.current = next;
+    setModal(next);
+  }, []);
 
   const selectByCardId = useCallback((cardId) => {
     const { cardsByStatus } = store.getState();
@@ -57,12 +130,31 @@ export function App({ store, client, apiUrl, apiKey }) {
     if (statusKey) store.selectCard(statusKey, cardId);
   }, [store]);
 
-  const applyStatus = useCallback(async (cardId, statusKey) => {
-    // 완료 칸으로 옮길 때 미완료 하위 일감이 있으면 원래는 사용자에게 확인을 받아야 한다.
-    // 확인 대화 컴포넌트가 아직 없으므로 지금은 이미 확인된 것으로 보고 그대로 진행한다.
-    // 대화가 붙으면 confirmSubtasks 를 빼고 'needs-confirm' 응답을 받아 대화를 띄운다.
-    const result = await mutations.changeStatus(cardId, statusKey, { confirmSubtasks: true });
-    if (result === 'done') store.selectCard(statusKey, cardId);
+  const countPending = useCallback(async (cardId) => {
+    try {
+      const subs = await client.listSubtasks(cardId);
+      return subs.filter(s => (s.statusKey ?? s.status) !== 'DONE').length;
+    } catch {
+      return 0;
+    }
+  }, [client]);
+
+  /**
+   * 상태 변경을 요청한다. 키보드와 마우스가 모두 이 길로 들어와야
+   * 완료 확인이 한쪽에서만 뜨는 일이 없다.
+   */
+  const requestStatus = useCallback(async (cardId, statusKey) => {
+    const r = await mutations.changeStatus(cardId, statusKey, { confirmSubtasks: false });
+    if (r === 'done') { store.selectCard(statusKey, cardId); return; }
+    if (r === 'needs-confirm') {
+      setModalNow({ kind: 'confirm', cardId, statusKey, pending: await countPending(cardId) });
+    }
+  }, [mutations, store, countPending]);
+
+  const confirmStatus = useCallback(async (m) => {
+    setModalNow(null);
+    const r = await mutations.changeStatus(m.cardId, m.statusKey, { confirmSubtasks: true });
+    if (r === 'done') store.selectCard(m.statusKey, m.cardId);
   }, [mutations, store]);
 
   const moveStatusBy = useCallback((delta) => {
@@ -70,8 +162,58 @@ export function App({ store, client, apiUrl, apiKey }) {
     if (!selected?.cardId) return;
     const at = statuses.findIndex(s => s.statusKey === selected.statusKey);
     const next = statuses[at + delta];
-    if (next) void applyStatus(selected.cardId, next.statusKey);
-  }, [store, applyStatus]);
+    if (next) void requestStatus(selected.cardId, next.statusKey);
+  }, [store, requestStatus]);
+
+  const commitPalette = useCallback(async (m) => {
+    const { items } = paletteOf(m, store.getState());
+    const item = items[m.index];
+    setModalNow(null);
+    if (!item) return;
+
+    if (m.kind === 'status') {
+      const sel = store.getState().selected;
+      if (sel?.cardId) await requestStatus(sel.cardId, item.id);
+    } else if (m.kind === 'filter') {
+      store.setFilter({ priority: item.value });
+    } else if (m.kind === 'project') {
+      await store.loadBoard(item.id);
+      saveConfig({ ...loadConfig(), lastProjectId: item.id });
+    }
+  }, [store, requestStatus]);
+
+  const typeSearch = useCallback((m, input, key) => {
+    if (key.escape) { store.setFilter({ query: '' }); setModalNow(null); return; }
+    if (key.return) { setModalNow(null); return; }
+
+    let next = m.value;
+    if (key.backspace || key.delete) next = m.value.slice(0, -1);
+    else if (isTypable(input, key)) next = m.value + input;
+    if (next === m.value) return;
+
+    setModalNow({ kind: 'search', value: next });
+    store.setFilter({ query: next });   // 입력하는 동안 바로 걸러진다
+  }, [store]);
+
+  /** 팝업이 떠 있으면 키를 모두 팝업이 가져간다. 처리했으면 true 를 돌려준다. */
+  const handleModalKey = useCallback((m, input, key) => {
+    if (m.kind === 'help') { setModalNow(null); return; }
+    if (m.kind === 'search') { typeSearch(m, input, key); return; }
+
+    if (m.kind === 'confirm') {
+      if (input === 'y') void confirmStatus(m);
+      else if (input === 'n' || key.escape) setModalNow(null);
+      return;
+    }
+
+    if (key.escape) { setModalNow(null); return; }
+    if (key.return) { void commitPalette(m); return; }
+
+    const count = paletteOf(m, store.getState()).items.length;
+    const step = (input === 'j' || key.downArrow) ? 1 : (input === 'k' || key.upArrow) ? -1 : 0;
+    if (step === 0) return;
+    setModalNow({ ...m, index: Math.min(count - 1, Math.max(0, m.index + step)) });
+  }, [store, typeSearch, confirmStatus, commitPalette]);
 
   useEffect(() => { store.loadProjects(); }, [store]);
 
@@ -146,23 +288,27 @@ export function App({ store, client, apiUrl, apiKey }) {
       onDragEnd: (id, statusKey) => {
         setDragging(null);
         setDropTarget(null);
-        if (statusKey) void applyStatus(id, statusKey);
+        if (statusKey) void requestStatus(id, statusKey);
       },
     });
 
     const onData = (buf) => {
+      if (modalRef.current) return;          // 팝업이 떠 있으면 보드를 만지지 않는다
       const ev = parseMouse(buf.toString());
       if (ev) handle(ev);
     };
 
     stdin.on('data', onData);
     return () => { stdin.off('data', onData); disableMouse(stdout); };
-  }, [mouseOn, stdin, stdout, store, selectByCardId, applyStatus]);
+  }, [mouseOn, stdin, stdout, store, selectByCardId, requestStatus]);
 
   useInput((input, key) => {
     // 마우스 시퀀스가 키로 흘러들면 엉뚱한 동작이 된다. 예를 들어 뗌 시퀀스는 'm' 으로
     // 끝나는데 'm' 은 마우스 끄기다. 마우스로 읽히는 입력은 여기서 걸러낸다.
     if (parseMouse(input)) return;
+
+    const open = modalRef.current;
+    if (open) return handleModalKey(open, input, key);
 
     const action = resolveKey(input, key);
     if (!action) return;
@@ -176,14 +322,17 @@ export function App({ store, client, apiUrl, apiKey }) {
       case 'column-last': return store.moveSelection(FAR);
       case 'move-status-left': return moveStatusBy(-1);
       case 'move-status-right': return moveStatusBy(1);
-      // 상태 고르기 팔레트가 아직 없으므로, 지금은 다음 칸으로 한 칸 옮긴다.
-      case 'change-status': return moveStatusBy(1);
+      case 'change-status': return setModalNow({ kind: 'status', index: 0 });
+      case 'search': return setModalNow({ kind: 'search', value: state.filter.query });
+      case 'filter': return setModalNow({ kind: 'filter', index: 0 });
+      case 'project': return setModalNow({ kind: 'project', index: 0 });
+      case 'help': return setModalNow({ kind: 'help' });
       case 'open-detail': return store.setFocus('detail');
       case 'toggle-focus': return store.setFocus(state.focus === 'board' ? 'detail' : 'board');
       case 'toggle-mouse': return setMouseOn(v => !v);
       case 'refresh': return void store.loadBoard(state.projectId);
       case 'quit': return exit();
-      default: return; // 나머지는 이후 태스크에서 붙인다
+      default: return; // 나머지는 웹과 MCP 도구가 맡는다
     }
   });
 
@@ -195,6 +344,7 @@ export function App({ store, client, apiUrl, apiKey }) {
   const statusName = state.statuses.find(s => s.statusKey === state.selected?.statusKey)?.name;
   const bodyTop = bodyTopOf(layout);
   const detailHeight = Math.max(1, rows - bodyTop - FOOTER_ROWS);
+  const modalLeft = modal ? Math.max(0, Math.floor((columns - MODAL_WIDTH[modal.kind]) / 2)) : 0;
 
   return (
     <Chrome projectName={projectName} columns={columns} rows={rows}
@@ -202,7 +352,7 @@ export function App({ store, client, apiUrl, apiKey }) {
       <Box width={columns} height={rows}>
         <Box position="absolute" marginTop={0} marginLeft={0}>
           <Board layout={layout} statuses={state.statuses}
-                 cardsByStatus={state.cardsByStatus} selected={state.selected}
+                 cardsByStatus={visibleCards} selected={state.selected}
                  dragging={dragging} dropTarget={dropTarget} />
         </Box>
 
@@ -213,6 +363,17 @@ export function App({ store, client, apiUrl, apiKey }) {
                width={DETAIL_WIDTH} height={detailHeight} overflow="hidden">
             <Detail card={detail.card} subtasks={detail.subtasks} comments={detail.comments}
                     statusName={statusName} width={DETAIL_WIDTH} loading={detail.loading} />
+          </Box>
+        )}
+
+        {/*
+          팝업은 마지막에 그려야 보드 위에 덮인다. 배경색을 주지 않으면 글자가 없는 칸이
+          칠해지지 않아 뒤의 카드 테두리가 팝업 안으로 비쳐 읽을 수 없다.
+        */}
+        {modal && (
+          <Box position="absolute" marginLeft={modalLeft} marginTop={MODAL_TOP}
+               backgroundColor="black">
+            {modalNode(modal, state)}
           </Box>
         )}
       </Box>

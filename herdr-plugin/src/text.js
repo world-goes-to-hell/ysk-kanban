@@ -26,11 +26,46 @@ function ellipsize(text, maxWidth) {
   return out + ELLIPSIS;
 }
 
+/** ellipsize 의 거울상. 뒤에서부터 담아 앞쪽을 버리고 맨 앞에 … 를 붙인다. */
+function ellipsizeStart(text, maxWidth) {
+  const chars = [...text];
+  const budget = maxWidth - width(ELLIPSIS);
+
+  let out = '';
+  let used = 0;
+  if (budget > 0) {
+    for (let i = chars.length - 1; i >= 0; i -= 1) {
+      const w = width(chars[i]);
+      if (used + w > budget) break;
+      out = chars[i] + out;
+      used += w;
+    }
+  }
+
+  // 한 글자도 담지 못할 만큼 좁으면 … 를 포기한다.
+  // 잘렸다는 표시보다 방금 친 글자가 보이는 편이 낫다.
+  if (out === '') {
+    const last = chars.at(-1) ?? '';
+    return width(last) <= maxWidth ? last : ELLIPSIS;
+  }
+  return ELLIPSIS + out;
+}
+
 /** 폭이 maxWidth 를 넘으면 잘라내고 끝에 … 를 붙인다. 넘지 않으면 원문 그대로다. */
 export function truncate(text, maxWidth) {
   const s = text ?? '';
   if (maxWidth <= 0) return '';
   return width(s) <= maxWidth ? s : ellipsize(s, maxWidth);
+}
+
+/**
+ * 폭이 넘치면 앞쪽을 잘라내고 맨 앞에 … 를 붙인다.
+ * 입력창처럼 방금 친 끝부분이 보여야 하는 자리에 쓴다.
+ */
+export function truncateStart(text, maxWidth) {
+  const s = text ?? '';
+  if (maxWidth <= 0) return '';
+  return width(s) <= maxWidth ? s : ellipsizeStart(s, maxWidth);
 }
 
 /**

@@ -19,6 +19,14 @@ describe('Input', () => {
     expect(f).toContain('내용을 입력하세요');
   });
 
+  it('긴 검색어는 방금 친 끝부분이 보인다', () => {
+    const tail = '누락되는 오류';
+    const f = render(
+      <Input title="검색" value={`배치 등록에서 파라미터가 ${tail}`} width={40} />
+    ).lastFrame();
+    expect(f).toContain(tail);
+  });
+
   it('긴 한글 입력값도 폭과 줄 수를 지킨다', () => {
     const short = render(<Input title="검색" value="배치" width={40} />).lastFrame();
     const long = render(
