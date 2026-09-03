@@ -348,7 +348,7 @@ export function App({ store, client, apiUrl, apiKey }) {
 
   return (
     <Chrome projectName={projectName} columns={columns} rows={rows}
-            connected={connected} error={state.error}>
+            connected={connected} error={state.error} mode={layout.mode}>
       <Box width={columns} height={rows}>
         <Box position="absolute" marginTop={0} marginLeft={0}>
           <Board layout={layout} statuses={state.statuses}

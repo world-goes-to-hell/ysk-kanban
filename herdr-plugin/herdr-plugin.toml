@@ -28,3 +28,19 @@ platforms = ["linux", "macos"]
 title = "칸반"
 placement = "split"
 command = ["node", "./dist/cli.js"]
+
+# 단축키나 명령 팔레트에서 보드를 열 수 있게 한다.
+# action id 는 플랫폼이 달라도 전역에서 유일해야 하므로 Windows 쪽에 접미사를 붙인다.
+[[actions]]
+id = "open-board"
+platforms = ["linux", "macos"]
+title = "칸반 열기"
+description = "칸반 보드를 새 pane 으로 엽니다."
+command = ["node", "./dist/cli.js", "--open"]
+
+[[actions]]
+id = "open-board-windows"
+platforms = ["windows"]
+title = "칸반 열기"
+description = "칸반 보드를 새 pane 으로 엽니다."
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '$r=$env:HERDR_PLUGIN_ROOT; if($r.StartsWith("\\?\")){$r=$r.Substring(4)}; node (Join-Path $r "dist\cli.js") --open']

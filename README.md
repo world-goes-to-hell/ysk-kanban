@@ -21,6 +21,7 @@ Spring Boot + React 기반의 칸반 보드 일감 관리 시스템입니다.
 - 대시보드 (통계, 프로젝트별 필터)
 - SSE 실시간 동기화
 - 세션 인증 (1시간 타임아웃, 연장 기능)
+- 외부 연동: MCP 서버(AI 에이전트용)와 Herdr 터미널 플러그인(사람용)
 
 ## 사전 요구사항
 
@@ -100,9 +101,33 @@ ysk-kanban/
 │   │   ├── styles/      # CSS Modules
 │   │   └── utils/       # 포맷터, 상수
 │   └── vite.config.js
+├── mcp-server/          # MCP 서버 (AI 에이전트가 일감을 다루는 도구)
+├── herdr-plugin/        # Herdr 터미널 플러그인 (사람이 보드를 보는 화면)
 ├── build.gradle
 └── gradlew / gradlew.bat
 ```
+
+## 외부 연동
+
+같은 API 를 두 갈래로 씁니다. **MCP 서버는 AI 에이전트가 쓰고, Herdr 플러그인은 사람이 씁니다.**
+
+| 구성 | 대상 | 할 수 있는 일 |
+|------|------|----------------|
+| [`mcp-server/`](mcp-server/) | AI 에이전트 | 일감 조회와 생성·수정·삭제 등 도구 호출 |
+| [`herdr-plugin/`](herdr-plugin/) | 사람 | 터미널에서 보드를 보고 카드의 상태를 바꿈 |
+
+### Herdr 터미널 플러그인
+
+[Herdr](https://herdr.dev) 의 pane 안에 칸반 보드를 그립니다. 키보드와 마우스로 카드를 훑고,
+드래그 앤 드롭이나 `Space` 로 다른 칸에 옮길 수 있습니다.
+다른 창에서 일감이 바뀌면 화면이 따라 갱신됩니다.
+
+```bash
+herdr plugin install world-goes-to-hell/ysk-kanban/herdr-plugin
+```
+
+**현재 조회와 상태 변경만 지원합니다.** 일감 생성·수정·삭제, 하위 일감 생성, 댓글 작성은
+웹 화면이나 MCP 서버에서 하십시오. 사용법과 키맵은 [herdr-plugin/README.md](herdr-plugin/README.md) 에 있습니다.
 
 ## 설정
 

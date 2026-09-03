@@ -213,3 +213,27 @@ describe('카드 내용', () => {
     expect(f).toContain('04-30');
   });
 });
+
+describe('하단 안내', () => {
+  const ROWS = 24;
+  const hintOf = (over = {}) => {
+    const f = render(
+      <Chrome projectName="테스트" columns={160} rows={ROWS} connected={true} error={null} {...over} />
+    ).lastFrame();
+    return f.split('\n')[ROWS - 1];
+  };
+
+  // 없는 키를 안내하면 눌러 보고 아무 일도 일어나지 않아 고장으로 오해한다.
+  it('없어진 기능인 새 일감을 안내하지 않는다', () => {
+    expect(hintOf()).not.toContain('새 일감');
+  });
+
+  // 목록 모드는 칸 구분이 없어 드롭 대상을 판정할 수 없다. 드래그가 듣지 않는 이유를 알려야 한다.
+  it('목록 모드에서는 드래그 대신 Space 를 쓰라고 알린다', () => {
+    expect(hintOf({ mode: 'list', columns: 80 })).toContain('Space 로 상태 변경');
+  });
+
+  it('보드 모드에서는 그 안내가 없다', () => {
+    expect(hintOf({ mode: 'board' })).not.toContain('좁은 화면');
+  });
+});
