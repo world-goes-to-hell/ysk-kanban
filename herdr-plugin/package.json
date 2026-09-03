@@ -4,7 +4,7 @@
   "description": "Herdr plugin for kanban board — full CRUD in the terminal",
   "type": "module",
   "bin": { "herdr-kanban": "src/cli.js" },
-  "engines": { "node": ">=18.0.0" },
+  "engines": { "node": ">=22.0.0" },
   "scripts": {
     "start": "node src/cli.js",
     "test": "vitest run",
@@ -16,8 +16,9 @@
     "react": "^19.2.8"
   },
   "devDependencies": {
-    "vitest": "^2.1.0",
+    "vitest": "^4.1.11",
     "ink-testing-library": "^4.0.0",
-    "@vitest/coverage-v8": "^2.1.0"
+    "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.28.2"
   }
 }
