@@ -6,7 +6,7 @@
 
 **Architecture:** Node.js + Ink 로 만든 단일 프로세스 TUI 다. 레이아웃을 직접 계산해 그 결과를 렌더링과 마우스 히트 판정 양쪽에 쓰고, 칸반 REST API 를 API Key 로 호출하며, SSE 로 실시간 갱신을 받는다. 백엔드는 수정하지 않는다.
 
-**Tech Stack:** Node.js 18+, Ink 7, React 19, vitest, ink-testing-library, fetch(Node 내장)
+**Tech Stack:** Node.js 22+, Ink 7, React 19, vitest 4, ink-testing-library, fetch(Node 내장)
 
 **Spec:** `docs/plan/herdr-kanban-plugin.md`
 
@@ -14,7 +14,9 @@
 
 - 플러그인 id 는 `herdr-kanban` 으로 고정한다. 저장소명(`ysk-kanban`)·디렉토리명(`herdr-plugin`)과 다르다.
 - 디렉토리는 저장소 루트의 `herdr-plugin/` 이다.
-- Node.js 18 이상. `package.json` 의 `engines.node` 에 `>=18.0.0` 을 명시한다.
+- Node.js 22 이상. `package.json` 의 `engines.node` 에 `>=22.0.0` 을 명시한다.
+  ink@7 자신이 `engines: {node: ">=22"}` 를 선언하므로 이보다 낮게 적으면 거짓 선언이 된다.
+  npm 은 engine-strict 가 꺼져 있어 Node 18~21 에서도 설치는 성공하고 실행에서 깨진다.
 - ESM 전용이다. `package.json` 에 `"type": "module"` 을 넣고 모든 import 에 확장자를 붙인다.
 - 네이티브 모듈을 쓰지 않는다. 컴파일 단계가 없어야 한다.
 - React 는 19 계열을 쓴다. Ink 6 과 7 모두 `react >=19` 를 peer 로 요구하므로
@@ -78,7 +80,7 @@ herdr-grid 가 쓰는 검증된 패턴을 그대로 따른다.
   "description": "Herdr plugin for kanban board — full CRUD in the terminal",
   "type": "module",
   "bin": { "herdr-kanban": "src/cli.js" },
-  "engines": { "node": ">=18.0.0" },
+  "engines": { "node": ">=22.0.0" },
   "scripts": {
     "start": "node src/cli.js",
     "test": "vitest run",
@@ -90,9 +92,9 @@ herdr-grid 가 쓰는 검증된 패턴을 그대로 따른다.
     "react": "^19.2.8"
   },
   "devDependencies": {
-    "vitest": "^2.1.0",
+    "vitest": "^4.1.11",
     "ink-testing-library": "^4.0.0",
-    "@vitest/coverage-v8": "^2.1.0"
+    "@vitest/coverage-v8": "^4.1.11"
   }
 }
 ```
@@ -2284,13 +2286,35 @@ git commit -m "feat(herdr-plugin): 상세 패널"
   - `watchBoard({ apiUrl, apiKey, projectId, onChange, onStatus, fetchImpl?, pollMs? }) -> stop()`
     - `onStatus('live' | 'polling')` 으로 연결 상태를 알린다
     - SSE 가 끊기면 자동으로 폴링으로 강등한다
+  - `parseFrames(buffer) -> { frames: [{ event, data }], rest: string }` — 순수 함수
+
+**백엔드 실제 사양 (확인 완료, 추측 아님)**
+
+`SseController` 와 `TodoController` 를 직접 읽어 확인한 내용이다.
+
+| 항목 | 실제 값 |
+|---|---|
+| 경로 | `GET /api/sse/subscribe` — **질의 파라미터를 받지 않는다** |
+| 인증 | `ApiKeyAuthFilter` 가 `Authorization: Bearer ak_...` 를 처리하므로 헤더 인증이 된다 |
+| 연결 직후 | `event: connected` / `data: ok` |
+| 하트비트 | `: heartbeat` (주석 줄) |
+| 일감 변경 | `event: todo_changed` / `data: {"action":"created\|updated\|deleted","projectId":3}` |
+| 댓글 변경 | `event: comment_changed` / `data: {"action":"...","todoId":1902}` |
+
+**따라서 URL 에 `?projectId=` 를 붙이면 안 된다.** 서버가 무시하며,
+모든 프로젝트의 이벤트가 한 스트림으로 들어온다. 현재 보고 있는 프로젝트만
+갱신하려면 **페이로드의 `projectId` 로 걸러야 한다.** 이 필터가 없으면 다른
+프로젝트를 건드릴 때마다 화면이 불필요하게 다시 그려진다.
+
+브라우저는 `EventSource` 를 쓰지만 그것은 헤더를 붙일 수 없다.
+API Key 인증이 필요하므로 여기서는 `fetch` 로 스트림을 직접 읽는다.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
 ```js
 // herdr-plugin/test/sse.test.js
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { watchBoard } from '../src/api/sse.js';
+import { watchBoard, parseFrames } from '../src/api/sse.js';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -2342,6 +2366,96 @@ describe('watchBoard', () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(onChange.mock.calls.length).toBe(before);
   });
+
+  it('URL 에 projectId 를 붙이지 않는다 (서버가 받지 않음)', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new Error('연결 실패'));
+    const stop = watchBoard({ apiUrl: 'https://k.example', apiKey: 'ak_1', projectId: 3,
+                              onChange: vi.fn(), onStatus: vi.fn(), fetchImpl, pollMs: 1000 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://k.example/api/sse/subscribe');
+    stop();
+  });
+
+  it('Bearer 헤더와 event-stream Accept 를 보낸다', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new Error('연결 실패'));
+    const stop = watchBoard({ apiUrl: 'https://k.example', apiKey: 'ak_1', projectId: 3,
+                              onChange: vi.fn(), onStatus: vi.fn(), fetchImpl, pollMs: 1000 });
+    await vi.advanceTimersByTimeAsync(0);
+    const init = fetchImpl.mock.calls[0][1];
+    expect(init.headers.Authorization).toBe('Bearer ak_1');
+    expect(init.headers.Accept).toBe('text/event-stream');
+    stop();
+  });
+});
+
+describe('parseFrames', () => {
+  it('완성된 프레임을 떼어낸다', () => {
+    const { frames } = parseFrames('event: todo_changed\ndata: {"projectId":3}\n\n');
+    expect(frames).toEqual([{ event: 'todo_changed', data: '{"projectId":3}' }]);
+  });
+
+  it('덜 온 조각은 rest 로 남긴다', () => {
+    const { frames, rest } = parseFrames('event: a\ndata: 1\n\nevent: b\ndata: 2');
+    expect(frames).toHaveLength(1);
+    expect(rest).toBe('event: b\ndata: 2');
+  });
+
+  it('하트비트 주석은 프레임을 만들지 않는다', () => {
+    expect(parseFrames(': heartbeat\n\n').frames).toEqual([]);
+  });
+
+  it('여러 프레임을 한 번에 처리한다', () => {
+    const { frames } = parseFrames('event: a\ndata: 1\n\nevent: b\ndata: 2\n\n');
+    expect(frames.map(f => f.event)).toEqual(['a', 'b']);
+  });
+
+  it('event 줄이 없으면 message 로 본다', () => {
+    expect(parseFrames('data: 1\n\n').frames[0].event).toBe('message');
+  });
+});
+
+describe('프로젝트 필터', () => {
+  /** 주어진 프레임들을 한 덩어리로 흘려보내는 가짜 스트림 */
+  function streamOf(text) {
+    return new ReadableStream({
+      start(c) { c.enqueue(new TextEncoder().encode(text)); },
+    });
+  }
+
+  async function runWith(text, projectId = 3) {
+    const onChange = vi.fn();
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, status: 200, body: streamOf(text) });
+    const stop = watchBoard({ apiUrl: 'https://k.example', apiKey: 'ak_1', projectId,
+                              onChange, onStatus: vi.fn(), fetchImpl });
+    await vi.advanceTimersByTimeAsync(10);
+    stop();
+    return onChange;
+  }
+
+  it('같은 프로젝트의 todo_changed 는 갱신한다', async () => {
+    const onChange = await runWith('event: todo_changed\ndata: {"action":"updated","projectId":3}\n\n');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it('다른 프로젝트의 todo_changed 는 무시한다', async () => {
+    const onChange = await runWith('event: todo_changed\ndata: {"action":"updated","projectId":99}\n\n');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('보드와 무관한 이벤트는 무시한다', async () => {
+    const onChange = await runWith('event: notification\ndata: {"id":1}\n\n');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('comment_changed 는 프로젝트를 알 수 없으므로 갱신한다', async () => {
+    const onChange = await runWith('event: comment_changed\ndata: {"todoId":1902}\n\n');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it('connected 이벤트만으로는 갱신하지 않는다', async () => {
+    const onChange = await runWith('event: connected\ndata: ok\n\n');
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 ```
 
@@ -2355,9 +2469,40 @@ Expected: FAIL — 모듈 없음
 ```js
 // herdr-plugin/src/api/sse.js
 
+/** 관심 있는 이벤트. 나머지(알림·토론)는 보드와 무관하므로 무시한다. */
+const WATCHED = new Set(['todo_changed', 'comment_changed']);
+
+/**
+ * SSE 스트림 버퍼에서 완성된 프레임만 떼어낸다.
+ * 마지막 조각은 아직 덜 온 것일 수 있으므로 rest 로 돌려준다.
+ */
+export function parseFrames(buffer) {
+  const chunks = buffer.split('\n\n');
+  const rest = chunks.pop() ?? '';
+  const frames = [];
+
+  for (const chunk of chunks) {
+    let event = 'message';
+    let data = '';
+
+    for (const line of chunk.split('\n')) {
+      if (line.startsWith(':')) continue;                       // 하트비트 주석
+      if (line.startsWith('event:')) event = line.slice(6).trim();
+      else if (line.startsWith('data:')) data += line.slice(5).trim();
+    }
+
+    if (data) frames.push({ event, data });
+  }
+
+  return { frames, rest };
+}
+
 /**
  * 보드 변경을 감시한다. SSE 를 먼저 시도하고, 실패하면 주기 폴링으로 내려간다.
  * 반환값을 부르면 감시를 멈춘다.
+ *
+ * 서버는 모든 프로젝트의 이벤트를 한 스트림으로 보내므로
+ * 페이로드의 projectId 로 지금 보고 있는 프로젝트만 걸러낸다.
  */
 export function watchBoard({
   apiUrl, apiKey, projectId, onChange, onStatus,
@@ -2375,11 +2520,24 @@ export function watchBoard({
     timer = setInterval(() => { if (!stopped) onChange(); }, pollMs);
   }
 
+  /** 이 프레임이 지금 보고 있는 보드와 관련 있는지 본다. */
+  function concerns(frame) {
+    if (!WATCHED.has(frame.event)) return false;
+    if (frame.event === 'comment_changed') return true;   // todoId 만 오므로 그냥 갱신한다
+
+    try {
+      const payload = JSON.parse(frame.data);
+      return payload.projectId === projectId;
+    } catch {
+      return true;    // 파싱에 실패하면 놓치는 것보다 갱신하는 편이 낫다
+    }
+  }
+
   async function startSse() {
     controller = new AbortController();
     let res;
     try {
-      res = await fetchImpl(`${base}/api/sse/subscribe?projectId=${projectId}`, {
+      res = await fetchImpl(`${base}/api/sse/subscribe`, {
         headers: { Authorization: `Bearer ${apiKey}`, Accept: 'text/event-stream' },
         signal: controller.signal,
       });
@@ -2401,13 +2559,10 @@ export function watchBoard({
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const chunks = buffer.split('\n\n');
-        buffer = chunks.pop() ?? '';
+        const { frames, rest } = parseFrames(buffer);
+        buffer = rest;
 
-        for (const chunk of chunks) {
-          if (chunk.startsWith(':')) continue;         // 하트비트
-          onChange();
-        }
+        if (frames.some(concerns)) onChange();
       }
     } catch {
       // 스트림이 끊겼다
@@ -2425,9 +2580,6 @@ export function watchBoard({
   };
 }
 ```
-
-**주의:** SSE 엔드포인트 경로는 백엔드의 `SseController` 를 열어 실제 경로와
-질의 파라미터를 확인한 뒤 위 코드의 URL 을 맞춘다. 다르면 이 태스크에서 바로 고친다.
 
 - [ ] **Step 4: App 에 연결**
 
@@ -3668,6 +3820,12 @@ git commit -m "feat(herdr-plugin): 마우스 클릭과 휠"
 **Interfaces:**
 - Consumes: Task 16 의 `createMouseHandler`
 - Produces: `<Board ... dragging={cardId|null} dropTarget={statusKey|null} />`
+
+**목록 모드에서는 드래그를 지원하지 않는다.** `listRegions` 가 `column-header`
+영역을 만들지 않으므로 `columnAt` 이 항상 `null` 을 돌려주고, 화면에 칸 구분도
+없어 드롭 대상을 고를 수 없다. 의도된 제약이다. 대신 `layout.mode === 'list'`
+일 때 화면 하단 안내에 "좁은 화면에서는 Space 로 상태를 바꿉니다" 를 덧붙여
+사용자가 드래그를 시도했다가 아무 반응이 없어 혼란스러워하지 않게 한다.
 
 - [ ] **Step 1: 드래그 흐름 테스트 작성**
 
