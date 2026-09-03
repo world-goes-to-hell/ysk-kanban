@@ -1,0 +1,26 @@
+id = "herdr-kanban"
+name = "herdr-kanban"
+version = "0.1.0"
+description = "칸반 보드를 터미널에서 조회하고 편집하는 플러그인"
+min_herdr_version = "0.8.0"
+platforms = ["linux", "macos", "windows"]
+
+[[build]]
+platforms = ["linux", "macos", "windows"]
+command = ["npm", "ci", "--omit=dev"]
+
+# Windows: 상대경로 [[panes]] 가 동작하지 않으므로 PowerShell 로 감싸고
+# HERDR_PLUGIN_ROOT 의 \\?\ 접두사를 제거한 뒤 절대경로로 실행한다.
+[[panes]]
+id = "board"
+platforms = ["windows"]
+title = "칸반"
+placement = "split"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '$r=$env:HERDR_PLUGIN_ROOT; if($r.StartsWith("\\?\")){$r=$r.Substring(4)}; node (Join-Path $r "src\cli.js")']
+
+[[panes]]
+id = "board-unix"
+platforms = ["linux", "macos"]
+title = "칸반"
+placement = "split"
+command = ["node", "./src/cli.js"]

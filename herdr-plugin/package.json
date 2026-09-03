@@ -1,0 +1,23 @@
+{
+  "name": "@dksktjdrhks2/herdr-kanban",
+  "version": "0.1.0",
+  "description": "Herdr plugin for kanban board — full CRUD in the terminal",
+  "type": "module",
+  "bin": { "herdr-kanban": "src/cli.js" },
+  "engines": { "node": ">=18.0.0" },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "ink": "^7.1.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "ink-testing-library": "^4.0.0",
+    "@vitest/coverage-v8": "^2.1.0"
+  }
+}
