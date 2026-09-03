@@ -78,6 +78,16 @@ describe('resolveSize', () => {
     expect(size).toEqual({ columns: 214 - CHROME_COLUMNS, rows: 46 });
   });
 
+  it('herdr 폭이 조금 더 커도 stdout 을 넘지 않는다', () => {
+    // 넘겨 잡으면 줄이 접혀 세로로 넘친다. 넓히는 쪽은 늘 보수적으로 간다.
+    const size = resolveSize({
+      paneId: 'w1:p2',
+      queryPane: () => ({ columns: 214, rows: 48 }),
+      stdout: { columns: 213, rows: 48 },
+    });
+    expect(size).toEqual({ columns: 213, rows: 48 });
+  });
+
   it('stdout 이 이미 정확하면 herdr 때문에 넓어지지 않는다', () => {
     const size = resolveSize({
       paneId: 'w1:p2',

@@ -8,6 +8,9 @@ export const FALLBACK_ROWS = 24;
 // herdr pane 의 테두리가 먹는 폭. rect 107 과 실제 104 의 차이를 재서 얻었다.
 export const CHROME_COLUMNS = 3;
 
+// stdout 폭이 pane 폭 대비 이 비율에 못 미치면 갇힌 값으로 본다.
+const TRUST_RATIO = 0.7;
+
 const POLL_MS = 250;
 const QUERY_TIMEOUT_MS = 3000;
 
@@ -71,8 +74,13 @@ export function resolveSize({ paneId, queryPane, stdout }) {
   const pane = queryPane(paneId);
   if (!pane) return own;
 
+  // stdout 폭이 pane 폭과 비슷하면 그대로 믿는다. 그 차이는 pane 테두리일 뿐이다.
+  // 폭을 실제보다 넓게 잡으면 모든 줄이 접혀 세로로 넘치고 화면이 밀려 올라가므로,
+  // 넓히는 쪽은 stdout 이 명백히 갇혔을 때(pane 의 70% 에도 못 미칠 때)만 한다.
+  const stuck = own.columns < pane.columns * TRUST_RATIO;
+
   return {
-    columns: Math.max(own.columns, pane.columns - CHROME_COLUMNS),
+    columns: stuck ? pane.columns - CHROME_COLUMNS : own.columns,
     rows: own.rows,
   };
 }

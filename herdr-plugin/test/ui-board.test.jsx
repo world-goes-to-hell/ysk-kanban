@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Board } from '../src/ui/Board.jsx';
+import { Card } from '../src/ui/Card.jsx';
 import { Chrome } from '../src/ui/Chrome.jsx';
-import { computeLayout } from '../src/layout.js';
+import { computeLayout, CARD_HEIGHT } from '../src/layout.js';
 
 const statuses = [
   { statusKey: 'TODO', name: '할 일', color: '#2563EB', position: 0 },
@@ -139,5 +140,76 @@ describe('Chrome 과 Board 의 좌표계', () => {
 
     // 하단 안내는 layout 이 FOOTER_ROWS 로 비워 둔 마지막 줄에 있어야 한다.
     expect(rows[24 - 1]).toContain('q 종료');
+  });
+});
+
+describe('높이 — 계산과 렌더가 같아야 한다', () => {
+  // 계산이 실제보다 낮으면 화면이 밀려 올라가 제목줄이 사라지고,
+  // 마우스를 붙였을 때 엉뚱한 카드를 집게 된다.
+  it('카드 하나가 CARD_HEIGHT 만큼의 줄을 차지한다', () => {
+    const cases = [
+      { id: 1, summary: '짧다', priority: 'HIGH', dueDate: '2026-09-05' },
+      { id: 2, summary: '가'.repeat(40), priority: 'LOW', dueDate: '2026-09-05' },
+      { id: 3, summary: '가'.repeat(300), priority: 'LOW' },
+      { id: 4, summary: 'a'.repeat(300), priority: 'MEDIUM', subtaskTotal: 3, subtaskDone: 1 },
+    ];
+    for (const card of cases) {
+      const f = render(<Card card={card} width={54} selected={false} />).lastFrame();
+      expect(f.split('\n')).toHaveLength(CARD_HEIGHT);
+    }
+  });
+
+  it('선택된 카드도 같은 높이다', () => {
+    const card = { id: 1, summary: '가'.repeat(40), priority: 'HIGH', dueDate: '2026-09-05' };
+    const f = render(<Card card={card} width={54} selected={true} />).lastFrame();
+    expect(f.split('\n')).toHaveLength(CARD_HEIGHT);
+  });
+
+  it('그려진 줄 수가 화면 높이를 넘지 않는다', () => {
+    const ROWS = 24;
+    const many = {
+      TODO: Array.from({ length: 30 }, (_, i) => ({
+        id: i + 1, summary: '일감 ' + (i + 1), priority: 'LOW', dueDate: '2026-09-05',
+      })),
+      DONE: [],
+    };
+    const layout = computeLayout({
+      columns: 160, rows: ROWS, statuses, cardsByStatus: many,
+      scroll: {}, collapsed: {}, columnOffset: 0,
+    });
+
+    // 계산 자체가 화면을 넘지 않아야 한다
+    for (const r of layout.regions) {
+      expect(r.y + r.h).toBeLessThanOrEqual(ROWS);
+    }
+
+    const f = render(
+      <Chrome projectName="테스트" columns={160} rows={ROWS} connected={true} error={null}>
+        <Board layout={layout} statuses={statuses} cardsByStatus={many} selected={null} />
+      </Chrome>
+    ).lastFrame();
+    expect(f.split('\n').length).toBeLessThanOrEqual(ROWS);
+  });
+});
+
+describe('카드 내용', () => {
+  // 일감 번호는 웹과 MCP 도구를 오갈 때 쓰는 유일한 식별자다.
+  // 제목이 자리를 밀어내 번호가 사라지면 사용자가 카드를 지칭할 수 없다.
+  it('제목이 짧을 때 일감 번호가 보인다', () => {
+    const card = { id: 137, summary: '사용독려 알림톡 템플릿 추가', priority: 'HIGH', dueDate: '2026-03-31' };
+    const f = render(<Card card={card} width={54} selected={false} />).lastFrame();
+    expect(f).toContain('#137');
+  });
+
+  it('제목이 아주 길어도 일감 번호가 보인다', () => {
+    const card = { id: 574, summary: '가'.repeat(200), priority: 'LOW', dueDate: '2026-04-30' };
+    const f = render(<Card card={card} width={54} selected={false} />).lastFrame();
+    expect(f).toContain('#574');
+  });
+
+  it('제목이 잘려도 마감일 줄은 남는다', () => {
+    const card = { id: 574, summary: '가'.repeat(200), priority: 'LOW', dueDate: '2026-04-30' };
+    const f = render(<Card card={card} width={54} selected={false} />).lastFrame();
+    expect(f).toContain('04-30');
   });
 });

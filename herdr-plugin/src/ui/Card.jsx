@@ -51,9 +51,15 @@ function wrap(text, width, maxLines) {
   return out;
 }
 
+// 카드는 CARD_HEIGHT(5) 행이고 테두리 두 줄을 빼면 쓸 수 있는 내용은 세 줄뿐이다.
+// 번호·제목·마감일에 한 줄씩 배분한다. 제목을 두 줄로 늘리면 번호 줄이 밀려 사라지는데,
+// 일감 번호는 웹과 MCP 도구를 오갈 때 카드를 지칭하는 유일한 식별자라 없으면 안 된다.
+// 제목 전문은 오른쪽 상세 패널에서 본다.
+const TITLE_LINES = 1;
+
 export function Card({ card, width, selected = false, dimmed = false }) {
   const inner = Math.max(1, width - 4);
-  const title = wrap(card.summary, inner, 2);
+  const title = wrap(card.summary, inner, TITLE_LINES);
 
   const meta = [];
   if (card.dueDate) meta.push(card.completedAt ? `v${card.dueDate.slice(5)}` : `~${card.dueDate.slice(5)}`);

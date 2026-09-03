@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "description": "Herdr plugin for kanban board — full CRUD in the terminal",
   "type": "module",
-  "bin": { "herdr-kanban": "dist/cli.js" },
-  "engines": { "node": ">=22.0.0" },
+  "bin": {
+    "herdr-kanban": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "esbuild src/cli.jsx --bundle --platform=node --format=esm --jsx=automatic --packages=external --outfile=dist/cli.js",
     "start": "node dist/cli.js",
@@ -14,12 +18,13 @@
   },
   "dependencies": {
     "ink": "^7.1.1",
-    "react": "^19.2.8"
+    "react": "^19.2.8",
+    "string-width": "^8.2.2"
   },
   "devDependencies": {
-    "vitest": "^4.1.11",
-    "ink-testing-library": "^4.0.0",
     "@vitest/coverage-v8": "^4.1.11",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "ink-testing-library": "^4.0.0",
+    "vitest": "^4.1.11"
   }
 }
