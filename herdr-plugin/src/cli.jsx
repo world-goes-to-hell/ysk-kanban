@@ -25,5 +25,8 @@ if (cfg.keys.length === 0) {
   const projectId = cfg.lastProjectId ?? store.getState().projects[0]?.id;
   if (projectId) await store.loadBoard(projectId);
 
-  render(<App store={store} />, { alternateScreen: true, exitOnCtrlC: true });
+  render(
+    <App store={store} client={client} apiUrl={cfg.apiUrl} apiKey={cfg.keys[0].key} />,
+    { alternateScreen: true, exitOnCtrlC: true },
+  );
 }
