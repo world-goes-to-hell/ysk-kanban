@@ -6,7 +6,7 @@
 
 **Architecture:** Node.js + Ink 로 만든 단일 프로세스 TUI 다. 레이아웃을 직접 계산해 그 결과를 렌더링과 마우스 히트 판정 양쪽에 쓰고, 칸반 REST API 를 API Key 로 호출하며, SSE 로 실시간 갱신을 받는다. 백엔드는 수정하지 않는다.
 
-**Tech Stack:** Node.js 18+, Ink 7, React 18, vitest, ink-testing-library, undici(fetch 내장 사용)
+**Tech Stack:** Node.js 18+, Ink 7, React 19, vitest, ink-testing-library, fetch(Node 내장)
 
 **Spec:** `docs/plan/herdr-kanban-plugin.md`
 
@@ -17,6 +17,8 @@
 - Node.js 18 이상. `package.json` 의 `engines.node` 에 `>=18.0.0` 을 명시한다.
 - ESM 전용이다. `package.json` 에 `"type": "module"` 을 넣고 모든 import 에 확장자를 붙인다.
 - 네이티브 모듈을 쓰지 않는다. 컴파일 단계가 없어야 한다.
+- React 는 19 계열을 쓴다. Ink 6 과 7 모두 `react >=19` 를 peer 로 요구하므로
+  Ink 를 낮춰도 React 18 을 쓸 수 없다. `--legacy-peer-deps` 로 우회하지 않는다.
 - 백엔드(`src/main/java/**`)와 `mcp-server/**` 는 이 계획에서 수정하지 않는다.
 - API 기본 URL 은 `https://kanban.yooit.kr` 이며 설정으로 덮어쓸 수 있다.
 - 인증 헤더는 `Authorization: Bearer ak_...` 형식이다.
@@ -85,7 +87,7 @@ herdr-grid 가 쓰는 검증된 패턴을 그대로 따른다.
   },
   "dependencies": {
     "ink": "^7.1.1",
-    "react": "^18.3.1"
+    "react": "^19.2.8"
   },
   "devDependencies": {
     "vitest": "^2.1.0",
