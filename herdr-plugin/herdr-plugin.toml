@@ -7,7 +7,11 @@ platforms = ["linux", "macos", "windows"]
 
 [[build]]
 platforms = ["linux", "macos", "windows"]
-command = ["npm", "ci", "--omit=dev"]
+command = ["npm", "ci"]
+
+[[build]]
+platforms = ["linux", "macos", "windows"]
+command = ["npm", "run", "build"]
 
 # Windows: 상대경로 [[panes]] 가 동작하지 않으므로 PowerShell 로 감싸고
 # HERDR_PLUGIN_ROOT 의 \\?\ 접두사를 제거한 뒤 절대경로로 실행한다.
@@ -16,11 +20,11 @@ id = "board"
 platforms = ["windows"]
 title = "칸반"
 placement = "split"
-command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '$r=$env:HERDR_PLUGIN_ROOT; if($r.StartsWith("\\?\")){$r=$r.Substring(4)}; node (Join-Path $r "src\cli.js")']
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '$r=$env:HERDR_PLUGIN_ROOT; if($r.StartsWith("\\?\")){$r=$r.Substring(4)}; node (Join-Path $r "dist\cli.js")']
 
 [[panes]]
 id = "board-unix"
 platforms = ["linux", "macos"]
 title = "칸반"
 placement = "split"
-command = ["node", "./src/cli.js"]
+command = ["node", "./dist/cli.js"]

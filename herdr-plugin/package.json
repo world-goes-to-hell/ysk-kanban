@@ -6,6 +6,7 @@
   "bin": { "herdr-kanban": "src/cli.js" },
   "engines": { "node": ">=22.0.0" },
   "scripts": {
+    "build": "esbuild src/cli.jsx --bundle --platform=node --format=esm --packages=external --outfile=dist/cli.js",
     "start": "node src/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
