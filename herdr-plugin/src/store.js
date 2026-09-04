@@ -20,12 +20,37 @@ export function createStore({ client, initialProjectId = null }) {
   const notify = () => { for (const fn of listeners) fn(state); };
   const set = (patch) => { state = { ...state, ...patch }; notify(); };
 
+  /** 완료 시각으로 쓸 값. 완료일이 없으면 수정일을 대신 쓰고, 둘 다 없으면 null 이다. */
+  function completedAtOf(todo) {
+    const at = todo.completedAt ?? todo.updatedAt;
+    if (!at) return null;
+    const t = Date.parse(at);
+    return Number.isNaN(t) ? null : t;
+  }
+
+  /** 최근 완료가 위로 오도록 견준다. 시각을 알 수 없는 것은 맨 뒤로 보낸다. */
+  function byCompletedDesc(a, b) {
+    const ra = completedAtOf(a);
+    const rb = completedAtOf(b);
+    if (ra === rb) return 0;
+    if (ra === null) return 1;
+    if (rb === null) return -1;
+    return rb - ra;
+  }
+
   function groupByStatus(statuses, todos) {
     const out = {};
     for (const s of statuses) out[s.statusKey] = [];
     for (const t of todos) {
       const key = t.statusKey ?? t.status;
       (out[key] ??= []).push(t);
+    }
+
+    // 완료 칸만 최근 완료 순으로 다시 세운다. 칸 이름과 statusKey 는 프로젝트마다
+    // 다르므로 semanticStatus 로 판별한다. 나머지 칸의 순서는 사용자가 웹에서 끌어
+    // 정한 것일 수 있으므로 서버가 준 그대로 둔다.
+    for (const s of statuses) {
+      if (s.semanticStatus === 'DONE') out[s.statusKey].sort(byCompletedDesc);
     }
     return out;
   }

@@ -157,6 +157,66 @@ describe('카드 갱신', () => {
   });
 });
 
+describe('완료 칸 정렬', () => {
+  const doneStatuses = [
+    { statusKey: 'TODO', name: '할 일', semanticStatus: 'TODO', position: 0 },
+    { statusKey: 'DONE', name: '완료', semanticStatus: 'DONE', position: 1 },
+  ];
+
+  async function boardWith(sts, list) {
+    const s = createStore({
+      client: fakeClient({
+        listStatuses: vi.fn().mockResolvedValue(sts),
+        listTodos: vi.fn().mockResolvedValue(list),
+      }),
+    });
+    await s.loadBoard(3);
+    return s;
+  }
+
+  it('완료 칸이 completedAt 내림차순으로 정렬된다', async () => {
+    const s = await boardWith(doneStatuses, [
+      { id: 72, statusKey: 'DONE', summary: '가', completedAt: '2026-03-03' },
+      { id: 1280, statusKey: 'DONE', summary: '나', completedAt: '2026-07-09' },
+      { id: 575, statusKey: 'DONE', summary: '다', completedAt: '2026-04-30' },
+    ]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([1280, 575, 72]);
+  });
+
+  it('completedAt 이 없는 항목은 맨 뒤로 간다', async () => {
+    const s = await boardWith(doneStatuses, [
+      { id: 1, statusKey: 'DONE', summary: '시각이 아예 없다' },
+      { id: 2, statusKey: 'DONE', summary: '완료일이 있다', completedAt: '2026-03-03' },
+      { id: 3, statusKey: 'DONE', summary: '수정일만 있다', updatedAt: '2026-05-01' },
+    ]);
+    // 완료일이 없으면 수정일을 대신 쓰고, 둘 다 없는 것만 맨 뒤로 간다
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([3, 2, 1]);
+  });
+
+  it('완료가 아닌 칸은 서버가 준 순서를 유지한다', async () => {
+    // 할 일과 진행 중의 순서는 사용자가 웹에서 끌어 정한 것일 수 있다
+    const s = await boardWith(doneStatuses, [
+      { id: 10, statusKey: 'TODO', summary: '가', completedAt: '2026-01-01' },
+      { id: 11, statusKey: 'TODO', summary: '나', completedAt: '2026-09-09' },
+      { id: 12, statusKey: 'TODO', summary: '다' },
+    ]);
+    expect(s.getState().cardsByStatus.TODO.map(c => c.id)).toEqual([10, 11, 12]);
+  });
+
+  it('semanticStatus 가 DONE 인 커스텀 칸도 정렬된다', async () => {
+    // 칸 이름과 statusKey 는 프로젝트마다 다르므로 semanticStatus 로 판별해야 한다
+    const custom = [
+      { statusKey: 'TODO', name: '할 일', semanticStatus: 'TODO', position: 0 },
+      { statusKey: 'SHIPPED', name: '배포됨', semanticStatus: 'DONE', position: 1 },
+    ];
+    const s = await boardWith(custom, [
+      { id: 1, statusKey: 'SHIPPED', summary: '가', completedAt: '2026-03-03' },
+      { id: 2, statusKey: 'SHIPPED', summary: '나', completedAt: '2026-07-09' },
+    ]);
+    expect(s.getState().cardsByStatus.SHIPPED.map(c => c.id)).toEqual([2, 1]);
+  });
+});
+
 describe('필터', () => {
   async function ready() {
     const s = createStore({ client: fakeClient() });
