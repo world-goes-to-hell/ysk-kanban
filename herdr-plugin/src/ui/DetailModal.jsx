@@ -1,26 +1,34 @@
 import { Box, Text } from 'ink';
-import { truncate, wrap } from '../text.js';
+import { truncate, wrap, padTo } from '../text.js';
 
 const PRIORITY_LABEL = { HIGH: '높음', MEDIUM: '보통', LOW: '낮음' };
 const MARK_WIDTH = 3;
 
 /** 이 폭 아래로는 70% 를 떼면 아무것도 담지 못하므로 화면을 거의 다 쓴다. */
 const NARROW = 90;
+// 크기를 받지 못했을 때 쓰는 값. 없으면 NaN 이 번져 본문이 0 줄로 접히고
+// 글자가 … 하나만 남아 팝업이 뒤를 덮지 못한다.
+const DEFAULT_COLUMNS = 80;
+const DEFAULT_ROWS = 24;
 const MAX_WIDTH = 100;
-/** 테두리 2 칸에 paddingX 1 씩을 더한 값 */
+/** 테두리가 차지하는 좌우 2 칸 */
+const BORDER = 2;
+/** 테두리 2 칸에 좌우 여백 1 칸씩을 더한 값 */
 const FRAME = 4;
 /** 고정으로 쓰는 줄: 테두리 위아래 2, 제목 1, 구분선 1, 안내 1 */
 const CHROME_ROWS = 5;
 
 /** 화면 가운데 뜨는 팝업의 폭. 넓은 화면에서는 70%, 좁은 화면에서는 거의 전부를 쓴다. */
 export function modalWidth(columns) {
-  if (columns < NARROW) return Math.max(20, columns - 4);
-  return Math.min(MAX_WIDTH, Math.round(columns * 0.7));
+  const c = Number.isFinite(columns) ? columns : DEFAULT_COLUMNS;
+  if (c < NARROW) return Math.max(20, c - 4);
+  return Math.min(MAX_WIDTH, Math.round(c * 0.7));
 }
 
 /** 팝업의 높이. 화면의 약 80% 를 쓰되 위아래로 한 줄씩은 남긴다. */
 export function modalHeight(rows) {
-  return Math.max(CHROME_ROWS + 1, Math.min(rows - 2, Math.round(rows * 0.8)));
+  const r = Number.isFinite(rows) ? rows : DEFAULT_ROWS;
+  return Math.max(CHROME_ROWS + 1, Math.min(r - 2, Math.round(r * 0.8)));
 }
 
 function fieldsOf(card, statusName) {
@@ -90,10 +98,11 @@ export function DetailModal({
 }) {
   const boxWidth = modalWidth(columns);
   const boxHeight = modalHeight(rows);
-  const inner = Math.max(4, boxWidth - FRAME);
+  const inner = Math.max(BORDER, boxWidth - BORDER);   // 테두리 안쪽 전체
+  const content = Math.max(4, boxWidth - FRAME);       // 글이 놓이는 자리
   const bodyHeight = Math.max(1, boxHeight - CHROME_ROWS);
 
-  const lines = buildDetailLines({ card, subtasks, comments, statusName, width: inner });
+  const lines = buildDetailLines({ card, subtasks, comments, statusName, width: content });
   const maxOffset = Math.max(0, lines.length - bodyHeight);
   const offset = Math.min(Math.max(0, scrollOffset), maxOffset);
   const visible = lines.slice(offset, offset + bodyHeight);
@@ -104,19 +113,26 @@ export function DetailModal({
     ? `j/k 스크롤  Esc 닫기    ${offset + 1}-${offset + visible.length}/${lines.length}`
     : 'j/k 스크롤  Esc 닫기';
 
+  // 팝업은 보드 위에 겹쳐 그려진다. 글자가 없는 칸은 아무것도 쓰지 않아 뒤가 그대로
+  // 비치므로, 모든 줄을 테두리 안쪽 폭까지 공백으로 늘려 그 자리를 덮는다.
+  // 여백도 Box 의 padding 대신 공백으로 넣는다. padding 이 만든 빈 칸은 칠해지지 않는다.
+  const row = (text) => padTo(' ' + truncate(text ?? '', content), inner);
+
+  // 내용이 짧아도 본문 높이만큼은 채워야 아래쪽에서 뒤가 비치지 않는다.
+  const body = loading ? ['불러오는 중…'] : visible;
+  const bodyRows = Array.from({ length: bodyHeight }, (_, i) => body[i] ?? '');
+
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan"
-         paddingX={1} width={boxWidth} height={boxHeight}>
-      <Text bold color="cyan">{truncate(head, inner)}</Text>
-      <Text color="gray">{'─'.repeat(inner)}</Text>
+         width={boxWidth} height={boxHeight}>
+      <Text bold color="cyan">{row(head)}</Text>
+      <Text color="gray">{row('─'.repeat(content))}</Text>
 
-      <Box flexDirection="column" height={bodyHeight}>
-        {loading
-          ? <Text color="gray">불러오는 중…</Text>
-          : visible.map((line, i) => <Text key={offset + i}>{line || ' '}</Text>)}
-      </Box>
+      {bodyRows.map((line, i) => (
+        <Text key={offset + i} color={loading ? 'gray' : undefined}>{row(line)}</Text>
+      ))}
 
-      <Text color="gray">{truncate(hint, inner)}</Text>
+      <Text color="gray">{row(hint)}</Text>
     </Box>
   );
 }

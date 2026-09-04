@@ -52,6 +52,19 @@ function ellipsizeStart(text, maxWidth) {
 }
 
 /** 폭이 maxWidth 를 넘으면 잘라내고 끝에 … 를 붙인다. 넘지 않으면 원문 그대로다. */
+/**
+ * 오른쪽을 공백으로 채워 정확히 maxWidth 폭이 되게 한다.
+ *
+ * 팝업은 보드 위에 겹쳐 그려지는데, 글자가 없는 칸은 아무것도 쓰지 않으므로 뒤가 그대로
+ * 비친다. 줄을 폭까지 늘려 두면 그 자리를 실제 공백이 덮는다.
+ * 이미 넘치는 글은 그대로 둔다. 잘라내는 것은 truncate 의 몫이다.
+ */
+export function padTo(text, maxWidth) {
+  const s = text ?? '';
+  const short = maxWidth - width(s);
+  return short > 0 ? s + ' '.repeat(short) : s;
+}
+
 export function truncate(text, maxWidth) {
   const s = text ?? '';
   if (maxWidth <= 0) return '';

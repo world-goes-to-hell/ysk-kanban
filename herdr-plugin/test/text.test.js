@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { width, truncate, truncateStart, wrap } from '../src/text.js';
+import { width, truncate, truncateStart, wrap, padTo } from '../src/text.js';
 
 describe('width', () => {
   it('영문만 있을 때 폭과 글자 수가 같다', () => {
@@ -72,5 +72,27 @@ describe('wrap', () => {
     expect(lines[0]).toBe('가나다');
     expect(lines[1]).toBe('라마…');
     for (const line of lines) expect(width(line)).toBeLessThanOrEqual(6);
+  });
+});
+
+describe('padTo', () => {
+  // 팝업은 겹쳐 그려지므로, 글자가 없는 칸은 뒤가 그대로 비친다.
+  // 줄을 폭까지 공백으로 늘려야 그 자리를 실제로 덮는다.
+  it('모자란 폭을 공백으로 채운다', () => {
+    expect(padTo('abc', 6)).toBe('abc   ');
+  });
+
+  it('한글은 글자 수가 아니라 화면 폭으로 잰다', () => {
+    expect(width(padTo('한글', 10))).toBe(10);
+    expect(padTo('한글', 6)).toBe('한글  ');
+  });
+
+  it('빈 문자열도 폭만큼 채운다', () => {
+    expect(padTo('', 4)).toBe('    ');
+    expect(padTo(undefined, 3)).toBe('   ');
+  });
+
+  it('이미 넘치면 그대로 둔다 — 자르는 것은 truncate 의 몫이다', () => {
+    expect(padTo('abcdef', 3)).toBe('abcdef');
   });
 });

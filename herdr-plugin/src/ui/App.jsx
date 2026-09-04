@@ -14,6 +14,7 @@ import { Palette } from './Palette.jsx';
 import { Confirm } from './Confirm.jsx';
 import { Input } from './Input.jsx';
 import { Help } from './Help.jsx';
+import { DetailModal, modalWidth, modalHeight, buildDetailLines } from './DetailModal.jsx';
 import { useTerminalSize } from './useTerminalSize.js';
 
 const EMPTY_DETAIL = { card: null, subtasks: [], comments: [], loading: false };
@@ -21,6 +22,11 @@ const FOOTER_ROWS = 1;
 const FAR = 9999; // 칸의 처음·끝으로 보낼 때 쓰는 충분히 큰 걸음. store 가 범위를 잘라 준다.
 const MODAL_TOP = 3;
 const MODAL_WIDTH = { status: 40, filter: 40, project: 44, search: 60, help: 44, confirm: 50 };
+
+// DetailModal 의 테두리와 머리·안내가 차지하는 몫. 그쪽 값과 같아야 스크롤 한계가 맞는다.
+// 어긋나도 DetailModal 이 다시 잘라 주므로 화면이 깨지지는 않는다.
+const DETAIL_FRAME_COLUMNS = 4;
+const DETAIL_CHROME_ROWS = 5;
 
 const PRIORITIES = [
   { id: 'ALL', label: '전체', value: null },
@@ -62,7 +68,27 @@ function paletteOf(modal, state) {
   return { title: '프로젝트 고르기', items: state.projects.map(p => ({ id: p.id, label: p.name })) };
 }
 
-function modalNode(modal, state) {
+/**
+ * 상세 팝업을 얼마나 내릴 수 있는지 셈한다. 내용 줄 수에서 보이는 높이를 뺀 값이다.
+ * 이보다 더 내려가면 아래가 비어 버리므로 App 이 여기까지만 허용한다.
+ */
+export function detailScrollMax({ detail, statusName, columns, rows }) {
+  const inner = Math.max(4, modalWidth(columns) - DETAIL_FRAME_COLUMNS);
+  const bodyHeight = Math.max(1, modalHeight(rows) - DETAIL_CHROME_ROWS);
+  const lines = buildDetailLines({ ...detail, statusName, width: inner });
+  return Math.max(0, lines.length - bodyHeight);
+}
+
+function modalNode(modal, state, view) {
+  if (modal.kind === 'detail') {
+    return (
+      <DetailModal card={view.detail.card} subtasks={view.detail.subtasks}
+                   comments={view.detail.comments} statusName={view.statusName}
+                   columns={view.columns} rows={view.rows}
+                   scrollOffset={modal.scroll} loading={view.detail.loading} />
+    );
+  }
+
   if (modal.kind === 'help') return <Help width={MODAL_WIDTH.help} />;
 
   if (modal.kind === 'confirm') {
@@ -123,6 +149,8 @@ export function App({ store, client, apiUrl, apiKey }) {
     collapsed: state.collapsed,
     columnOffset: state.columnOffset,
   });
+
+  const statusName = state.statuses.find(s => s.statusKey === state.selected?.statusKey)?.name;
 
   // 마우스 처리기는 한 번만 만들고 계속 쓰므로, 바뀌는 값은 상자에 담아 건넨다.
   const layoutRef = useRef(null);
@@ -211,8 +239,25 @@ export function App({ store, client, apiUrl, apiKey }) {
     store.setFilter({ query: next });   // 입력하는 동안 바로 걸러진다
   }, [store]);
 
+  const scrollDetail = useCallback((m, input, key) => {
+    if (key.escape) { setModalNow(null); return; }
+
+    // 키를 빠르게 여러 번 누르면 터미널이 'jjj' 처럼 한 덩어리로 보낸다.
+    // 한 글자하고만 견주면 그 입력이 통째로 버려져 스크롤이 멈춘 것처럼 보이므로,
+    // 덩어리 안의 글자 수를 세어 누른 만큼 움직인다.
+    const count = (ch) => [...input].filter(c => c === ch).length;
+    const step = count('j') - count('k')
+      + (key.downArrow ? 1 : 0) - (key.upArrow ? 1 : 0);
+    if (step === 0) return;
+
+    const max = detailScrollMax({ detail, statusName, columns, rows });
+    const next = Math.min(max, Math.max(0, m.scroll + step));
+    if (next !== m.scroll) setModalNow({ ...m, scroll: next });
+  }, [detail, statusName, columns, rows, setModalNow]);
+
   /** 팝업이 떠 있으면 키를 모두 팝업이 가져간다. 처리했으면 true 를 돌려준다. */
   const handleModalKey = useCallback((m, input, key) => {
+    if (m.kind === 'detail') { scrollDetail(m, input, key); return; }
     if (m.kind === 'help') { setModalNow(null); return; }
     if (m.kind === 'search') { typeSearch(m, input, key); return; }
 
@@ -229,7 +274,7 @@ export function App({ store, client, apiUrl, apiKey }) {
     const step = (input === 'j' || key.downArrow) ? 1 : (input === 'k' || key.upArrow) ? -1 : 0;
     if (step === 0) return;
     setModalNow({ ...m, index: Math.min(count - 1, Math.max(0, m.index + step)) });
-  }, [store, typeSearch, confirmStatus, commitPalette]);
+  }, [store, typeSearch, confirmStatus, commitPalette, scrollDetail]);
 
   // 선택한 칸이 화면 밖이면 보이도록 가로 위치를 맞춘다. 값이 실제로 달라질 때만 바꾼다.
   useEffect(() => {
@@ -356,7 +401,7 @@ export function App({ store, client, apiUrl, apiKey }) {
       case 'filter': return setModalNow({ kind: 'filter', index: 0 });
       case 'project': return setModalNow({ kind: 'project', index: 0 });
       case 'help': return setModalNow({ kind: 'help' });
-      case 'open-detail': return store.setFocus('detail');
+      case 'open-detail': return setModalNow({ kind: 'detail', scroll: 0 });
       case 'toggle-focus': return store.setFocus(state.focus === 'board' ? 'detail' : 'board');
       case 'toggle-mouse': return setMouseOn(v => !v);
       case 'refresh': return void store.loadBoard(state.projectId);
@@ -370,10 +415,15 @@ export function App({ store, client, apiUrl, apiKey }) {
   }
 
   const projectName = state.projects.find(p => p.id === state.projectId)?.name;
-  const statusName = state.statuses.find(s => s.statusKey === state.selected?.statusKey)?.name;
   const bodyTop = bodyTopOf(layout);
   const detailHeight = Math.max(1, rows - bodyTop - FOOTER_ROWS);
-  const modalLeft = modal ? Math.max(0, Math.floor((columns - MODAL_WIDTH[modal.kind]) / 2)) : 0;
+  const modalW = modal
+    ? (modal.kind === 'detail' ? modalWidth(columns) : MODAL_WIDTH[modal.kind])
+    : 0;
+  const modalLeft = modal ? Math.max(0, Math.floor((columns - modalW) / 2)) : 0;
+  const modalTop = modal?.kind === 'detail'
+    ? Math.max(0, Math.floor((rows - modalHeight(rows)) / 2))
+    : MODAL_TOP;
 
   return (
     <Chrome projectName={projectName} columns={columns} rows={rows}
@@ -400,9 +450,9 @@ export function App({ store, client, apiUrl, apiKey }) {
           칠해지지 않아 뒤의 카드 테두리가 팝업 안으로 비쳐 읽을 수 없다.
         */}
         {modal && (
-          <Box position="absolute" marginLeft={modalLeft} marginTop={MODAL_TOP}
+          <Box position="absolute" marginLeft={modalLeft} marginTop={modalTop}
                backgroundColor="black">
-            {modalNode(modal, state)}
+            {modalNode(modal, state, { detail, statusName, columns, rows })}
           </Box>
         )}
       </Box>
