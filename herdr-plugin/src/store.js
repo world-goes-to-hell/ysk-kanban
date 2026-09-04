@@ -13,16 +13,42 @@ const INITIAL = {
   filter: { query: '', priority: null },
 };
 
-export function createStore({ client, initialProjectId = null }) {
+/**
+ * 로컬 기준 오늘 날짜를 YYYY-MM-DD 로 만든다.
+ * toISOString() 은 UTC 라 우리 시각으로 이른 아침이면 어제 날짜가 나온다.
+ */
+function todayString(d = new Date()) {
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * 오늘 끝낸 일감인지 본다.
+ *
+ * 서버의 completedAt 은 '2026-09-04T11:55:05.304421' 처럼 타임존 표기가 없는
+ * 한국 시각이다. Date 로 파싱하면 환경에 따라 UTC 로 읽혀 아홉 시간이 어긋나고,
+ * 자정 전후의 일감이 어제나 내일로 밀린다. 그래서 앞 열 자를 문자열 그대로 견준다.
+ */
+function isCompletedOn(todo, day) {
+  const at = todo.completedAt;
+  return typeof at === 'string' && at.slice(0, 10) === day;
+}
+
+export function createStore({ client, initialProjectId = null, today = null }) {
   let state = { ...INITIAL, projectId: initialProjectId };
   const listeners = new Set();
 
   const notify = () => { for (const fn of listeners) fn(state); };
   const set = (patch) => { state = { ...state, ...patch }; notify(); };
 
-  /** 완료 시각으로 쓸 값. 완료일이 없으면 수정일을 대신 쓰고, 둘 다 없으면 null 이다. */
+  // 주입받은 값이 있으면 그것을 쓰고, 없으면 부를 때마다 오늘을 다시 셈한다.
+  // 고정해 두면 자정을 넘겨 켜 둔 화면이 어제에 머문다.
+  const currentDay = () => today ?? todayString();
+
+  /** 완료 시각. 완료 칸에는 completedAt 이 있는 것만 남으므로 없으면 null 이다. */
   function completedAtOf(todo) {
-    const at = todo.completedAt ?? todo.updatedAt;
+    const at = todo.completedAt;
     if (!at) return null;
     const t = Date.parse(at);
     return Number.isNaN(t) ? null : t;
@@ -46,11 +72,16 @@ export function createStore({ client, initialProjectId = null }) {
       (out[key] ??= []).push(t);
     }
 
-    // 완료 칸만 최근 완료 순으로 다시 세운다. 칸 이름과 statusKey 는 프로젝트마다
-    // 다르므로 semanticStatus 로 판별한다. 나머지 칸의 순서는 사용자가 웹에서 끌어
-    // 정한 것일 수 있으므로 서버가 준 그대로 둔다.
+    // 완료 칸에는 오늘 끝낸 것만 남기고 최근 순으로 세운다. 완료 일감은 수백 건까지
+    // 쌓이므로 전부 보여 봐야 쓸모가 없다. 칸 이름과 statusKey 는 프로젝트마다
+    // 다르므로 semanticStatus 로 판별한다. 나머지 칸은 거르지도 정렬하지도 않는다.
+    // 그 순서는 사용자가 웹에서 끌어 정한 것일 수 있다.
+    const day = currentDay();
     for (const s of statuses) {
-      if (s.semanticStatus === 'DONE') out[s.statusKey].sort(byCompletedDesc);
+      if (s.semanticStatus !== 'DONE') continue;
+      out[s.statusKey] = out[s.statusKey]
+        .filter(t => isCompletedOn(t, day))
+        .sort(byCompletedDesc);
     }
     return out;
   }

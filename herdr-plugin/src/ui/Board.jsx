@@ -37,7 +37,13 @@ export function Board({ layout, statuses, cardsByStatus, selected,
                     inverse={isTarget} underline={isCurrent}>
                 {isTarget ? `▸ ${s.name} ◂` : isCurrent ? `▌${s.name}` : s.name}
               </Text>
-              <Text color="gray"> {count}</Text>
+              {/*
+                완료 칸에는 오늘 끝낸 것만 담긴다. 그 사실을 적어 두지 않으면
+                오늘 완료가 없는 날에 칸이 비어 보여 고장으로 오해한다.
+              */}
+              <Text color="gray">
+                {` ${count}`}{s.semanticStatus === 'DONE' ? ' · 오늘' : ''}
+              </Text>
             </Box>
           );
         }

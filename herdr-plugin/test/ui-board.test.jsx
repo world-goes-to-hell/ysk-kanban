@@ -77,6 +77,36 @@ describe('Board', () => {
   });
 });
 
+describe('완료 칸 머리', () => {
+  // 완료 칸에는 오늘 끝낸 것만 보인다. 그 사실을 적어 두지 않으면
+  // 오늘 완료가 없는 날에 칸이 비어 보여 고장으로 오해한다.
+  const headerOf = (sts) => {
+    const cards = Object.fromEntries(sts.map(s => [s.statusKey, []]));
+    const layout = computeLayout({
+      columns: 160, rows: 24, statuses: sts, cardsByStatus: cards,
+      scroll: {}, collapsed: {}, columnOffset: 0,
+    });
+    return render(<Board layout={layout} statuses={sts}
+                         cardsByStatus={cards} selected={null} />).lastFrame();
+  };
+
+  it('완료 칸 머리에 오늘 표시가 나온다', () => {
+    const f = headerOf([
+      { statusKey: 'DONE', name: '완료', color: '#059669', semanticStatus: 'DONE', position: 0 },
+    ]);
+    expect(f).toContain('완료');
+    expect(f).toContain('오늘');
+  });
+
+  it('완료가 아닌 칸에는 그 표시가 없다', () => {
+    const f = headerOf([
+      { statusKey: 'TODO', name: '할 일', color: '#2563EB', semanticStatus: 'TODO', position: 0 },
+    ]);
+    expect(f).toContain('할 일');
+    expect(f).not.toContain('오늘');
+  });
+});
+
 describe('Board — 목록 모드', () => {
   const listLayout = () => computeLayout({
     columns: 80, rows: 24, statuses, cardsByStatus, scroll: {}, collapsed: {}, columnOffset: 0,

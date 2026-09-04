@@ -157,63 +157,93 @@ describe('카드 갱신', () => {
   });
 });
 
-describe('완료 칸 정렬', () => {
+describe('완료 칸 — 오늘 완료만', () => {
+  // 실제 오늘에 기대면 내일 깨지므로 기준 날짜를 주입해 시험한다.
+  const TODAY = '2026-09-04';
+
   const doneStatuses = [
     { statusKey: 'TODO', name: '할 일', semanticStatus: 'TODO', position: 0 },
     { statusKey: 'DONE', name: '완료', semanticStatus: 'DONE', position: 1 },
   ];
 
-  async function boardWith(sts, list) {
+  async function boardWith(sts, list, today = TODAY) {
     const s = createStore({
       client: fakeClient({
         listStatuses: vi.fn().mockResolvedValue(sts),
         listTodos: vi.fn().mockResolvedValue(list),
       }),
+      today,
     });
     await s.loadBoard(3);
     return s;
   }
 
-  it('완료 칸이 completedAt 내림차순으로 정렬된다', async () => {
+  it('오늘 완료된 일감만 완료 칸에 남는다', async () => {
     const s = await boardWith(doneStatuses, [
-      { id: 72, statusKey: 'DONE', summary: '가', completedAt: '2026-03-03' },
-      { id: 1280, statusKey: 'DONE', summary: '나', completedAt: '2026-07-09' },
-      { id: 575, statusKey: 'DONE', summary: '다', completedAt: '2026-04-30' },
+      { id: 1933, statusKey: 'DONE', summary: '오늘', completedAt: '2026-09-04T11:55:05.304421' },
+      { id: 72, statusKey: 'DONE', summary: '한참 전', completedAt: '2026-03-03T10:00:00' },
+      { id: 1929, statusKey: 'DONE', summary: '오늘 또', completedAt: '2026-09-04T09:12:00' },
     ]);
-    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([1280, 575, 72]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([1933, 1929]);
   });
 
-  it('completedAt 이 없는 항목은 맨 뒤로 간다', async () => {
+  it('어제 완료된 것은 빠진다', async () => {
     const s = await boardWith(doneStatuses, [
-      { id: 1, statusKey: 'DONE', summary: '시각이 아예 없다' },
-      { id: 2, statusKey: 'DONE', summary: '완료일이 있다', completedAt: '2026-03-03' },
-      { id: 3, statusKey: 'DONE', summary: '수정일만 있다', updatedAt: '2026-05-01' },
+      { id: 1, statusKey: 'DONE', summary: '어제 늦게', completedAt: '2026-09-03T23:59:59' },
+      { id: 2, statusKey: 'DONE', summary: '오늘', completedAt: '2026-09-04T00:00:01' },
     ]);
-    // 완료일이 없으면 수정일을 대신 쓰고, 둘 다 없는 것만 맨 뒤로 간다
-    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([3, 2, 1]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([2]);
   });
 
-  it('완료가 아닌 칸은 서버가 준 순서를 유지한다', async () => {
+  it('completedAt 이 없는 완료 일감은 빠진다', async () => {
+    // 언제 끝났는지 모르는 것을 오늘 것으로 볼 수 없다. 수정일로 대신하지도 않는다.
+    const s = await boardWith(doneStatuses, [
+      { id: 1, statusKey: 'DONE', summary: '시각이 없다' },
+      { id: 2, statusKey: 'DONE', summary: '수정일만 있다', updatedAt: '2026-09-04T10:00:00' },
+      { id: 3, statusKey: 'DONE', summary: '오늘', completedAt: '2026-09-04T10:00:00' },
+    ]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([3]);
+  });
+
+  it('완료가 아닌 칸은 거르지 않고 서버가 준 순서를 유지한다', async () => {
     // 할 일과 진행 중의 순서는 사용자가 웹에서 끌어 정한 것일 수 있다
     const s = await boardWith(doneStatuses, [
-      { id: 10, statusKey: 'TODO', summary: '가', completedAt: '2026-01-01' },
-      { id: 11, statusKey: 'TODO', summary: '나', completedAt: '2026-09-09' },
+      { id: 10, statusKey: 'TODO', summary: '가', completedAt: '2026-01-01T10:00:00' },
+      { id: 11, statusKey: 'TODO', summary: '나', completedAt: '2026-09-09T10:00:00' },
       { id: 12, statusKey: 'TODO', summary: '다' },
     ]);
     expect(s.getState().cardsByStatus.TODO.map(c => c.id)).toEqual([10, 11, 12]);
   });
 
-  it('semanticStatus 가 DONE 인 커스텀 칸도 정렬된다', async () => {
+  it('남은 것들이 completedAt 내림차순이다', async () => {
+    const s = await boardWith(doneStatuses, [
+      { id: 1, statusKey: 'DONE', summary: '아침', completedAt: '2026-09-04T09:00:00' },
+      { id: 2, statusKey: 'DONE', summary: '저녁', completedAt: '2026-09-04T18:30:00' },
+      { id: 3, statusKey: 'DONE', summary: '점심', completedAt: '2026-09-04T12:15:00' },
+    ]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([2, 3, 1]);
+  });
+
+  it('자정 직후에 끝난 것도 오늘로 본다', async () => {
+    // 서버의 completedAt 은 타임존 표기가 없는 한국 시각이다. Date 로 파싱하면
+    // UTC 로 읽혀 아홉 시간이 어긋나고, 이 일감이 전날로 밀려 사라진다.
+    const s = await boardWith(doneStatuses, [
+      { id: 1, statusKey: 'DONE', summary: '자정 직후', completedAt: '2026-09-04T00:30:00' },
+    ]);
+    expect(s.getState().cardsByStatus.DONE.map(c => c.id)).toEqual([1]);
+  });
+
+  it('semanticStatus 가 DONE 인 커스텀 칸에도 적용된다', async () => {
     // 칸 이름과 statusKey 는 프로젝트마다 다르므로 semanticStatus 로 판별해야 한다
     const custom = [
       { statusKey: 'TODO', name: '할 일', semanticStatus: 'TODO', position: 0 },
       { statusKey: 'SHIPPED', name: '배포됨', semanticStatus: 'DONE', position: 1 },
     ];
     const s = await boardWith(custom, [
-      { id: 1, statusKey: 'SHIPPED', summary: '가', completedAt: '2026-03-03' },
-      { id: 2, statusKey: 'SHIPPED', summary: '나', completedAt: '2026-07-09' },
+      { id: 1, statusKey: 'SHIPPED', summary: '한참 전', completedAt: '2026-03-03T10:00:00' },
+      { id: 2, statusKey: 'SHIPPED', summary: '오늘', completedAt: '2026-09-04T10:00:00' },
     ]);
-    expect(s.getState().cardsByStatus.SHIPPED.map(c => c.id)).toEqual([2, 1]);
+    expect(s.getState().cardsByStatus.SHIPPED.map(c => c.id)).toEqual([2]);
   });
 });
 
