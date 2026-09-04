@@ -261,3 +261,26 @@ describe('구독', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 });
+
+describe('setColumnOffset', () => {
+  // 칸이 많아 화면 밖으로 밀려난 칸을 보이게 하려면 가로 위치를 옮겨야 한다.
+  it('가로 위치를 옮긴다', () => {
+    const s = createStore({ client: fakeClient() });
+    s.setColumnOffset(2);
+    expect(s.getState().columnOffset).toBe(2);
+  });
+
+  it('음수는 0 으로 잡아 준다', () => {
+    const s = createStore({ client: fakeClient() });
+    s.setColumnOffset(-3);
+    expect(s.getState().columnOffset).toBe(0);
+  });
+
+  it('구독자에게 알린다', () => {
+    const s = createStore({ client: fakeClient() });
+    const fn = vi.fn();
+    s.subscribe(fn);
+    s.setColumnOffset(1);
+    expect(fn).toHaveBeenCalled();
+  });
+});

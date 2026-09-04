@@ -156,6 +156,9 @@ export function createStore({ client, initialProjectId = null }) {
       set({ scroll: { ...state.scroll, [statusKey]: Math.min(max, Math.max(0, now + delta)) } });
     },
 
+    /** 보이는 칸의 시작 위치. 칸이 많아 화면 밖으로 밀려난 칸을 보이게 할 때 쓴다. */
+    setColumnOffset(columnOffset) { set({ columnOffset: Math.max(0, columnOffset) }); },
+
     setFocus(focus) { set({ focus }); },
     setError(error) { set({ error }); },
 

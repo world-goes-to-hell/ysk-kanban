@@ -28,10 +28,14 @@ export function Board({ layout, statuses, cardsByStatus, selected,
           if (!s) return null;
           const count = (cardsByStatus[r.id] ?? []).length;
           const isTarget = dropTarget === r.id;
+          // 카드가 없는 칸에 선택이 가면 화면에 아무 표시가 없어 자기 위치를 알 수 없다.
+          // 드롭 대상과는 다른 표시를 써야 끌어다 놓는 중인지 그냥 머무는 중인지 구분된다.
+          const isCurrent = !isTarget && selected?.statusKey === r.id;
           return (
             <Box key={`h-${i}`} position="absolute" marginLeft={r.x} marginTop={r.y} width={r.w}>
-              <Text bold color={isTarget ? 'cyan' : s.color} inverse={isTarget}>
-                {isTarget ? `▸ ${s.name} ◂` : s.name}
+              <Text bold color={isTarget ? 'cyan' : s.color}
+                    inverse={isTarget} underline={isCurrent}>
+                {isTarget ? `▸ ${s.name} ◂` : isCurrent ? `▌${s.name}` : s.name}
               </Text>
               <Text color="gray"> {count}</Text>
             </Box>

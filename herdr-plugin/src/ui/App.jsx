@@ -29,6 +29,22 @@ const PRIORITIES = [
   { id: 'LOW', label: '낮음', value: 'LOW' },
 ];
 
+/**
+ * 선택한 칸이 화면 밖으로 밀려났을 때 보이게 하려면 가로 위치를 어디로 옮겨야 하는지 셈한다.
+ * 이미 보이면 지금 값을 그대로 돌려주므로, 결과를 다시 넣어도 더 움직이지 않는다.
+ * (움직이면 layout 이 다시 계산되고 그것이 또 옮겨 화면이 끝없이 다시 그려진다.)
+ */
+export function nextColumnOffset({ statuses, visibleColumns, selectedStatusKey, columnOffset }) {
+  if (!selectedStatusKey) return columnOffset;
+  if (visibleColumns.includes(selectedStatusKey)) return columnOffset;
+
+  const at = statuses.findIndex(s => s.statusKey === selectedStatusKey);
+  if (at === -1) return columnOffset;
+
+  const shown = Math.max(1, visibleColumns.length);
+  return at < columnOffset ? at : Math.max(0, at - shown + 1);
+}
+
 /** 본문이 시작하는 줄. layout 이 만든 칸 머리 위치에서 끌어낸다. */
 function bodyTopOf(layout) {
   return layout.regions.find(r => r.kind === 'column-header')?.y ?? 2;
@@ -214,6 +230,19 @@ export function App({ store, client, apiUrl, apiKey }) {
     if (step === 0) return;
     setModalNow({ ...m, index: Math.min(count - 1, Math.max(0, m.index + step)) });
   }, [store, typeSearch, confirmStatus, commitPalette]);
+
+  // 선택한 칸이 화면 밖이면 보이도록 가로 위치를 맞춘다. 값이 실제로 달라질 때만 바꾼다.
+  useEffect(() => {
+    if (layout.mode === 'list') return;
+    const next = nextColumnOffset({
+      statuses: state.statuses,
+      visibleColumns: layout.visibleColumns,
+      selectedStatusKey: state.selected?.statusKey,
+      columnOffset: state.columnOffset,
+    });
+    if (next !== state.columnOffset) store.setColumnOffset(next);
+  }, [store, state.statuses, state.selected?.statusKey, state.columnOffset,
+      layout.mode, layout.visibleColumns.join(',')]);
 
   useEffect(() => { store.loadProjects(); }, [store]);
 

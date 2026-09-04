@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Board } from '../src/ui/Board.jsx';
+import { nextColumnOffset } from '../src/ui/App.jsx';
 import { Card } from '../src/ui/Card.jsx';
 import { Chrome } from '../src/ui/Chrome.jsx';
 import { computeLayout, CARD_HEIGHT } from '../src/layout.js';
@@ -235,5 +236,80 @@ describe('하단 안내', () => {
 
   it('보드 모드에서는 그 안내가 없다', () => {
     expect(hintOf({ mode: 'board' })).not.toContain('좁은 화면');
+  });
+});
+
+describe('선택한 칸을 화면 안에 유지한다', () => {
+  const four = [
+    { statusKey: 'TODO', name: '할 일', color: '#2563EB', position: 0 },
+    { statusKey: 'DOING', name: '진행 중', color: '#D97706', position: 1 },
+    { statusKey: 'CUSTOM_86CB8EB5', name: '보류', color: '#6B7280', position: 2 },
+    { statusKey: 'DONE', name: '완료', color: '#059669', position: 3 },
+  ];
+
+  it('오른쪽 밖에 있으면 그 칸이 마지막에 오도록 옮긴다', () => {
+    const next = nextColumnOffset({
+      statuses: four, visibleColumns: ['TODO', 'DOING', 'CUSTOM_86CB8EB5'],
+      selectedStatusKey: 'DONE', columnOffset: 0,
+    });
+    expect(next).toBe(1);   // DONE 은 3 번째, 세 칸이 보이므로 3 - 3 + 1
+  });
+
+  it('왼쪽 밖에 있으면 그 칸부터 보이도록 옮긴다', () => {
+    const next = nextColumnOffset({
+      statuses: four, visibleColumns: ['CUSTOM_86CB8EB5', 'DONE'],
+      selectedStatusKey: 'TODO', columnOffset: 2,
+    });
+    expect(next).toBe(0);
+  });
+
+  it('이미 보이면 옮기지 않는다', () => {
+    const next = nextColumnOffset({
+      statuses: four, visibleColumns: ['TODO', 'DOING'],
+      selectedStatusKey: 'DOING', columnOffset: 0,
+    });
+    expect(next).toBe(0);
+  });
+
+  it('선택이 없으면 옮기지 않는다', () => {
+    const next = nextColumnOffset({
+      statuses: four, visibleColumns: ['TODO'], selectedStatusKey: null, columnOffset: 1,
+    });
+    expect(next).toBe(1);
+  });
+
+  // 옮긴 결과를 다시 넣었을 때 또 옮기면 화면이 끝없이 다시 그려진다.
+  it('옮긴 뒤에는 더 옮기지 않는다', () => {
+    const first = nextColumnOffset({ statuses: four, visibleColumns: ['TODO', 'DOING', 'CUSTOM_86CB8EB5'],
+      selectedStatusKey: 'DONE', columnOffset: 0 });
+    const again = nextColumnOffset({ statuses: four, visibleColumns: ['DOING', 'CUSTOM_86CB8EB5', 'DONE'],
+      selectedStatusKey: 'DONE', columnOffset: first });
+    expect(again).toBe(first);
+  });
+});
+
+describe('칸 머리 강조', () => {
+  const empty = { TODO: [], DONE: [] };
+  const frameOf = (props) => {
+    const layout = computeLayout({
+      columns: 160, rows: 24, statuses, cardsByStatus: empty,
+      scroll: {}, collapsed: {}, columnOffset: 0,
+    });
+    return render(<Board layout={layout} statuses={statuses} cardsByStatus={empty} {...props} />)
+      .lastFrame();
+  };
+
+  it('카드가 없어도 선택한 칸의 머리가 강조된다', () => {
+    const plain = frameOf({ selected: null });
+    const picked = frameOf({ selected: { statusKey: 'TODO', cardId: null } });
+    expect(picked).not.toBe(plain);
+  });
+
+  it('드롭 대상 강조와 선택 칸 강조는 서로 다르다', () => {
+    const picked = frameOf({ selected: { statusKey: 'TODO', cardId: null } });
+    const target = frameOf({ selected: null, dropTarget: 'TODO' });
+    expect(picked).not.toBe(target);
+    expect(target).toContain('▸');          // 드롭 대상에만 붙는 표시
+    expect(picked).not.toContain('▸');
   });
 });
